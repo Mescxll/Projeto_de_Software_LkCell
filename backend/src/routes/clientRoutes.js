@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const clienteController = require('../controllers/clienteController');
+const clientController = require('../controllers/clientController');
 
 //Rota do tipo POST para cadastro de clientes
-router.post('/', clienteController.cadastrarCliente);
+router.post('/', clientController.cadastrarCliente);
 
 module.exports = router;
