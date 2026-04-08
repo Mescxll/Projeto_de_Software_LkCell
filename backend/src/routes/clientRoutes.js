@@ -10,4 +10,10 @@ router.post(
     clientController.cadastrarCliente
 );
 
+// Rota do tipo GET para buscar cliente por CPF/CNPJ
+router.get(
+    '/:documento', 
+    clientController.buscarCliente
+);
+
 module.exports = router;
