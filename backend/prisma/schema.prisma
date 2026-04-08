@@ -1,0 +1,51 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql" // ou "mysql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Cliente {
+  id_cliente Int @id @default(autoincrement())
+  nome String
+  tipo_cliente TipoCliente
+  telefones Telefone[]
+  logadouro String
+  cidade String
+  uf String
+  numero String
+  cep String
+  bairro String
+
+  pessoaFisica PessoaFisica?
+  pessoaJuridica PessoaJuridica?
+}
+
+enum TipoCliente {
+  FISICA
+  JURIDICA
+}
+
+model Telefone {
+  id Int @id @default(autoincrement())
+  numero String
+  clienteId Int
+  cliente Cliente @relation(fields: [clienteId], references: [id_cliente])
+}
+
+model PessoaFisica {
+  cpf String @id
+  clienteId Int @unique
+  cliente Cliente @relation(fields: [clienteId], references: [id_cliente])
+}
+
+model PessoaJuridica {
+  cnpj String @id
+  razao_social String
+  nome_fantasia String
+  clienteId Int @unique
+  cliente Cliente @relation(fields: [clienteId], references: [id_cliente])
+}
