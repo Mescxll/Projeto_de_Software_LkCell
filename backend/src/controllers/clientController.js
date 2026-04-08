@@ -10,18 +10,6 @@ const cadastrarCliente = async (req, res) => {
             documento
         } = req.body;
 
-        if (!tipoPessoa || !nome || !email || !documento) {
-            return res.status(400).json({ 
-                erro: 'Campos obrigatórios faltando: tipoPessoa, nome, email e/ou documento.' 
-            });
-        }
-
-        if (tipoPessoa !== 'FISICA' && tipoPessoa !== 'JURIDICA') {
-            return res.status(400).json({ 
-                erro: 'O tipoPessoa deve ser FISICA ou JURIDICA.' 
-            });
-        }
-
         const clienteExistente = clientesDB.find(c => c.documento === documento);
         if (clienteExistente) {
             return res.status(409).json({ 
