@@ -1,4 +1,4 @@
-const clienteDB = [];
+const clientesDB = [];
 
 const cadastrarCliente = async (req, res) => {
     try {
