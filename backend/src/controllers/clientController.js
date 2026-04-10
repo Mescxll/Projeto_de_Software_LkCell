@@ -16,8 +16,8 @@ const cadastrarCliente = async (req, res) => {
 
         const clienteExistente = clientesDB.find(c => c.documento === documento);
         if (clienteExistente) {
-            return res.status(409).json({ 
-                erro: 'Já existe um cliente cadastrado com este documento (CPF/CNPJ).' 
+            return res.status(409).json({
+                erro: 'Já existe um cliente cadastrado com este documento (CPF/CNPJ).'
             });
         }
 
@@ -45,6 +45,83 @@ const cadastrarCliente = async (req, res) => {
     }
 };
 
+const buscarCliente = async (req, res) => {
+    try {
+        const { documento } = req.params;
+
+        const documentoLimpoURL = documento.replace(/\D/g, '');
+
+        if (!documentoLimpoURL) {
+            return res.status(400).json({
+                erro: 'Documento inválido. Certifique-se de enviar apenas números.'
+            });
+        }
+        // Substituir as linhas abaixo pela conexão com o banco
+        const cliente = clientesDB.find(c => {
+            const documentoLimpoDB = c.documento.replace(/\D/g, '');
+            return documentoLimpoDB === documentoLimpoURL;
+        });
+
+        if (!cliente) {
+            return res.status(404).json({
+                erro: 'Cliente não encontrado na base de dados.'
+            });
+        }
+        return res.status(200).json(cliente);
+    } catch (error) {
+        console.error('Erro ao buscar cliente:', error);
+        return res.status(500).json({ erro: 'Erro interno no servidor.' });
+    }
+
+};
+
+const atualizarCliente = async (req, res) => {
+    try {
+        const { documento } = req.params;
+
+        const { nome, email, telefone } = req.body;
+
+        const documentoLimpoURL = documento.replace(/\D/g, '');
+
+        if (!documentoLimpoURL) {
+            return res.status(400).json({
+                erro: 'Documento inválido. Certifique-se de enviar apenas números.'
+            });
+        }
+
+        // Substituir as linhas abaixo pela conexão com o banco
+        const index = clientesDB.findIndex(c => {
+            const documentoLimpoDB = c.documento.replace(/\D/g, '');
+            return documentoLimpoDB === documentoLimpoURL;
+        });
+
+        if (index === -1) {
+            return res.status(404).json({
+                erro: 'Cliente não encontrado na base de dados.'
+            });
+        }
+        
+        const clienteAtualizado = {
+            ...clientesDB[index],
+            nome: nome || clientesDB[index].nome,
+            email: email || clientesDB[index].email,
+            telefone: telefone || clientesDB[index].telefone
+        };
+
+        clientesDB[index] = clienteAtualizado;
+
+        return res.status(200).json({
+            mensagem: 'Cliente atualizado com sucesso!',
+            cliente: clienteAtualizado
+        });
+    } catch (error) {
+        console.error('Erro ao atualizar cliente:', error);
+        return res.status(500).json({ erro: 'Erro interno no servidor.' });
+    }
+};
+
 module.exports = {
-    cadastrarCliente
+    cadastrarCliente,
+    buscarCliente,
+    atualizarCliente
 };
