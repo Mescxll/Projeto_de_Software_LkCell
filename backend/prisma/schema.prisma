@@ -1,11 +1,11 @@
 // prisma/schema.prisma
 
-datasource db {
-  provider = "postgresql" // ou "mysql"
-}
-
 generator client {
   provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
 }
 
 model Cliente {
