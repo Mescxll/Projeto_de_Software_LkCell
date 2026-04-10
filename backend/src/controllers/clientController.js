@@ -1,8 +1,14 @@
 const { PrismaClient } = require('@prisma/client');
+const { createClient } = require('@libsql/client');
+const { PrismaLibSql } = require('@prisma/adapter-libsql');
 
-const prisma = new PrismaClient({
-    datasourceUrl: "file:./dev.db"
+const libsql = createClient({
+    url: "file:./dev.db"
 });
+
+const adapter = new PrismaLibSql(libsql);
+
+const prisma = new PrismaClient({ adapter });
 
 const cadastrarCliente = async (req, res) => {
     try {
