@@ -7,6 +7,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
+  url = "file:./dev.db"
 }
 
 model Cliente {
@@ -49,4 +50,10 @@ model PessoaJuridica {
   nome_fantasia String
   clienteId Int @unique
   cliente Cliente @relation(fields: [clienteId], references: [id_cliente])
+}
+
+model Funcionario {
+  id_funcionario Int @id @default(autoincrement())
+  nome String
+  data_nascimento String
 }

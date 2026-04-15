@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const clientRoutes = require('./src/routes/clientRoutes');
+const funcionarioRoutes = require('./src/routes/funcionarioRoutes');
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 // Lista das rotas configuradas
 app.use('/api/clientes', clientRoutes);
+app.use('/api/funcionarios', funcionarioRoutes);
 
 // Start do servidor
 const PORT = process.env.PORT || 3000;
