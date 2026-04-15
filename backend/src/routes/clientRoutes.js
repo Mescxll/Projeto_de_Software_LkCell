@@ -22,4 +22,10 @@ router.put(
     clientController.atualizarCliente
 );
 
+// Rota do tipo DELETE para remover cliente por CPF/CNPJ
+router.delete(
+    '/:documento',
+    clientController.deletarCliente
+);
+
 module.exports = router;
