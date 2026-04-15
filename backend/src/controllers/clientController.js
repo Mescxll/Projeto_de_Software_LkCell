@@ -153,8 +153,50 @@ const atualizarCliente = async (req, res) => {
     }
 };
 
+const deletarCliente = async (req, res) => {
+    try {
+        const { documento } = req.params;
+        const documentoLimpo = documento.replace(/\D/g, '');
+
+        if (!documentoLimpo) {
+            return res.status(400).json({ erro: 'Documento inválido. Certifique-se de enviar apenas números.' });
+        }
+
+        const stmtFindId = db.prepare(`
+            SELECT clienteId FROM PessoaFisica WHERE cpf = ?
+            UNION
+            SELECT clienteId FROM PessoaJuridica WHERE cnpj = ?
+        `);
+        const row = stmtFindId.get(documentoLimpo, documentoLimpo);
+
+        if (!row) {
+            return res.status(404).json({ erro: 'Cliente não encontrado na base de dados.' });
+        }
+
+        const clienteId = row.clienteId;
+
+        const deleteTransaction = db.transaction(() => {
+            db.prepare('DELETE FROM Telefone WHERE clienteId = ?').run(clienteId);
+            db.prepare('DELETE FROM PessoaFisica WHERE clienteId = ?').run(clienteId);
+            db.prepare('DELETE FROM PessoaJuridica WHERE clienteId = ?').run(clienteId);
+            db.prepare('DELETE FROM Cliente WHERE id_cliente = ?').run(clienteId);
+        });
+
+        deleteTransaction();
+
+        return res.status(200).json({
+            mensagem: 'Cliente deletado com sucesso!'
+        });
+
+    } catch (error) {
+        console.error('Erro ao deletar cliente:', error);
+        return res.status(500).json({ erro: 'Erro interno no servidor ao deletar.' });
+    }
+};
+
 module.exports = {
     cadastrarCliente,
     buscarCliente,
-    atualizarCliente
+    atualizarCliente,
+    deletarCliente
 };
