@@ -1,59 +1,136 @@
-// prisma/schema.prisma
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url = "file:./dev.db"
+  provider = "postgresql"
 }
 
-model Cliente {
-  id_cliente Int @id @default(autoincrement())
-  nome String
-  tipo_cliente TipoCliente
-  telefones Telefone[]
-  logadouro String
-  cidade String
-  uf String
-  numero String
-  cep String
-  bairro String
-
-  pessoaFisica PessoaFisica?
-  pessoaJuridica PessoaJuridica?
+model cliente {
+  id_cliente       Int                @id @default(autoincrement())
+  nome             String?            @db.VarChar(100)
+  tipo_cliente     tipo_cliente_enum?
+  cidade           String?            @db.VarChar(50)
+  uf               String?            @db.Char(2)
+  numero           Int?
+  cep              String?            @db.VarChar(10)
+  bairro           String?            @db.VarChar(50)
+  logradouro       String?            @db.VarChar(100)
+  pessoafisica     pessoafisica?
+  pessoajuridica   pessoajuridica?
+  telefone_cliente telefone_cliente[]
+  venda            venda[]
 }
 
-enum TipoCliente {
-  FISICA
-  JURIDICA
+model compra {
+  id_compra                   Int           @id @default(autoincrement())
+  data_hora                   DateTime?     @db.Timestamp(6)
+  valor_total                 Decimal?      @db.Decimal(10, 2)
+  prazo_entrega               DateTime?     @db.Date
+  fk_fornecedor_id_fornecedor Int?
+  fornecedor                  fornecedor?   @relation(fields: [fk_fornecedor_id_fornecedor], references: [id_fornecedor], onDelete: Cascade, onUpdate: NoAction, map: "fk_compra_2")
+  itenscompra                 itenscompra[]
 }
 
-model Telefone {
-  id Int @id @default(autoincrement())
-  numero String
-  clienteId Int
-  cliente Cliente @relation(fields: [clienteId], references: [id_cliente])
+model fornecedor {
+  id_fornecedor       Int                   @id @default(autoincrement())
+  razao_social        String?               @db.VarChar(100)
+  email               String?               @db.VarChar(50)
+  politica_preco      Decimal?              @db.Decimal(10, 2)
+  compra              compra[]
+  telefone_fornecedor telefone_fornecedor[]
 }
 
-model PessoaFisica {
-  cpf String @id
-  clienteId Int @unique
-  cliente Cliente @relation(fields: [clienteId], references: [id_cliente])
+model funcionario {
+  id_funcionario   Int       @id @default(autoincrement())
+  nome             String?   @db.VarChar(100)
+  data_aniversario DateTime? @db.Date
+  venda            venda[]
 }
 
-model PessoaJuridica {
-  cnpj String @id
-  razao_social String
-  nome_fantasia String
-  clienteId Int @unique
-  cliente Cliente @relation(fields: [clienteId], references: [id_cliente])
+model itenscompra {
+  fk_produto_id_produto Int
+  fk_compra_id_compra   Int
+  quantidade            Int?
+  preco_compra          Decimal? @db.Decimal(10, 2)
+  produto               produto  @relation(fields: [fk_produto_id_produto], references: [id_produto], onUpdate: NoAction, map: "fk_itenscompra_1")
+  compra                compra   @relation(fields: [fk_compra_id_compra], references: [id_compra], onUpdate: NoAction, map: "fk_itenscompra_2")
+
+  @@id([fk_produto_id_produto, fk_compra_id_compra])
 }
 
-model Funcionario {
-  id_funcionario Int @id @default(autoincrement())
-  nome String
-  data_nascimento String
+model itensvenda {
+  fk_produto_id_produto Int
+  fk_venda_id_venda     Int
+  preco_unitario        Decimal? @db.Decimal(10, 2)
+  quantidade_vendida    Int?
+  produto               produto  @relation(fields: [fk_produto_id_produto], references: [id_produto], onUpdate: NoAction, map: "fk_itensvenda_1")
+  venda                 venda    @relation(fields: [fk_venda_id_venda], references: [id_venda], onUpdate: NoAction, map: "fk_itensvenda_2")
+
+  @@id([fk_produto_id_produto, fk_venda_id_venda])
+}
+
+model pessoafisica {
+  cpf                   String  @id @db.VarChar(11)
+  fk_cliente_id_cliente Int     @unique
+  cliente               cliente @relation(fields: [fk_cliente_id_cliente], references: [id_cliente], onDelete: Cascade, onUpdate: NoAction, map: "fk_pessoafisica_2")
+}
+
+model pessoajuridica {
+  cnpj                  String  @id @db.VarChar(14)
+  razao_social          String? @db.VarChar(100)
+  nome_fantasia         String? @db.VarChar(50)
+  fk_cliente_id_cliente Int     @unique
+  cliente               cliente @relation(fields: [fk_cliente_id_cliente], references: [id_cliente], onDelete: Cascade, onUpdate: NoAction, map: "fk_pessoajuridica_2")
+}
+
+model produto {
+  id_produto   Int           @id @default(autoincrement())
+  nome         String?       @db.VarChar(50)
+  descricao    String?       @db.VarChar(100)
+  preco_custo  Decimal?      @db.Decimal(10, 2)
+  preco_compra Decimal?      @db.Decimal(10, 2)
+  margem_lucro Decimal?      @db.Decimal(10, 2)
+  itenscompra  itenscompra[]
+  itensvenda   itensvenda[]
+}
+
+model telefone_cliente {
+  telefone_cliente    String  @db.VarChar(14)
+  telefone_cliente_pk Int
+  cliente             cliente @relation(fields: [telefone_cliente_pk], references: [id_cliente], onDelete: NoAction, onUpdate: NoAction, map: "fk_telefone_cliente_2")
+
+  @@id([telefone_cliente_pk, telefone_cliente])
+}
+
+model telefone_fornecedor {
+  telefone_fornecedor     String     @db.VarChar(14)
+  telefone_forncecedor_pk Int
+  fornecedor              fornecedor @relation(fields: [telefone_forncecedor_pk], references: [id_fornecedor], onDelete: NoAction, onUpdate: NoAction, map: "fk_telefone_forncecedor_2")
+
+  @@id([telefone_forncecedor_pk, telefone_fornecedor])
+}
+
+model venda {
+  id_venda                      Int                    @id @default(autoincrement())
+  valor_total                   Decimal?               @db.Decimal(10, 2)
+  status_pagamento              status_pagamento_enum?
+  data_vencimento               DateTime?              @db.Date
+  data_hora                     DateTime?              @db.Timestamp(6)
+  fk_cliente_id_cliente         Int?
+  fk_funcionario_id_funcionario Int?
+  itensvenda                    itensvenda[]
+  cliente                       cliente?               @relation(fields: [fk_cliente_id_cliente], references: [id_cliente], onDelete: Cascade, onUpdate: NoAction, map: "fk_venda_2")
+  funcionario                   funcionario?           @relation(fields: [fk_funcionario_id_funcionario], references: [id_funcionario], onDelete: Cascade, onUpdate: NoAction, map: "fk_venda_3")
+}
+
+enum status_pagamento_enum {
+  PAGO
+  EM_ABERTO
+}
+
+enum tipo_cliente_enum {
+  FISICO
+  JURIDICO
 }

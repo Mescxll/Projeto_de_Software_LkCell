@@ -1,23 +1,24 @@
-const Database = require('better-sqlite3');
-const db = new Database('./dev.db', { verbose: console.log });
+const prisma = require('../lib/prisma');
 
 const cadastrarFuncionario = async (req, res) => {
     try {
         const { nome, data_nascimento } = req.body;
-
-        const stmt = db.prepare(`
-            INSERT INTO Funcionario (nome, data_nascimento) 
-            VALUES (?, ?)
-        `);
-        const result = stmt.run(nome, data_nascimento);
+       
+        const novoFuncionario = await prisma.funcionario.create({
+            data: {
+                nome,
+                // Convertendo para objeto Date
+                data_aniversario: data_nascimento ? new Date(data_nascimento) : null
+            }
+        });
 
         return res.status(201).json({
             mensagem: 'Funcionário cadastrado com sucesso!',
-            idGerado: result.lastInsertRowid
+            funcionario: novoFuncionario
         });
 
     } catch (error) {
-        console.error('Erro no SQL:', error);
+        console.error('Erro Prisma:', error);
         return res.status(500).json({ erro: 'Erro interno no servidor ao salvar.' });
     }
 };
@@ -26,19 +27,9 @@ const buscarFuncionario = async (req, res) => {
     try {
         const { id } = req.params;
 
-        if (!id || isNaN(id)) {
-            return res.status(400).json({
-                erro: 'ID inválido. Certifique-se de enviar um número válido.'
-            });
-        }
-
-        const stmt = db.prepare(`
-            SELECT id_funcionario, nome, data_nascimento
-            FROM Funcionario
-            WHERE id_funcionario = ?
-        `);
-        
-        const funcionario = stmt.get(id);
+        const funcionario = await prisma.funcionario.findUnique({
+            where: { id_funcionario: parseInt(id) }
+        });
 
         if (!funcionario) {
             return res.status(404).json({ erro: 'Funcionário não encontrado na base de dados.' });
@@ -57,54 +48,24 @@ const atualizarFuncionario = async (req, res) => {
         const { id } = req.params;
         const { nome, data_nascimento } = req.body;
 
-        if (!id || isNaN(id)) {
-            return res.status(400).json({
-                erro: 'ID inválido. Certifique-se de enviar um número válido.'
-            });
-        }
-
-        // Verificar se funcionário existe
-        const stmtVerifica = db.prepare('SELECT id_funcionario FROM Funcionario WHERE id_funcionario = ?');
-        const funcionarioExistente = stmtVerifica.get(id);
-
-        if (!funcionarioExistente) {
-            return res.status(404).json({ erro: 'Funcionário não encontrado.' });
-        }
-
-        // Preparar campos para atualizar
-        const campos = [];
-        const valores = [];
-
-        if (nome !== undefined) {
-            campos.push('nome = ?');
-            valores.push(nome);
-        }
-
-        if (data_nascimento !== undefined) {
-            campos.push('data_nascimento = ?');
-            valores.push(data_nascimento);
-        }
-
-        if (campos.length === 0) {
-            return res.status(400).json({ erro: 'Nenhum campo para atualizar.' });
-        }
-
-        valores.push(id);
-
-        const stmt = db.prepare(`
-            UPDATE Funcionario
-            SET ${campos.join(', ')}
-            WHERE id_funcionario = ?
-        `);
-        
-        stmt.run(...valores);
+        const funcionarioAtualizado = await prisma.funcionario.update({
+            where: { id_funcionario: parseInt(id) },
+            data: {
+                nome,
+                data_aniversario: data_nascimento ? new Date(data_nascimento) : undefined
+            }
+        });
 
         return res.status(200).json({
-            mensagem: 'Funcionário atualizado com sucesso!'
+            mensagem: 'Funcionário atualizado com sucesso!',
+            funcionario: funcionarioAtualizado
         });
 
     } catch (error) {
-        console.error('Erro ao atualizar funcionário:', error);
+        console.error('Erro ao atualizar:', error);
+        if (error.code === 'P2025') {
+            return res.status(404).json({ erro: 'Funcionário não encontrado.' });
+        }
         return res.status(500).json({ erro: 'Erro interno no servidor.' });
     }
 };
@@ -113,29 +74,19 @@ const deletarFuncionario = async (req, res) => {
     try {
         const { id } = req.params;
 
-        if (!id || isNaN(id)) {
-            return res.status(400).json({
-                erro: 'ID inválido. Certifique-se de enviar um número válido.'
-            });
-        }
-
-        // Verificar se funcionário existe
-        const stmtVerifica = db.prepare('SELECT id_funcionario FROM Funcionario WHERE id_funcionario = ?');
-        const funcionarioExistente = stmtVerifica.get(id);
-
-        if (!funcionarioExistente) {
-            return res.status(404).json({ erro: 'Funcionário não encontrado.' });
-        }
-
-        const stmt = db.prepare('DELETE FROM Funcionario WHERE id_funcionario = ?');
-        stmt.run(id);
+        await prisma.funcionario.delete({
+            where: { id_funcionario: parseInt(id) }
+        });
 
         return res.status(200).json({
             mensagem: 'Funcionário removido com sucesso!'
         });
 
     } catch (error) {
-        console.error('Erro ao deletar funcionário:', error);
+        console.error('Erro ao deletar:', error);
+        if (error.code === 'P2025') {
+            return res.status(404).json({ erro: 'Funcionário não encontrado.' });
+        }
         return res.status(500).json({ erro: 'Erro interno no servidor.' });
     }
 };

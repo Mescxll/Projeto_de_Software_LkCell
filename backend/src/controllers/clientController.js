@@ -1,52 +1,46 @@
-const Database = require('better-sqlite3');
-const db = new Database('./dev.db', { verbose: console.log });
+const prisma = require('../lib/prisma');
 
 const cadastrarCliente = async (req, res) => {
     try {
         const {
-            nome, tipo_cliente, telefone, logadouro, cidade, uf, numero, cep, bairro,
+            nome, tipo_cliente, telefone, logradouro, cidade, uf, numero, cep, bairro,
             cpf, cnpj, razao_social, nome_fantasia
         } = req.body;
 
-        const insertTransaction = db.transaction(() => {
-            const stmtCliente = db.prepare(`
-                INSERT INTO Cliente (nome, tipo_cliente, logadouro, cidade, uf, numero, cep, bairro) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            `);
-            const resultCliente = stmtCliente.run(nome, tipo_cliente, logadouro, cidade, uf, numero, cep, bairro);
-            const clienteId = resultCliente.lastInsertRowid;
-
-            if (telefone) {
-                const stmtTelefone = db.prepare('INSERT INTO Telefone (numero, clienteId) VALUES (?, ?)');
-                stmtTelefone.run(telefone, clienteId);
+        const novoCliente = await prisma.cliente.create({
+            data: {
+                nome,
+                tipo_cliente: tipo_cliente === 'FISICA' ? 'FISICO' : 'JURIDICO', // Ajuste para o ENUM do schema 
+                logradouro,
+                cidade,
+                uf,
+                numero: parseInt(numero), // O schema espera Int 
+                cep,
+                bairro,
+                // Criando Telefone e PF/PJ 
+                telefone_cliente: telefone ? {
+                    create: { telefone_cliente: telefone }
+                } : undefined,
+                pessoafisica: tipo_cliente === 'FISICA' ? {
+                    create: { cpf }
+                } : undefined,
+                pessoajuridica: tipo_cliente === 'JURIDICA' ? {
+                    create: { cnpj, razao_social, nome_fantasia }
+                } : undefined
             }
-
-            if (tipo_cliente === 'FISICA') {
-                const stmtPF = db.prepare('INSERT INTO PessoaFisica (cpf, clienteId) VALUES (?, ?)');
-                stmtPF.run(cpf, clienteId);
-            } else if (tipo_cliente === 'JURIDICA') {
-                const stmtPJ = db.prepare('INSERT INTO PessoaJuridica (cnpj, razao_social, nome_fantasia, clienteId) VALUES (?, ?, ?, ?)');
-                stmtPJ.run(cnpj, razao_social, nome_fantasia, clienteId);
-            }
-
-            return clienteId;
         });
-
-        const novoId = insertTransaction();
 
         return res.status(201).json({
             mensagem: 'Cliente cadastrado com sucesso!',
-            idGerado: novoId
+            cliente: novoCliente
         });
 
     } catch (error) {
-        console.error('Erro no SQL:', error);
-        
-        if (error.code === 'SQLITE_CONSTRAINT_UNIQUE' || error.code === 'SQLITE_CONSTRAINT_PRIMARYKEY') {
+        console.error('Erro Prisma:', error);
+        if (error.code === 'P2002') {
             return res.status(409).json({ erro: 'Documento (CPF/CNPJ) já cadastrado.' });
         }
-
-        return res.status(500).json({ erro: 'Erro interno no servidor ao salvar.' });
+        return res.status(500).json({ erro: 'Erro interno no servidor.' });
     }
 };
 
@@ -61,31 +55,27 @@ const buscarCliente = async (req, res) => {
             });
         }
 
-        const stmtCliente = db.prepare(`
-            SELECT c.*, 
-                   pf.cpf, 
-                   pj.cnpj, pj.razao_social, pj.nome_fantasia
-            FROM Cliente c
-            LEFT JOIN PessoaFisica pf ON c.id_cliente = pf.clienteId
-            LEFT JOIN PessoaJuridica pj ON c.id_cliente = pj.clienteId
-            WHERE pf.cpf = ? OR pj.cnpj = ?
-        `);
-        
-        const cliente = stmtCliente.get(documentoLimpo, documentoLimpo);
+        // O Prisma faz o busca
+        const cliente = await prisma.cliente.findFirst({
+            where: {
+                OR: [
+                    { pessoafisica: { cpf: documentoLimpo } },
+                    { pessoajuridica: { cnpj: documentoLimpo } }
+                ]
+            },
+            include: {
+                pessoafisica: true,
+                pessoajuridica: true,
+                telefone_cliente: true // Traz os telefones na mesma viagem ao banco
+            }
+        });
 
         if (!cliente) {
             return res.status(404).json({ erro: 'Cliente não encontrado na base de dados.' });
         }
 
-        const stmtTelefones = db.prepare('SELECT numero FROM Telefone WHERE clienteId = ?');
-        const telefones = stmtTelefones.all(cliente.id_cliente);
-
-        const resposta = {
-            ...cliente,
-            telefones: telefones.map(t => t.numero)
-        };
-
-        return res.status(200).json(resposta);
+        // Como o Prisma traz tudo estruturado,não é necessário mapear
+        return res.status(200).json(cliente);
 
     } catch (error) {
         console.error('Erro ao buscar cliente:', error);
@@ -96,51 +86,47 @@ const buscarCliente = async (req, res) => {
 const atualizarCliente = async (req, res) => {
     try {
         const { documento } = req.params;
-        const { nome, logadouro, cidade, uf, numero, cep, bairro } = req.body;
+        const { nome, logradouro, cidade, uf, numero, cep, bairro, telefone } = req.body;
         const documentoLimpo = documento.replace(/\D/g, '');
 
         if (!documentoLimpo) {
             return res.status(400).json({ erro: 'Documento inválido.' });
         }
 
-        const stmtFindId = db.prepare(`
-            SELECT clienteId FROM PessoaFisica WHERE cpf = ?
-            UNION
-            SELECT clienteId FROM PessoaJuridica WHERE cnpj = ?
-        `);
-        const row = stmtFindId.get(documentoLimpo, documentoLimpo);
+        // Localiza o ID do cliente através do documento (CPF ou CNPJ)
+        // Buscamos nas tabelas de relação que o db pull gerou
+        const pf = await prisma.pessoafisica.findUnique({ where: { cpf: documentoLimpo } });
+        const pj = await prisma.pessoajuridica.findUnique({ where: { cnpj: documentoLimpo } });
 
-        if (!row) {
+        const clienteId = pf?.fk_cliente_id_cliente || pj?.fk_cliente_id_cliente;
+
+        if (!clienteId) {
             return res.status(404).json({ erro: 'Cliente não encontrado na base de dados.' });
         }
 
-        const clienteId = row.clienteId;
-
-        const stmtUpdate = db.prepare(`
-            UPDATE Cliente 
-            SET nome = COALESCE(?, nome),
-                logadouro = COALESCE(?, logadouro),
-                cidade = COALESCE(?, cidade),
-                uf = COALESCE(?, uf),
-                numero = COALESCE(?, numero),
-                cep = COALESCE(?, cep),
-                bairro = COALESCE(?, bairro)
-            WHERE id_cliente = ?
-        `);
-        
-        stmtUpdate.run(
-            nome ?? null, 
-            logadouro ?? null, 
-            cidade ?? null, 
-            uf ?? null, 
-            numero ?? null, 
-            cep ?? null, 
-            bairro ?? null, 
-            clienteId
-        );
-
-        const stmtClienteAtualizado = db.prepare('SELECT * FROM Cliente WHERE id_cliente = ?');
-        const clienteAtualizado = stmtClienteAtualizado.get(clienteId);
+        // O update do Prisma só altera o que foi enviado
+        const clienteAtualizado = await prisma.cliente.update({
+            where: { id_cliente: clienteId },
+            data: {
+                nome,
+                logradouro,
+                cidade,
+                uf,
+                numero: numero ? parseInt(numero) : undefined, // Garantindo que é Int para o Postgres
+                cep,
+                bairro,
+                telefone_cliente: telefone ? {
+                    deleteMany: {},
+                    create: { telefone_cliente: telefone }
+                } : undefined
+            },
+            // Incluir para aparecer no JSON de resposta
+            include: {
+                telefone_cliente: true,
+                pessoafisica: true,
+                pessoajuridica: true
+            }
+        });
 
         return res.status(200).json({
             mensagem: 'Cliente atualizado com sucesso!',
@@ -162,27 +148,25 @@ const deletarCliente = async (req, res) => {
             return res.status(400).json({ erro: 'Documento inválido. Certifique-se de enviar apenas números.' });
         }
 
-        const stmtFindId = db.prepare(`
-            SELECT clienteId FROM PessoaFisica WHERE cpf = ?
-            UNION
-            SELECT clienteId FROM PessoaJuridica WHERE cnpj = ?
-        `);
-        const row = stmtFindId.get(documentoLimpo, documentoLimpo);
+        // Localiza o ID do cliente (PF ou PJ)
+        const pf = await prisma.pessoafisica.findUnique({ where: { cpf: documentoLimpo } });
+        const pj = await prisma.pessoajuridica.findUnique({ where: { cnpj: documentoLimpo } });
 
-        if (!row) {
+        const clienteId = pf?.fk_cliente_id_cliente || pj?.fk_cliente_id_cliente;
+
+        if (!clienteId) {
             return res.status(404).json({ erro: 'Cliente não encontrado na base de dados.' });
         }
 
-        const clienteId = row.clienteId;
+        // Como o  schema tem 'onDelete: Cascade' em PF, PJ e Vendas, 
+        // ao deletar o Cliente, o banco apaga os dependentes automaticamente.
 
-        const deleteTransaction = db.transaction(() => {
-            db.prepare('DELETE FROM Telefone WHERE clienteId = ?').run(clienteId);
-            db.prepare('DELETE FROM PessoaFisica WHERE clienteId = ?').run(clienteId);
-            db.prepare('DELETE FROM PessoaJuridica WHERE clienteId = ?').run(clienteId);
-            db.prepare('DELETE FROM Cliente WHERE id_cliente = ?').run(clienteId);
-        });
-
-        deleteTransaction();
+        await prisma.$transaction([
+            // Como telefone_cliente está como 'NoAction' no seu schema, deletamos ele primeiro manualmente
+            prisma.telefone_cliente.deleteMany({ where: { telefone_cliente_pk: clienteId } }),
+            // Agora deletamos o cliente e o Cascade faz o resto na nuvem
+            prisma.cliente.delete({ where: { id_cliente: clienteId } })
+        ]);
 
         return res.status(200).json({
             mensagem: 'Cliente deletado com sucesso!'
