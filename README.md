@@ -33,34 +33,26 @@ npm install
 ```
 
 ### Configurando o .env:
-Para o banco de dados funcionar, é necessário conectar o projeto ao Supabase.
-
-Crie um arquivo chamado  `.env` na raiz da pasta backend.
-
-Adicione a sua Connection String do Supabase (utilizando a porta direta VIP 5432 exigida pelo Prisma 7):
-
+Atenção: Use a porta 6543 para pooling (DATABASE_URL) e 5432 para conexão direta (DIRECT_URL).
 ```
-DATABASE_URL="postgresql://postgres:[SUA_SENHA_AQUI]@aws-0-us-east-1.pooler.supabase.
+DATABASE_URL="postgresql://postgres:[SUA_SENHA]@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres:[SUA_SENHA]@aws-0-sa-east-1.pooler.supabase.com:5432/postgres"
 ```
+Sincronizando o Prisma com o `.env` configurado, gere o cliente para o seu sistema reconhecer as tabelas:
 
-Com o `.env` configurado, atualize o banco de dados na nuvem e gere o Prisma Client executando:
-
-```
-npx prisma db pull
+```bash
 npx prisma generate
-npx prisma migrate dev --name init
 ```
 
 Instale o Driver Adapter:
 
-```
+```bash
 npm install @prisma/adapter-pg pg
-
 ```
 
 Inicie o servidor backend:
 
-```
+```bash
 node --watch index.js
 ```
 
