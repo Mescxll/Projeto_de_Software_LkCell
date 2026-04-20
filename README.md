@@ -38,7 +38,8 @@ Atenção: Use a porta 6543 para pooling (DATABASE_URL) e 5432 para conexão dir
 DATABASE_URL="postgresql://postgres:[SUA_SENHA]@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
 DIRECT_URL="postgresql://postgres:[SUA_SENHA]@aws-0-sa-east-1.pooler.supabase.com:5432/postgres"
 ```
-Sincronizando o Prisma com o `.env` configurado, gere o cliente para o seu sistema reconhecer as tabelas:
+**Sincronizando o Prisma**
+Com o `.env` configurado, gere o cliente para o seu sistema reconhecer as tabelas:
 
 ```bash
 npx prisma generate
