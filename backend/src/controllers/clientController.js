@@ -83,6 +83,25 @@ const buscarCliente = async (req, res) => {
     }
 };
 
+const buscarTodos = async (req, res) => {
+    try {
+        // O Prisma traz as relações junto
+        const clientes = await prisma.cliente.findMany({
+            include: {
+                pessoafisica: true,
+                pessoajuridica: true,
+                telefone_cliente: true // Traz os telefones na mesma viagem
+            }
+        });
+
+        return res.status(200).json(clientes);
+
+    } catch (error) {
+        console.error('Erro ao buscar todos os clientes:', error);
+        return res.status(500).json({ erro: 'Erro interno no servidor ao listar clientes.' });
+    }
+};
+
 const atualizarCliente = async (req, res) => {
     try {
         const { documento } = req.params;
@@ -181,6 +200,7 @@ const deletarCliente = async (req, res) => {
 module.exports = {
     cadastrarCliente,
     buscarCliente,
+    buscarTodos,
     atualizarCliente,
     deletarCliente
 };
