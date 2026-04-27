@@ -7,15 +7,17 @@ const cadastrarCliente = async (req, res) => {
             cpf, cnpj, razao_social, nome_fantasia
         } = req.body;
 
+        const tipoNormalizado = (tipo_cliente === 'FISICA' || tipo_cliente === 'FISICO') ? 'FISICO' : 'JURIDICO';
+
         const novoCliente = await prisma.cliente.create({
             data: {
                 nome,
-                tipo_cliente: tipo_cliente === 'FISICA' ? 'FISICO' : 'JURIDICO', // Ajuste para o ENUM do schema 
-                email,
+                tipo_cliente: tipoNormalizado, // Ajuste para o ENUM do schema 
+                email: email || null,
                 logradouro,
                 cidade,
                 uf,
-                numero: parseInt(numero), // O schema espera Int 
+                numero: numero ? parseInt(numero): null, // O schema espera Int 
                 cep,
                 bairro,
                 // Criando Telefone e PF/PJ 
