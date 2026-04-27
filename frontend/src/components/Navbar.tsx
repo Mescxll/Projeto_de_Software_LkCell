@@ -6,7 +6,7 @@ import { Users, UserCog, Package, Truck, TrendingUp, ShoppingBasket, Wrench, Wal
 
 const modulos = [
   { titulo: "Clientes", icone: Users, link: "/clientes/gerenciar" },
-  { titulo: "Funcionários", icone: UserCog, link: "#" },
+  { titulo: "Funcionários", icone: UserCog, link: "/funcionarios/gerenciar" },
   { titulo: "Produtos", icone: Package, link: "#" },
   { titulo: "Fornecedores", icone: Truck, link: "#" },
   { titulo: "Vendas", icone: TrendingUp, link: "#" },
@@ -44,7 +44,7 @@ export default function Navbar() {
           <Search className="absolute left-3 text-gray-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="Buscar..."
+            placeholder="Buscar Módulo..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             onBlur={() => setTimeout(() => setBusca(""), 150)}

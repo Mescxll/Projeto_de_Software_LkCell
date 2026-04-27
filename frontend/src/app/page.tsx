@@ -18,11 +18,9 @@ export default function Home() {
   return (
     <>
       <Navbar />
-
       <main className="p-8 px-55 min-h-screen bg-[#f8f9fa]">
-        <h1 className="text-2xl">Bem-vindo ao LkCell</h1>
-        <br/>
-        <p className="font-light">Acesse o módulo que deseja gerenciar</p>
+        <h1 className="text-2xl text-gray-800">Bem-vindo ao LkCell</h1>        
+        <p className="font-light text-gray-500">Acesse o módulo que deseja gerenciar</p>
         <br/>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {painel.map((card, index) => {
