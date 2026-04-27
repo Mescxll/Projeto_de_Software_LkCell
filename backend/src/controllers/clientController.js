@@ -3,7 +3,7 @@ const prisma = require('../lib/prisma');
 const cadastrarCliente = async (req, res) => {
     try {
         const {
-            nome, tipo_cliente, telefone, logradouro, cidade, uf, numero, cep, bairro,
+            nome, tipo_cliente, telefone, email, logradouro, cidade, uf, numero, cep, bairro,
             cpf, cnpj, razao_social, nome_fantasia
         } = req.body;
 
@@ -11,6 +11,7 @@ const cadastrarCliente = async (req, res) => {
             data: {
                 nome,
                 tipo_cliente: tipo_cliente === 'FISICA' ? 'FISICO' : 'JURIDICO', // Ajuste para o ENUM do schema 
+                email,
                 logradouro,
                 cidade,
                 uf,

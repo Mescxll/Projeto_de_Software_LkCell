@@ -11,6 +11,7 @@ model cliente {
   id_cliente       Int                @id @default(autoincrement())
   nome             String?            @db.VarChar(100)
   tipo_cliente     tipo_cliente_enum?
+  email            String?            @unique @db.VarChar(100)
   cidade           String?            @db.VarChar(50)
   uf               String?            @db.Char(2)
   numero           Int?
@@ -97,7 +98,7 @@ model produto {
 }
 
 model telefone_cliente {
-  telefone_cliente    String  @db.VarChar(14)
+  telefone_cliente    String  @unique @db.VarChar(14)
   telefone_cliente_pk Int
   cliente             cliente @relation(fields: [telefone_cliente_pk], references: [id_cliente], onDelete: NoAction, onUpdate: NoAction, map: "fk_telefone_cliente_2")
 
@@ -105,7 +106,7 @@ model telefone_cliente {
 }
 
 model telefone_fornecedor {
-  telefone_fornecedor     String     @db.VarChar(14)
+  telefone_fornecedor     String     @unique @db.VarChar(14)
   telefone_forncecedor_pk Int
   fornecedor              fornecedor @relation(fields: [telefone_forncecedor_pk], references: [id_fornecedor], onDelete: NoAction, onUpdate: NoAction, map: "fk_telefone_forncecedor_2")
 
