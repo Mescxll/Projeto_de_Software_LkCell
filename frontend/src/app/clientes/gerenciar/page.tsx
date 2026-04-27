@@ -62,11 +62,23 @@ export default function GerenciarClientes() {
   const clientesFiltrados = clientes.filter((c) => {
     const doc = c.pessoafisica?.cpf || c.pessoajuridica?.cnpj || "";
     const id = String(c.id_cliente || "");
+    const email = c.email || "";
+
+    // O Pulo do Gato: Traduzindo o banco para o vocabulário do usuário
+    const termosTipo =
+      c.tipo_cliente === "FISICO"
+        ? "fisica fisico pessoa física pf"
+        : "juridica juridico pessoa jurídica pj";
+
+    // Deixa tudo minúsculo pra busca não quebrar com letras maiúsculas
+    const termoBusca = busca.toLowerCase();
+
     return (
-      c.nome?.toLowerCase().includes(busca.toLowerCase()) ||
-      doc.includes(busca) ||
-      c.email?.toLowerCase().includes(busca.toLowerCase()) ||
-      id.includes(busca)
+      c.nome?.toLowerCase().includes(termoBusca) ||
+      doc.includes(termoBusca) ||
+      email.toLowerCase().includes(termoBusca) ||
+      id.includes(termoBusca) ||
+      termosTipo.includes(termoBusca) 
     );
   });
 
@@ -104,8 +116,8 @@ export default function GerenciarClientes() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="Buscar por nome, ID, CPF ou CNPJ..."
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 text-gray-800 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm placeholder:text-gray-400"
+            placeholder="Buscar por nome, ID, CPF ou CNPJ, Física ou Jurídica..."
+            className="w-full pl-9 pr-6 py-2 border border-gray-200 text-gray-800 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm placeholder:text-gray-400"
             onChange={(e) => setBusca(e.target.value)}
           />
         </div>
@@ -122,6 +134,17 @@ export default function GerenciarClientes() {
             >
               <p className="text-sm font-semibold text-gray-800">{c.nome}</p>
               <p className="text-xs text-gray-400 mt-1">ID: {c.id_cliente}</p>
+              <div className="mt-2 flex justify-center">
+                <span
+                  className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                    c.tipo_cliente === "FISICO"
+                      ? "bg-blue-100 text-blue-600 border border-blue-200"
+                      : "bg-green-100 text-green-600 border border-green-200"
+                  }`}
+                >
+                  {c.tipo_cliente === "FISICO" ? "Física" : "Jurídica"}
+                </span>
+              </div>
 
               {/* Menu de ações */}
               {menuAberto === c.id_cliente && (
