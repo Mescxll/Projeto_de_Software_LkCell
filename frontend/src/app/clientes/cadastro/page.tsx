@@ -8,6 +8,7 @@ import {
   FileText,
   Phone,
   MapPin,
+  Mail,
   UserPlus,
   CheckCircle,
   AlertTriangle,
@@ -28,6 +29,7 @@ export default function CadastroCliente() {
     razao_social: "",
     nome_fantasia: "",
     telefone: "",
+    email: "",
     logradouro: "",
     numero: "",
     bairro: "",
@@ -36,16 +38,58 @@ export default function CadastroCliente() {
     cep: "",
   });
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    let { name, value } = e.target;
+
+    // Verifica se o campo atual é um dos que precisam ser puramente numéricos
+    if (["cpf", "cnpj", "telefone", "cep"].includes(name)) {
+      // Regex brabíssima: O \D pega tudo que NÃO for número e substitui por vazio ('')
+      value = value.replace(/\D/g, "");
+
+      // Aplica o limite de caracteres pra cada campo na lata
+      if (name === "cpf") value = value.slice(0, 11);
+      if (name === "cnpj") value = value.slice(0, 14);
+      if (name === "telefone") value = value.slice(0, 11);
+      if (name === "cep") value = value.slice(0, 8);
+  }
+
+    
+
+    setForm({ ...form, [name]: value });
+  };
 
   const handleSubmit = async () => {
     // Validação básica
     const doc = tipo === "FISICA" ? form.cpf : form.cnpj;
     if (!form.nome.trim() || !doc.trim() || !form.telefone.trim()) {
       setErroMsg(
-        "Preencha todos os campos obrigatórios: nome, documento e telefone.",
+        "Preencha todos os campos obrigatórios: Nome, Documento e Telefone."
       );
+      setModal("erro");
+      return;
+    }    
+
+    if (tipo === "FISICA" && form.cpf.length !== 11) {
+      setErroMsg("O CPF precisa ter exatamente 11 números!");
+      setModal("erro");
+      return;
+    }
+
+    if (tipo === "JURIDICA" && form.cnpj.length !== 14) {
+      setErroMsg("O CNPJ precisa ter exatamente 14 números!");
+      setModal("erro");
+      return;
+    }
+
+    if (form.telefone.length !== 11) {
+      setErroMsg("O telefone precisa ter exatamente 11 números (DDD + 9 dígitos)!");
+      setModal("erro");
+      return;
+    }
+
+    // O CEP não é obrigatório na primeira checagem, mas se a pessoa preencheu algo, tem que ser 8 números
+    if (form.cep && form.cep.length !== 8) {
+      setErroMsg("O CEP está incompleto! Digite exatamente 8 números.");
       setModal("erro");
       return;
     }
@@ -54,6 +98,7 @@ export default function CadastroCliente() {
       nome: form.nome,
       tipo_cliente: tipo,
       telefone: form.telefone,
+      email: form.email,
       logradouro: form.logradouro,
       numero: form.numero,
       bairro: form.bairro,
@@ -252,8 +297,27 @@ export default function CadastroCliente() {
                   <input
                     type="text"
                     name="telefone"
-                    placeholder="(00) 00000-0000"
+                    placeholder="DDD + Número (Ex: 77999999999)"
                     value={form.telefone}
+                    onChange={handleChange}
+                    className={inputIconClass}
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                  Email{" "}
+                  <span className="text-gray-400 font-normal">(opcional)</span>
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Digite o email"
+                    value={form.email}
                     onChange={handleChange}
                     className={inputIconClass}
                   />
@@ -320,7 +384,7 @@ export default function CadastroCliente() {
                   <input
                     type="text"
                     name="cep"
-                    placeholder="CEP (00000-000)"
+                    placeholder="CEP (Ex: 44444444)"
                     value={form.cep}
                     onChange={handleChange}
                     className={inputClass}
@@ -382,6 +446,7 @@ export default function CadastroCliente() {
                   razao_social: "",
                   nome_fantasia: "",
                   telefone: "",
+                  email: "",
                   logradouro: "",
                   numero: "",
                   bairro: "",
