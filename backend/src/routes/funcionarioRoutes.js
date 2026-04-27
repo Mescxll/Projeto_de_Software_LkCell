@@ -3,26 +3,26 @@ const router = express.Router();
 const funcionarioController = require('../controllers/funcionarioController');
 const validarCadastroFuncionario = require('../middlewares/validarCadastroFuncionario');
 
-// Rota do tipo POST para cadastro de funcionários
+// Criar
 router.post(
     '/',
     validarCadastroFuncionario,
     funcionarioController.cadastrarFuncionario
 );
 
-// Rota do tipo GET para buscar funcionário por ID
+// Buscar (tudo, por nome ou por id)
 router.get(
-    '/:id',
+    '/',
     funcionarioController.buscarFuncionario
 );
 
-// Rota do tipo PUT para atualizar funcionário por ID
+// Atualizar
 router.put(
     '/:id',
     funcionarioController.atualizarFuncionario
 );
 
-// Rota do tipo DELETE para remover funcionário por ID
+// Deletar
 router.delete(
     '/:id',
     funcionarioController.deletarFuncionario

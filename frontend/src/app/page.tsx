@@ -4,7 +4,7 @@ import { Users, UserCog, Package, Truck, TrendingUp, ShoppingBasket, Wrench, Wal
 
 const painel = [
   { titulo: "Clientes", icone: Users, cor: "azul", link: "/clientes/gerenciar"},
-  { titulo: "Funcionários", icone: UserCog, cor: "verde" },
+  { titulo: "Funcionários", icone: UserCog, cor: "verde", link: "/funcionarios/gerenciar"},
   { titulo: "Produtos", icone: Package, cor: "cinza" },
   { titulo: "Fornecedores", icone: Truck, cor: "cinza" },
   { titulo: "Vendas", icone: TrendingUp, cor: "cinza" },

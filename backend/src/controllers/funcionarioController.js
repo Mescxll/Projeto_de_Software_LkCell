@@ -25,20 +25,36 @@ const cadastrarFuncionario = async (req, res) => {
 
 const buscarFuncionario = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { busca } = req.query;
 
-        const funcionario = await prisma.funcionario.findUnique({
-            where: { id_funcionario: parseInt(id) }
-        });
+        if (!busca) {
+            const funcionarios = await prisma.funcionario.findMany({
+                orderBy: { id_funcionario: 'asc' }
+            });
 
-        if (!funcionario) {
-            return res.status(404).json({ erro: 'Funcionário não encontrado na base de dados.' });
+            return res.status(200).json(funcionarios);
         }
 
-        return res.status(200).json(funcionario);
+        const isNumero = !isNaN(busca);
+
+        const funcionarios = await prisma.funcionario.findMany({
+            where: {
+                OR: [
+                    ...(isNumero ? [{ id_funcionario: parseInt(busca) }] : []),
+                    {
+                        nome: {
+                            contains: busca,
+                            mode: 'insensitive'
+                        }
+                    }
+                ]
+            }
+        });
+
+        return res.status(200).json(funcionarios);
 
     } catch (error) {
-        console.error('Erro ao buscar funcionário:', error);
+        console.error('Erro ao buscar funcionários:', error);
         return res.status(500).json({ erro: 'Erro interno no servidor.' });
     }
 };
