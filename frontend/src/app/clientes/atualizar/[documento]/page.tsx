@@ -71,6 +71,10 @@ export default function AtualizarCliente() {
       value = value.replace(/\D/g, "");
     }
 
+    if (name === "uf") {
+      value = value.replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase();
+    }
+
     setForm({ ...form, [name]: value });
   };
 

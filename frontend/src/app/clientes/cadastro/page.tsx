@@ -51,9 +51,11 @@ export default function CadastroCliente() {
       if (name === "cnpj") value = value.slice(0, 14);
       if (name === "telefone") value = value.slice(0, 11);
       if (name === "cep") value = value.slice(0, 8);
-  }
+    }
 
-    
+    if (name === "uf") {
+      value = value.replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase();
+    }
 
     setForm({ ...form, [name]: value });
   };
