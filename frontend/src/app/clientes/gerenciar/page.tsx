@@ -23,9 +23,22 @@ export default function GerenciarClientes() {
 
   useEffect(() => {
     fetch("http://localhost:3000/api/clientes")
-      .then((res) => res.json())
-      .then((data) => setClientes(data))
-      .catch((err) => console.error("Erro ao buscar dados do Supabase:", err));
+      .then((res) => {
+        if (!res.ok) throw new Error("Falha ao carregar clientes");
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setClientes(data);
+        } else {
+          console.error("Dados recebidos não são uma lista:", data);
+          setClientes([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Erro na requisição:", err);
+        setClientes([]);
+      });
   }, []);
 
   // Fecha o menu ao clicar fora

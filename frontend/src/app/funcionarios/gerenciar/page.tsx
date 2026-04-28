@@ -48,9 +48,22 @@ export default function GerenciarFuncionarios() {
 
   useEffect(() => {
     fetch("http://localhost:3000/api/funcionarios")
-      .then((res) => res.json())
-      .then((data: Funcionario[]) => setFuncionarios(data))
-      .catch((err) => console.error("Erro ao buscar funcionários:", err));
+      .then((res) => {
+        if (!res.ok) throw new Error("Falha ao carregar funcionários");
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setFuncionarios(data);
+        } else {
+          console.error("Dados recebidos não são uma lista:", data);
+          setFuncionarios([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar funcionários:", err);
+        setFuncionarios([]);
+      });
   }, []);
 
   useEffect(() => {
