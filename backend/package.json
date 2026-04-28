@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "jest --runInBand --detectOpenHandles --forceExit"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +24,8 @@
     "pg": "^8.20.0"
   },
   "devDependencies": {
-    "prisma": "^7.7.0"
+    "jest": "^30.3.0",
+    "prisma": "^7.7.0",
+    "supertest": "^7.2.2"
   }
 }

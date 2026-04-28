@@ -17,8 +17,4 @@ app.use(express.json());
 app.use('/api/clientes', clientRoutes);
 app.use('/api/funcionarios', funcionarioRoutes);
 
-// Start do servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`No ar! Servidor rodando na porta ${PORT}`);
-});
+module.exports = app;
