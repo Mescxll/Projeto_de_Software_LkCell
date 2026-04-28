@@ -35,8 +35,8 @@ npm install
 ### Configurando o .env:
 Atenção: Use a porta 6543 para pooling (DATABASE_URL) e 5432 para conexão direta (DIRECT_URL).
 ```
-DATABASE_URL="postgresql://postgres:[SUA_SENHA]@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
-DIRECT_URL="postgresql://postgres:[SUA_SENHA]@aws-0-sa-east-1.pooler.supabase.com:5432/postgres"
+DATABASE_URL="postgresql://postgres.id_do_banco:sua_senha@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres.id_do_banco:sua_senha@aws-0-sa-east-1.pooler.supabase.com:5432/postgres"
 ```
 **Sincronizando o Prisma**
 
