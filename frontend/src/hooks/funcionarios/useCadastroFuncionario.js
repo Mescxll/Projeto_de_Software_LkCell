@@ -1,3 +1,4 @@
+// Lógica da Tela de Cadastro de Funcionários
 import { useState } from "react";
 
 export function useCadastroFuncionario() {
@@ -9,7 +10,8 @@ export function useCadastroFuncionario() {
     data_nascimento: null,
   });
 
-  const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async () => {
     if (!form.nome.trim()) {

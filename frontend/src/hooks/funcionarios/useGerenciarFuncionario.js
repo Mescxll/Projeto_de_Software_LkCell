@@ -1,3 +1,4 @@
+// Lógica da Tela de Gerenciamento de Funcionários (Exlusão, Busca e Listagem)
 import { useState, useEffect, useRef } from "react";
 
 export function useGerenciarFuncionario() {
