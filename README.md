@@ -55,7 +55,7 @@ npm install @prisma/adapter-pg pg
 Inicie o servidor backend:
 
 ```bash
-node --watch index.js
+npm run dev
 ```
 
 ## Frontend
