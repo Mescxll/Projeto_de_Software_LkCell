@@ -2,22 +2,26 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import LoadingGerenciar from "@/components/LoadingGerenciar";
 import {
   ArrowLeft,
   UserPlus,
   Search,
   Pencil,
   Trash2,
+  Loader2,
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
 
 export default function GerenciarClientes() {
+  const [loading, setLoading] = useState(true);
   const [clientes, setClientes] = useState([]);
   const [busca, setBusca] = useState("");
   const [menuAberto, setMenuAberto] = useState(null);
   const [modalConfirmar, setModalConfirmar] = useState(false);
   const [modalSucesso, setModalSucesso] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const menuRef = useRef(null);
 
@@ -38,6 +42,9 @@ export default function GerenciarClientes() {
       .catch((err) => {
         console.error("Erro na requisição:", err);
         setClientes([]);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
 
@@ -55,21 +62,29 @@ export default function GerenciarClientes() {
   const handleExcluir = async () => {
     if (!clienteSelecionado) return;
 
+    setIsDeleting(true);
+
     const doc =
       clienteSelecionado.pessoafisica?.cpf ||
       clienteSelecionado.pessoajuridica?.cnpj;
 
-    await fetch(`http://localhost:3000/api/clientes/${doc}`, {
-      method: "DELETE",
-    });
+    try {
+      await fetch(`http://localhost:3000/api/clientes/${doc}`, {
+        method: "DELETE",
+      });
 
-    setClientes((prev) =>
-      prev.filter((c) => c.id_cliente !== clienteSelecionado.id_cliente),
-    );
+      setClientes((prev) =>
+        prev.filter((c) => c.id_cliente !== clienteSelecionado.id_cliente),
+      );
 
-    setModalConfirmar(false);
-    setMenuAberto(null);
-    setModalSucesso(true);
+      setModalConfirmar(false);
+      setMenuAberto(null);
+      setModalSucesso(true);
+    } catch (error) {
+      console.error("Erro ao excluir cliente:", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const clientesFiltrados = clientes.filter((c) => {
@@ -91,7 +106,7 @@ export default function GerenciarClientes() {
       doc.includes(termoBusca) ||
       email.toLowerCase().includes(termoBusca) ||
       id.includes(termoBusca) ||
-      termosTipo.includes(termoBusca) 
+      termosTipo.includes(termoBusca)
     );
   });
 
@@ -134,59 +149,76 @@ export default function GerenciarClientes() {
             onChange={(e) => setBusca(e.target.value)}
           />
         </div>
-
-        {/* Grid de Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {clientesFiltrados.map((c) => (
-            <div
-              key={c.id_cliente}
-              className="relative bg-white border border-gray-100 rounded-xl px-6 py-5 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer text-center"
-              onClick={() =>
-                setMenuAberto(menuAberto === c.id_cliente ? null : c.id_cliente)
-              }
-            >
-              <p className="text-sm font-semibold text-gray-800">{c.nome}</p>
-              <p className="text-xs text-gray-400 mt-1">ID: {c.id_cliente}</p>
-              <div className="mt-2 flex justify-center">
-                <span
-                  className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
-                    c.tipo_cliente === "FISICO"
-                      ? "bg-blue-100 text-blue-600 border border-blue-200"
-                      : "bg-green-100 text-green-600 border border-green-200"
-                  }`}
-                >
-                  {c.tipo_cliente === "FISICO" ? "Física" : "Jurídica"}
-                </span>
-              </div>
-
-              {/* Menu de ações */}
-              {menuAberto === c.id_cliente && (
+        {/* Loading */}
+        {loading ? (
+          <LoadingGerenciar />
+        ) : (
+          <>
+            {/* Grid de Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {clientesFiltrados.map((c) => (
                 <div
-                  ref={menuRef}
-                  className="absolute top-14 left-1/2 -translate-x-1/2 bg-white border border-gray-100 rounded-xl shadow-lg z-10 overflow-hidden w-36"
-                  onClick={(e) => e.stopPropagation()}
+                  key={c.id_cliente}
+                  className="relative bg-white border border-gray-100 rounded-xl px-6 py-5 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer text-center"
+                  onClick={() =>
+                    setMenuAberto(
+                      menuAberto === c.id_cliente ? null : c.id_cliente,
+                    )
+                  }
                 >
-                  <Link
-                    href={`/clientes/atualizar/${c.pessoafisica?.cpf || c.pessoajuridica?.cnpj}`}
-                  >
-                    <button className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-blue-500 hover:bg-blue-50 transition-colors">
-                      <Pencil className="w-4 h-4" /> Atualizar
-                    </button>
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setClienteSelecionado(c);
-                      setModalConfirmar(true);
-                    }}
-                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" /> Excluir
-                  </button>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {c.nome}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    ID: {c.id_cliente}
+                  </p>
+                  <div className="mt-2 flex justify-center">
+                    <span
+                      className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                        c.tipo_cliente === "FISICO"
+                          ? "bg-blue-100 text-blue-600 border border-blue-200"
+                          : "bg-green-100 text-green-600 border border-green-200"
+                      }`}
+                    >
+                      {c.tipo_cliente === "FISICO" ? "Física" : "Jurídica"}
+                    </span>
+                  </div>
+
+                  {/* Menu de ações */}
+                  {menuAberto === c.id_cliente && (
+                    <div
+                      ref={menuRef}
+                      className="absolute top-14 left-1/2 -translate-x-1/2 bg-white border border-gray-100 rounded-xl shadow-lg z-10 overflow-hidden w-36"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Link
+                        href={`/clientes/atualizar/${c.pessoafisica?.cpf || c.pessoajuridica?.cnpj}`}
+                      >
+                        <button className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-blue-500 hover:bg-blue-50 transition-colors">
+                          <Pencil className="w-4 h-4" /> Atualizar
+                        </button>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setClienteSelecionado(c);
+                          setModalConfirmar(true);
+                        }}
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" /> Excluir
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
+            {clientesFiltrados.length === 0 && (
+              <p className="text-sm text-gray-500 mt-6 text-center">
+                Nenhum cliente encontrado!
+              </p>
+            )}
+          </>
+        )}
       </main>
       {/* Modal Confirmar Exclusão */}
       {modalConfirmar && (
@@ -219,9 +251,18 @@ export default function GerenciarClientes() {
               </button>
               <button
                 onClick={handleExcluir}
-                className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm transition-all"
+                disabled={isDeleting}
+                className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all
+                  ${isDeleting ? "bg-red-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"}
+                `}
               >
-                Confirmar
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Excluindo...
+                  </>
+                ) : (
+                  "Confirmar"
+                )}
               </button>
             </div>
           </div>

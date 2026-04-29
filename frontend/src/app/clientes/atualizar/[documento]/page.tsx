@@ -10,6 +10,7 @@ import {
   MapPin,
   AlertTriangle,
   Save,
+  Loader2,
   CheckCircle,
 } from "lucide-react";
 
@@ -20,6 +21,7 @@ export default function AtualizarCliente() {
   const [modal, setModal] = useState(false);
   const [modalErro, setModalErro] = useState(false);
   const [erroMsg, setErroMsg] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [tipo, setTipo] = useState("FISICA");
   const [form, setForm] = useState({
     nome: "",
@@ -72,7 +74,10 @@ export default function AtualizarCliente() {
     }
 
     if (name === "uf") {
-      value = value.replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase();
+      value = value
+        .replace(/[^a-zA-Z]/g, "")
+        .slice(0, 2)
+        .toUpperCase();
     }
 
     setForm({ ...form, [name]: value });
@@ -101,7 +106,7 @@ export default function AtualizarCliente() {
       setModalErro(true);
       return;
     }
-
+    setIsSubmitting(true);
     // Se passou por todas as travas, tenta salvar!
     try {
       const res = await fetch(
@@ -132,6 +137,8 @@ export default function AtualizarCliente() {
     } catch (err) {
       setErroMsg("Não foi possível conectar ao servidor.");
       setModalErro(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -305,9 +312,20 @@ export default function AtualizarCliente() {
               </button>
               <button
                 onClick={handleSalvar}
-                className="flex-1 flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md"
+                disabled={isSubmitting}
+                className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md
+                  ${isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}
+                `}
               >
-                <Save className="w-4 h-4" /> Salvar
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" /> Salvar
+                  </>
+                )}
               </button>
             </div>
           </div>

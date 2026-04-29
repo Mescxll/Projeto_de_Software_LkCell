@@ -2,12 +2,22 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { ArrowLeft, User, Calendar, Save, CheckCircle, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft,
+  User,
+  Calendar,
+  Save,
+  CheckCircle,
+  AlertTriangle,
+  Loader2,
+} from "lucide-react";
 
 export default function AtualizarFuncionario() {
   const router = useRouter();
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [modal, setModal] = useState<null | "sucesso" | "erro">(null);
   const [erroMsg, setErroMsg] = useState("");
   const [form, setForm] = useState({
@@ -17,8 +27,8 @@ export default function AtualizarFuncionario() {
 
   useEffect(() => {
     fetch(`http://localhost:3000/api/funcionarios?busca=${id}`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         const funcionario = Array.isArray(data) ? data[0] : data;
         setForm({
           nome: funcionario?.nome || "",
@@ -28,13 +38,14 @@ export default function AtualizarFuncionario() {
         });
         setLoading(false);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Erro ao buscar funcionário:", err);
         setLoading(false);
       });
   }, [id]);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSalvar = async () => {
     if (!form.nome.trim()) {
@@ -42,6 +53,7 @@ export default function AtualizarFuncionario() {
       setModal("erro");
       return;
     }
+    setIsSubmitting(true);
 
     try {
       const res = await fetch(`http://localhost:3000/api/funcionarios/${id}`, {
@@ -62,49 +74,62 @@ export default function AtualizarFuncionario() {
     } catch {
       setErroMsg("Não foi possível conectar ao servidor.");
       setModal("erro");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const inputIconClass = "w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
+  const inputIconClass =
+    "w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
 
-  if (loading) return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-[#f4f6fb] flex items-center justify-center">
-        <p className="text-gray-400 text-sm">Carregando...</p>
-      </main>
-    </>
-  );
+  if (loading)
+    return (
+      <>
+        <Navbar />
+        <main className="min-h-screen bg-[#f4f6fb] flex items-center justify-center">
+          <p className="text-gray-400 text-sm">Carregando...</p>
+        </main>
+      </>
+    );
 
   return (
     <>
       <Navbar />
       <main className="min-h-screen bg-[#f4f6fb] p-8 px-55">
-
         {/* Voltar */}
-        <button onClick={() => router.push("/funcionarios/gerenciar")}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors">
+        <button
+          onClick={() => router.push("/funcionarios/gerenciar")}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
+        >
           <ArrowLeft className="w-4 h-4" /> Voltar para Funcionários
         </button>
 
         {/* Centro */}
         <div className="flex flex-col items-center">
           <div className="w-full max-w-xl">
-
             {/* Título */}
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">Atualizar Funcionário</h1>
-              <p className="text-sm text-gray-400 mt-1">Edite as informações do funcionário</p>
+              <h1 className="text-2xl font-bold text-gray-800">
+                Atualizar Funcionário
+              </h1>
+              <p className="text-sm text-gray-400 mt-1">
+                Edite as informações do funcionário
+              </p>
             </div>
 
             {/* Formulário */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-
               {/* ID (somente leitura) */}
               <div className="mb-4">
-                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">ID</label>
-                <input type="text" value={`#${id}`} disabled
-                  className="w-full px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed" />
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                  ID
+                </label>
+                <input
+                  type="text"
+                  value={`#${id}`}
+                  disabled
+                  className="w-full px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed"
+                />
               </div>
 
               {/* Nome */}
@@ -114,35 +139,61 @@ export default function AtualizarFuncionario() {
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input type="text" name="nome" value={form.nome} onChange={handleChange}
-                    placeholder="Digite o nome completo" className={inputIconClass} />
+                  <input
+                    type="text"
+                    name="nome"
+                    value={form.nome}
+                    onChange={handleChange}
+                    placeholder="Digite o nome completo"
+                    className={inputIconClass}
+                  />
                 </div>
               </div>
 
               {/* Data de Nascimento */}
               <div className="mb-6">
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                  Data de Nascimento <span className="text-gray-400 font-normal">(opcional)</span>
+                  Data de Nascimento{" "}
+                  <span className="text-gray-400 font-normal">(opcional)</span>
                 </label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input type="date" name="data_nascimento" value={form.data_nascimento}
-                    onChange={handleChange} className={inputIconClass} />
+                  <input
+                    type="date"
+                    name="data_nascimento"
+                    value={form.data_nascimento}
+                    onChange={handleChange}
+                    className={inputIconClass}
+                  />
                 </div>
               </div>
 
               {/* Botões */}
               <div className="flex gap-3">
-                <button onClick={() => router.push("/funcionarios/gerenciar")}
-                  className="flex-1 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all">
+                <button
+                  onClick={() => router.push("/funcionarios/gerenciar")}
+                  className="flex-1 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all"
+                >
                   Cancelar
                 </button>
-                <button onClick={handleSalvar}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md">
-                  <Save className="w-4 h-4" /> Salvar
+                <button
+                  onClick={handleSalvar}
+                  disabled={isSubmitting}
+                  className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md
+                    ${isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}
+                  `}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" /> Salvar
+                    </>
+                  )}
                 </button>
               </div>
-
             </div>
           </div>
         </div>
@@ -158,9 +209,13 @@ export default function AtualizarFuncionario() {
               </div>
             </div>
             <h2 className="text-lg font-bold text-gray-800 mb-1">Sucesso!</h2>
-            <p className="text-xs text-gray-400 mb-6">Funcionário atualizado com sucesso.</p>
-            <button onClick={() => router.push("/funcionarios/gerenciar")}
-              className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold text-sm transition-all">
+            <p className="text-xs text-gray-400 mb-6">
+              Funcionário atualizado com sucesso.
+            </p>
+            <button
+              onClick={() => router.push("/funcionarios/gerenciar")}
+              className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold text-sm transition-all"
+            >
               Fechar
             </button>
           </div>
@@ -176,10 +231,14 @@ export default function AtualizarFuncionario() {
                 <AlertTriangle className="w-9 h-9 text-red-500" />
               </div>
             </div>
-            <h2 className="text-lg font-bold text-gray-800 mb-1">Erro ao atualizar</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-1">
+              Erro ao atualizar
+            </h2>
             <p className="text-xs text-gray-400 mb-6">{erroMsg}</p>
-            <button onClick={() => setModal(null)}
-              className="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm transition-all">
+            <button
+              onClick={() => setModal(null)}
+              className="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm transition-all"
+            >
               Tentar novamente
             </button>
           </div>

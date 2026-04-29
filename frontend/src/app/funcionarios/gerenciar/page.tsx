@@ -2,12 +2,14 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import LoadingGerenciar from "@/components/LoadingGerenciar";
 import {
   ArrowLeft,
   UserPlus,
   Search,
   Pencil,
   Trash2,
+  Loader2,
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
@@ -19,6 +21,8 @@ type Funcionario = {
 };
 
 export default function GerenciarFuncionarios() {
+  const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [busca, setBusca] = useState("");
   const [menuAberto, setMenuAberto] = useState<number | null>(null);
@@ -63,6 +67,9 @@ export default function GerenciarFuncionarios() {
       .catch((err) => {
         console.error("Erro ao buscar funcionários:", err);
         setFuncionarios([]);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
 
@@ -79,22 +86,31 @@ export default function GerenciarFuncionarios() {
   const handleExcluir = async () => {
     if (!funcionarioSelecionado) return;
 
-    await fetch(
-      `http://localhost:3000/api/funcionarios/${funcionarioSelecionado.id_funcionario}`,
-      {
-      method: "DELETE",
-      },
-    );
+    setIsDeleting(true);
 
-    setFuncionarios((prev) =>
-      prev.filter(
-        (f) => f.id_funcionario !== funcionarioSelecionado.id_funcionario,
-      ),
-    );
+    try {
+      await fetch(
+        `http://localhost:3000/api/funcionarios/${funcionarioSelecionado.id_funcionario}`,
+        {
+          method: "DELETE",
+        },
+      );
 
-    setModalConfirmar(false);
-    setMenuAberto(null);
-    setModalSucesso(true);
+      // Atualiza a tabela na tela
+      setFuncionarios((prev) =>
+        prev.filter(
+          (f) => f.id_funcionario !== funcionarioSelecionado.id_funcionario,
+        ),
+      );
+
+      setModalConfirmar(false);
+      setMenuAberto(null);
+      setModalSucesso(true);
+    } catch (error) {
+      console.error("Erro ao excluir funcionário:", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const funcionariosFiltrados = funcionarios.filter((f) => {
@@ -103,11 +119,7 @@ export default function GerenciarFuncionarios() {
     const data = normalizarTexto(formatarData(f.data_aniversario));
     const filtro = normalizarTexto(busca);
 
-    return (
-      nome.includes(filtro) ||
-      id.includes(busca) ||
-      data.includes(filtro)
-    );
+    return nome.includes(filtro) || id.includes(busca) || data.includes(filtro);
   });
 
   return (
@@ -152,56 +164,70 @@ export default function GerenciarFuncionarios() {
         </div>
         <div className="mb-6" />
 
-        {/* Grid de Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {funcionariosFiltrados.map((f) => (
-            <div
-              key={f.id_funcionario}
-              className="relative bg-white border border-gray-100 rounded-xl px-6 py-5 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer text-center"
-              onClick={() =>
-                setMenuAberto(
-                  menuAberto === f.id_funcionario ? null : f.id_funcionario,
-                )
-              }
-            >
-              <p className="text-sm font-semibold text-gray-800">
-                {f.nome || "Sem nome"}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">ID: {f.id_funcionario}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                Nascimento: {formatarData(f.data_aniversario)}
-              </p>
-
-              {/* Menu de ações */}
-              {menuAberto === f.id_funcionario && (
+        {/* Loading */}
+        {loading ? (
+          // Lado A do Envelope: Tela carregando
+          <LoadingGerenciar />
+        ) : (
+          <>
+            {/* Grid de Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {funcionariosFiltrados.map((f) => (
                 <div
-                  ref={menuRef}
-                  className="absolute top-14 left-1/2 -translate-x-1/2 bg-white border border-gray-100 rounded-xl shadow-lg z-10 overflow-hidden w-36"
-                  onClick={(e) => e.stopPropagation()}
+                  key={f.id_funcionario}
+                  className="relative bg-white border border-gray-100 rounded-xl px-6 py-5 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer text-center"
+                  onClick={() =>
+                    setMenuAberto(
+                      menuAberto === f.id_funcionario ? null : f.id_funcionario,
+                    )
+                  }
                 >
-                  <Link href={`/funcionarios/atualizar/${f.id_funcionario}`}>
-                    <button className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-blue-500 hover:bg-blue-50 transition-colors">
-                      <Pencil className="w-4 h-4" /> Atualizar
-                    </button>
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setFuncionarioSelecionado(f);
-                      setModalConfirmar(true);
-                    }}
-                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" /> Excluir
-                  </button>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {f.nome || "Sem nome"}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    ID: {f.id_funcionario}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Nascimento: {formatarData(f.data_aniversario)}
+                  </p>
+
+                  {/* Menu de ações */}
+                  {menuAberto === f.id_funcionario && (
+                    <div
+                      ref={menuRef}
+                      className="absolute top-14 left-1/2 -translate-x-1/2 bg-white border border-gray-100 rounded-xl shadow-lg z-10 overflow-hidden w-36"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Link
+                        href={`/funcionarios/atualizar/${f.id_funcionario}`}
+                      >
+                        <button className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-blue-500 hover:bg-blue-50 transition-colors">
+                          <Pencil className="w-4 h-4" /> Atualizar
+                        </button>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setFuncionarioSelecionado(f);
+                          setModalConfirmar(true);
+                        }}
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" /> Excluir
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
-        {funcionariosFiltrados.length === 0 && (
-          <p className="text-sm text-gray-500 mt-6">
-            Nenhum funcionário carregado.
-          </p>
+
+            {/* Mensagem de Vazio */}
+            {funcionariosFiltrados.length === 0 && (
+              <p className="text-sm text-gray-500 mt-6 text-center">
+                Nenhum Funcionário Encontrado!
+              </p>
+            )}
+          </>
         )}
       </main>
       {/* Modal Confirmar Exclusão */}
@@ -235,9 +261,18 @@ export default function GerenciarFuncionarios() {
               </button>
               <button
                 onClick={handleExcluir}
-                className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm transition-all"
+                disabled={isDeleting}
+                className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all
+                  ${isDeleting ? "bg-red-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"}
+                `}
               >
-                Confirmar
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Excluindo...
+                  </>
+                ) : (
+                  "Confirmar"
+                )}
               </button>
             </div>
           </div>

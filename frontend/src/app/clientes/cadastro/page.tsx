@@ -12,7 +12,7 @@ import {
   UserPlus,
   CheckCircle,
   AlertTriangle,
-  X,
+  Loader2,
   ArrowLeft,
 } from "lucide-react";
 
@@ -22,6 +22,7 @@ export default function CadastroCliente() {
   const [modal, setModal] = useState(null); // "sucesso" | "erro" | null
   const [nomecadastrado, setNomeCadastrado] = useState("");
   const [erroMsg, setErroMsg] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     nome: "",
     cpf: "",
@@ -121,6 +122,8 @@ export default function CadastroCliente() {
           }),
     };
 
+    setIsSubmitting(true);
+
     try {
       const res = await fetch("http://localhost:3000/api/clientes", {
         method: "POST",
@@ -141,6 +144,8 @@ export default function CadastroCliente() {
     } catch {
       setErroMsg("Não foi possível conectar ao servidor.");
       setModal("erro");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -402,9 +407,21 @@ export default function CadastroCliente() {
               <div className="flex gap-3">
                 <button
                   onClick={handleSubmit}
-                  className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md"
+                  disabled={isSubmitting}
+                  className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md
+                    ${isSubmitting ? "bg-green-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"}
+                  `}
                 >
-                  <UserPlus className="w-4 h-4" /> Cadastrar Cliente
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />{" "}
+                      Processando...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" /> Cadastrar Cliente
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={() => router.push("/clientes/gerenciar")}
