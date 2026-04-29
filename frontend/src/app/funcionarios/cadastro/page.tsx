@@ -1,7 +1,8 @@
+// Tela de Cadastro de Funcionários
 "use client";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { useCadastroFuncionario } from "@/hooks/useCadastroFuncionario";
+import { useCadastroFuncionario } from "@/hooks/funcionarios/useCadastroFuncionario";
 import {
   User,
   Calendar,
