@@ -1,9 +1,9 @@
 const validarCadastroFuncionario = (req, res, next) => {
     const { nome, data_nascimento } = req.body;
 
-    if (!nome || !data_nascimento) {
+    if (!nome) {
         return res.status(400).json({ 
-            erro: 'Campos obrigatórios faltando: nome e data_nascimento.' 
+            erro: 'O nome do Funcionário é o obrigatório!.' 
         });
     }
 
@@ -11,6 +11,10 @@ const validarCadastroFuncionario = (req, res, next) => {
         return res.status(400).json({ 
             erro: 'Nome deve ser uma string não vazia.' 
         });
+    }
+
+    if (!data_nascimento) {
+        return next();
     }
 
     // Validar formato de data (YYYY-MM-DD)
@@ -26,6 +30,24 @@ const validarCadastroFuncionario = (req, res, next) => {
     if (isNaN(data.getTime())) {
         return res.status(400).json({ 
             erro: 'Data de nascimento inválida.' 
+        });
+    }
+
+    // Validação de Menores de idade
+    const hoje = new Date();
+    let idade = hoje.getFullYear() - dataNasc.getFullYear();
+    const mesAtual = hoje.getMonth();
+    const diaAtual = hoje.getDate();
+    const mesNascimento = dataNasc.getMonth();
+    const diaNascimento = dataNasc.getDate();
+
+    if (mesAtual < mesNascimento || (mesAtual === mesNascimento && diaAtual < diaNascimento)) {
+        idade--;
+    }
+
+    if (idade < 18) {
+        return res.status(400).json({ 
+            erro: 'O funcionário deve ter pelo menos 18 anos para ser cadastrado.' 
         });
     }
 
