@@ -37,4 +37,22 @@ describe('Testes Integrados de Clientes', () => {
         expect(response.status).toBe(409);
         expect(response.body.erro).toBe("Atenção: O Email, Telefone ou Documento que você tentou usar já está cadastrado no sistema.");
     });
+
+       // Validação de Data - Funcionário
+    it('Deve retornar 400 se a data de nascimento do funcionário for inválida', async () => {
+        const funcionarioInvalido = {
+            nome: "João Silva",
+            cpf: "00011122233",
+            data_nascimento: "10/05/1990",
+            cargo: "Técnico",
+            salario: 3000
+        };
+
+        const response = await request(app)
+            .post('/api/funcionarios')
+            .send(funcionarioInvalido);
+
+        expect(response.status).toBe(400);
+        expect(response.body.erro).toBe("Data de nascimento deve estar no formato YYYY-MM-DD.");
+    });
 });
