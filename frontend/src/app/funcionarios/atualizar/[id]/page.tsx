@@ -79,7 +79,7 @@ export default function AtualizarFuncionario() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-[#f4f6fb] p-8">
+      <main className="min-h-screen bg-[#f4f6fb] p-8 px-55">
 
         {/* Voltar */}
         <button onClick={() => router.push("/funcionarios/gerenciar")}

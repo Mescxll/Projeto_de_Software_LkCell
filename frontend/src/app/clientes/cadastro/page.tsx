@@ -54,7 +54,10 @@ export default function CadastroCliente() {
     }
 
     if (name === "uf") {
-      value = value.replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase();
+      value = value
+        .replace(/[^a-zA-Z]/g, "")
+        .slice(0, 2)
+        .toUpperCase();
     }
 
     setForm({ ...form, [name]: value });
@@ -65,11 +68,11 @@ export default function CadastroCliente() {
     const doc = tipo === "FISICA" ? form.cpf : form.cnpj;
     if (!form.nome.trim() || !doc.trim() || !form.telefone.trim()) {
       setErroMsg(
-        "Preencha todos os campos obrigatórios: Nome, Documento e Telefone."
+        "Preencha todos os campos obrigatórios: Nome, Documento e Telefone.",
       );
       setModal("erro");
       return;
-    }    
+    }
 
     if (tipo === "FISICA" && form.cpf.length !== 11) {
       setErroMsg("O CPF precisa ter exatamente 11 números!");
@@ -84,7 +87,9 @@ export default function CadastroCliente() {
     }
 
     if (form.telefone.length !== 11) {
-      setErroMsg("O telefone precisa ter exatamente 11 números (DDD + 9 dígitos)!");
+      setErroMsg(
+        "O telefone precisa ter exatamente 11 números (DDD + 9 dígitos)!",
+      );
       setModal("erro");
       return;
     }
@@ -147,14 +152,13 @@ export default function CadastroCliente() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-[#f4f6fb] p-8">
+      <main className="min-h-screen bg-[#f4f6fb] p-8 px-55">
         <button
           onClick={() => router.push("/clientes/gerenciar")}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Voltar para Clientes
         </button>
-
         <div className="flex flex-col items-center">
           <div className="w-full max-w-lg">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-lg p-8">
