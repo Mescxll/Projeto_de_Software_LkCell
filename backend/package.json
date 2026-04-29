@@ -19,9 +19,11 @@
     "@supabase/supabase-js": "^2.105.1",
     "better-sqlite3": "^12.9.0",
     "cors": "^2.8.6",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "pg": "^8.20.0"
+    "pg": "^8.20.0",
+    "react-datepicker": "^9.1.0"
   },
   "devDependencies": {
     "jest": "^30.3.0",
