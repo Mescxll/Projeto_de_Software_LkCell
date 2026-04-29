@@ -132,7 +132,7 @@ export default function GerenciarClientes() {
               </p>
             </div>
           </div>
-          <Link href="/clientes/cadastro">
+          <Link href="/clientes/cadastrar">
             <button className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all text-sm">
               <UserPlus className="w-4 h-4" /> Cadastrar Cliente
             </button>

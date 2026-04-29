@@ -1,8 +1,8 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import LoadingGerenciar from "@/components/LoadingGerenciar";
+import { useGerenciarFuncionario } from "@/hooks/funcionarios/useGerenciarFuncionario";
 import {
   ArrowLeft,
   UserPlus,
@@ -14,113 +14,25 @@ import {
   CheckCircle,
 } from "lucide-react";
 
-type Funcionario = {
-  id_funcionario: number;
-  nome: string | null;
-  data_aniversario: string | null;
-};
-
 export default function GerenciarFuncionarios() {
-  const [loading, setLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
-  const [busca, setBusca] = useState("");
-  const [menuAberto, setMenuAberto] = useState<number | null>(null);
-  const [modalConfirmar, setModalConfirmar] = useState(false);
-  const [modalSucesso, setModalSucesso] = useState(false);
-  const [funcionarioSelecionado, setFuncionarioSelecionado] =
-    useState<Funcionario | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  const normalizarTexto = (texto: string) =>
-    texto
-      .normalize("NFD")
-      .replace(/[^\w\s]|_/g, "")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
-
-  const formatarData = (data: string | null) => {
-    if (!data) return "Data não informada";
-    const dataObj = new Date(data);
-
-    if (Number.isNaN(dataObj.getTime())) {
-      return "Data inválida";
-    }
-
-    return dataObj.toLocaleDateString("pt-BR", { timeZone: "UTC" });
-  };
-
-  useEffect(() => {
-    fetch("http://localhost:3000/api/funcionarios")
-      .then((res) => {
-        if (!res.ok) throw new Error("Falha ao carregar funcionários");
-        return res.json();
-      })
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setFuncionarios(data);
-        } else {
-          console.error("Dados recebidos não são uma lista:", data);
-          setFuncionarios([]);
-        }
-      })
-      .catch((err) => {
-        console.error("Erro ao buscar funcionários:", err);
-        setFuncionarios([]);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    const handleClickFora = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuAberto(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickFora);
-    return () => document.removeEventListener("mousedown", handleClickFora);
-  }, []);
-
-  const handleExcluir = async () => {
-    if (!funcionarioSelecionado) return;
-
-    setIsDeleting(true);
-
-    try {
-      await fetch(
-        `http://localhost:3000/api/funcionarios/${funcionarioSelecionado.id_funcionario}`,
-        {
-          method: "DELETE",
-        },
-      );
-
-      // Atualiza a tabela na tela
-      setFuncionarios((prev) =>
-        prev.filter(
-          (f) => f.id_funcionario !== funcionarioSelecionado.id_funcionario,
-        ),
-      );
-
-      setModalConfirmar(false);
-      setMenuAberto(null);
-      setModalSucesso(true);
-    } catch (error) {
-      console.error("Erro ao excluir funcionário:", error);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const funcionariosFiltrados = funcionarios.filter((f) => {
-    const id = String(f.id_funcionario || "");
-    const nome = normalizarTexto(f.nome || "");
-    const data = normalizarTexto(formatarData(f.data_aniversario));
-    const filtro = normalizarTexto(busca);
-
-    return nome.includes(filtro) || id.includes(busca) || data.includes(filtro);
-  });
+  const {
+    loading,
+    isDeleting,
+    busca,
+    setBusca,
+    menuAberto,
+    setMenuAberto,
+    modalConfirmar,
+    setModalConfirmar,
+    modalSucesso,
+    setModalSucesso,
+    funcionarioSelecionado,
+    setFuncionarioSelecionado,
+    menuRef,
+    funcionariosFiltrados,
+    handleExcluir,
+    formatarData,
+  } = useGerenciarFuncionario();
 
   return (
     <>
@@ -144,7 +56,7 @@ export default function GerenciarFuncionarios() {
               </p>
             </div>
           </div>
-          <Link href="/funcionarios/cadastro">
+          <Link href="/funcionarios/cadastrar">
             <button className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all text-sm">
               <UserPlus className="w-4 h-4" /> Cadastrar Funcionário
             </button>
