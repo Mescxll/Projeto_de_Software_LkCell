@@ -12,6 +12,13 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
+import DatePicker, { registerLocale } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { ptBR } from "date-fns/locale/pt-BR";
+
+// Registra o português do Brasil no motor do calendário
+registerLocale("pt-BR", ptBR);
+
 export default function CadastrarFuncionario() {
   const router = useRouter();
   const [modal, setModal] = useState<null | "sucesso" | "erro">(null);
@@ -19,7 +26,7 @@ export default function CadastrarFuncionario() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     nome: "",
-    data_nascimento: "",
+    data_nascimento: null,
   });
 
   const handleChange = (e) =>
@@ -33,12 +40,18 @@ export default function CadastrarFuncionario() {
     }
 
     setIsSubmitting(true);
+    const dataFormatada = form.data_nascimento
+      ? form.data_nascimento.toISOString().split("T")[0]
+      : null;
 
     try {
       const res = await fetch("http://localhost:3000/api/funcionarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          nome: form.nome,
+          data_nascimento: dataFormatada,
+        }),
       });
 
       if (res.ok) {
@@ -111,13 +124,25 @@ export default function CadastrarFuncionario() {
                   <span className="text-gray-400 font-normal">(opcional)</span>
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="date"
-                    name="data_nascimento"
-                    value={form.data_nascimento}
-                    onChange={handleChange}
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />
+
+                  <DatePicker
+                    selected={form.data_nascimento}
+                    onChange={(date) =>
+                      setForm({ ...form, data_nascimento: date })
+                    }
+                    locale="pt-BR"
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Selecione a data"
                     className={inputIconClass}
+                    wrapperClassName="w-full"
+                    showPopperArrow={false}
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
+                    yearDropdownItemNumber={100}
+                    scrollableYearDropdown
+                    maxDate={new Date()} // Trava de engenharia: Sem viajantes do tempo!
                   />
                 </div>
               </div>

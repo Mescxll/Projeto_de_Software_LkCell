@@ -11,6 +11,12 @@ import {
   AlertTriangle,
   Loader2,
 } from "lucide-react";
+import DatePicker, { registerLocale } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { ptBR } from "date-fns/locale/pt-BR";
+// Registra o português do Brasil no motor do calendário
+registerLocale("pt-BR", ptBR);
+
 
 export default function AtualizarFuncionario() {
   const router = useRouter();
@@ -33,8 +39,8 @@ export default function AtualizarFuncionario() {
         setForm({
           nome: funcionario?.nome || "",
           data_nascimento: funcionario?.data_aniversario
-            ? funcionario.data_aniversario.split("T")[0]
-            : "",
+            ? new Date(funcionario.data_aniversario)
+            : null,
         });
         setLoading(false);
       })
@@ -61,7 +67,9 @@ export default function AtualizarFuncionario() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nome: form.nome,
-          data_nascimento: form.data_nascimento || null,
+         data_nascimento: form.data_nascimento 
+            ? form.data_nascimento.toISOString().split("T")[0] 
+            : null,
         }),
       });
 
@@ -151,19 +159,29 @@ export default function AtualizarFuncionario() {
               </div>
 
               {/* Data de Nascimento */}
-              <div className="mb-6">
+             <div className="mb-6">
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                   Data de Nascimento{" "}
                   <span className="text-gray-400 font-normal">(opcional)</span>
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="date"
-                    name="data_nascimento"
-                    value={form.data_nascimento}
-                    onChange={handleChange}
-                    className={inputIconClass}
+                 
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />                  
+                  <DatePicker
+                    selected={form.data_nascimento}
+                    onChange={(date) => setForm({ ...form, data_nascimento: date })}
+                    locale="pt-BR"
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Selecione a data"
+                    className={inputIconClass} 
+                    wrapperClassName="w-full"
+                    showPopperArrow={false}
+                    showMonthDropdown 
+                    showYearDropdown 
+                    dropdownMode="select" 
+                    yearDropdownItemNumber={100} 
+                    scrollableYearDropdown 
+                    maxDate={new Date()} 
                   />
                 </div>
               </div>
