@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import { useAtualizarFuncionario } from "@/hooks/funcionarios/useAtualizarFuncionario"
 import {
   ArrowLeft,
   User,
@@ -20,72 +21,18 @@ registerLocale("pt-BR", ptBR);
 export default function AtualizarFuncionario() {
   const router = useRouter();
   const { id } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [modal, setModal] = useState<null | "sucesso" | "erro">(null);
-  const [erroMsg, setErroMsg] = useState("");
-  const [form, setForm] = useState({
-    nome: "",
-    data_nascimento: "",
-  });
-
-  useEffect(() => {
-    fetch(`http://localhost:3000/api/funcionarios?busca=${id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const funcionario = Array.isArray(data) ? data[0] : data;
-        setForm({
-          nome: funcionario?.nome || "",
-          data_nascimento: funcionario?.data_aniversario
-            ? new Date(funcionario.data_aniversario)
-            : null,
-        });
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Erro ao buscar funcionário:", err);
-        setLoading(false);
-      });
-  }, [id]);
-
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleSalvar = async () => {
-    if (!form.nome.trim()) {
-      setErroMsg("O nome do funcionário é obrigatório.");
-      setModal("erro");
-      return;
-    }
-    setIsSubmitting(true);
-
-    try {
-      const res = await fetch(`http://localhost:3000/api/funcionarios/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome: form.nome,
-          data_nascimento: form.data_nascimento
-            ? form.data_nascimento.toISOString().split("T")[0]
-            : null,
-        }),
-      });
-
-      if (res.ok) setModal("sucesso");
-      else {
-        const data = await res.json();
-        setErroMsg(data.erro || "Erro ao atualizar funcionário.");
-        setModal("erro");
-      }
-    } catch {
-      setErroMsg("Não foi possível conectar ao servidor.");
-      setModal("erro");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
+  const {
+    loading,
+    isSubmitting,
+    modal,
+    setModal,
+    erroMsg,
+    form,
+    setForm,
+    handleChange,
+    handleSalvar,
+  } = useAtualizarFuncionario(id);  
+  
   const inputIconClass =
     "w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
 
