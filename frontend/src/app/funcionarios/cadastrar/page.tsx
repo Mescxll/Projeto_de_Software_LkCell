@@ -98,7 +98,7 @@ export default function CadastrarFuncionario() {
                   <DatePicker
                     selected={form.data_nascimento}
                     onChange={(date) =>
-                      setForm({ ...form, data_nascimento: date })
+                      setForm((prev) => ({ ...prev, data_nascimento: date }))
                     }
                     locale="pt-BR"
                     dateFormat="dd/MM/yyyy"

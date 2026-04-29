@@ -78,7 +78,6 @@ export default function GerenciarFuncionarios() {
 
         {/* Loading */}
         {loading ? (
-          // Lado A do Envelope: Tela carregando
           <LoadingGerenciar />
         ) : (
           <>

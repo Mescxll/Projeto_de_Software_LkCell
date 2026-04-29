@@ -17,7 +17,6 @@ import { ptBR } from "date-fns/locale/pt-BR";
 // Registra o português do Brasil no motor do calendário
 registerLocale("pt-BR", ptBR);
 
-
 export default function AtualizarFuncionario() {
   const router = useRouter();
   const { id } = useParams();
@@ -67,8 +66,8 @@ export default function AtualizarFuncionario() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nome: form.nome,
-         data_nascimento: form.data_nascimento 
-            ? form.data_nascimento.toISOString().split("T")[0] 
+          data_nascimento: form.data_nascimento
+            ? form.data_nascimento.toISOString().split("T")[0]
             : null,
         }),
       });
@@ -159,29 +158,30 @@ export default function AtualizarFuncionario() {
               </div>
 
               {/* Data de Nascimento */}
-             <div className="mb-6">
+              <div className="mb-6">
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                   Data de Nascimento{" "}
                   <span className="text-gray-400 font-normal">(opcional)</span>
                 </label>
                 <div className="relative">
-                 
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />                  
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />
                   <DatePicker
                     selected={form.data_nascimento}
-                    onChange={(date) => setForm({ ...form, data_nascimento: date })}
+                    onChange={(date) =>
+                      setForm((prev) => ({ ...prev, data_nascimento: date }))
+                    }
                     locale="pt-BR"
                     dateFormat="dd/MM/yyyy"
                     placeholderText="Selecione a data"
-                    className={inputIconClass} 
+                    className={inputIconClass}
                     wrapperClassName="w-full"
                     showPopperArrow={false}
-                    showMonthDropdown 
-                    showYearDropdown 
-                    dropdownMode="select" 
-                    yearDropdownItemNumber={100} 
-                    scrollableYearDropdown 
-                    maxDate={new Date()} 
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
+                    yearDropdownItemNumber={100}
+                    scrollableYearDropdown
+                    maxDate={new Date()}
                   />
                 </div>
               </div>
