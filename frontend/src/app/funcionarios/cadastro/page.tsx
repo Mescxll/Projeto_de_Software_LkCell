@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import { useCadastroFuncionario } from "@/hooks/useCadastroFuncionario";
 import {
   User,
   Calendar,
@@ -21,53 +21,18 @@ registerLocale("pt-BR", ptBR);
 
 export default function CadastrarFuncionario() {
   const router = useRouter();
-  const [modal, setModal] = useState<null | "sucesso" | "erro">(null);
-  const [erroMsg, setErroMsg] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({
-    nome: "",
-    data_nascimento: null,
-  });
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleSubmit = async () => {
-    if (!form.nome.trim()) {
-      setErroMsg("O nome do funcionário é obrigatório.");
-      setModal("erro");
-      return;
-    }
-
-    setIsSubmitting(true);
-    const dataFormatada = form.data_nascimento
-      ? form.data_nascimento.toISOString().split("T")[0]
-      : null;
-
-    try {
-      const res = await fetch("http://localhost:3000/api/funcionarios", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome: form.nome,
-          data_nascimento: dataFormatada,
-        }),
-      });
-
-      if (res.ok) {
-        setModal("sucesso");
-      } else {
-        const data = await res.json();
-        setErroMsg(data.erro || "Erro ao cadastrar funcionário.");
-        setModal("erro");
-      }
-    } catch {
-      setErroMsg("Não foi possível conectar ao servidor.");
-      setModal("erro");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const {
+    form,
+    modal,
+    erroMsg,
+    isSubmitting,
+    handleChange,
+    handleSubmit,
+    setForm,
+    setModal,
+    resetForm,
+  } = useCadastroFuncionario();
 
   const inputIconClass =
     "w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
@@ -78,7 +43,10 @@ export default function CadastrarFuncionario() {
       <main className="min-h-screen bg-[#f4f6fb] p-8 px-55">
         {/* Voltar */}
         <button
-          onClick={() => router.push("/funcionarios/gerenciar")}
+          onClick={() => {
+            resetForm();
+            router.push("/funcionarios/gerenciar");
+          }}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Voltar para Funcionários
@@ -206,7 +174,7 @@ export default function CadastrarFuncionario() {
             <button
               onClick={() => {
                 setModal(null);
-                setForm({ nome: "", data_nascimento: "" });
+                setForm({ nome: "", data_nascimento: null });
               }}
               className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
             >
