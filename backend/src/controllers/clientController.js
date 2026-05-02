@@ -64,22 +64,52 @@ const cadastrarCliente = async (req, res) => {
     console.error("Erro Prisma Completo:", error); // Continua imprimindo no terminal pra você debugar
 
     if (error.code === "P2002") {
-      let campoDuplicado = "Email, Telefone ou Documento"; // Fallback muito mais claro pra usuária!
+      const textoDoErroBruto = error.message.toLowerCase();
       const alvo = error.meta?.target;
 
-      // Se o Prisma mandar como Array (ex: ['email'])
-      if (Array.isArray(alvo)) {
-        campoDuplicado = alvo.join(", ").toUpperCase();
-      }
-      // Se o Prisma mandar como String (ex: "cliente_email_key")
-      else if (typeof alvo === "string") {
-        campoDuplicado = alvo.toUpperCase();
+      const stringAlvo = Array.isArray(alvo)
+        ? alvo.join(" ").toLowerCase()
+        : typeof alvo === "string"
+          ? alvo.toLowerCase()
+          : "";
+
+      const textoParaBusca = textoDoErroBruto + " " + stringAlvo;
+
+      // Checa Telefone (Tabela: telefone_cliente)
+      if (
+        textoParaBusca.includes("telefone_cliente") ||
+        textoParaBusca.includes("telefone")
+      ) {
+        return res
+          .status(409)
+          .json({ erro: "Este telefone já está vinculado a outro cliente. Tente outro." });
       }
 
+      // Checa Email (Tabela: cliente)
+      if (textoParaBusca.includes("email")) {
+        return res
+          .status(409)
+          .json({ erro: "Este e-mail já está vinculado a outro cliente. Tente outro." });
+      }
+
+      // Checa Documento (Tabelas: pessoafisica ou pessoajuridica)
+      if (
+        textoParaBusca.includes("cpf") ||
+        textoParaBusca.includes("pessoafisica") ||
+        textoParaBusca.includes("cnpj") ||
+        textoParaBusca.includes("pessoajuridica")
+      ) {
+        return res
+          .status(409)
+          .json({ erro: "Este CPF/CNPJ já está vinculado a outro cliente. Tente outro." });
+      }
+
+      // Fallback de segurança
       return res.status(409).json({
-        erro: `Atenção: O ${campoDuplicado} que você tentou usar já está cadastrado no sistema.`,
+        erro: "Atenção: O dado que você tentou usar já está cadastrado no sistema.",
       });
     }
+
     return res
       .status(500)
       .json({ erro: "Erro interno no servidor ao cadastrar." });
@@ -156,9 +186,6 @@ const atualizarCliente = async (req, res) => {
     if (!documentoLimpo) {
       return res.status(400).json({ erro: "Documento inválido." });
     }
-
-    // Localiza o ID do cliente através do documento (CPF ou CNPJ)
-    // Buscamos nas tabelas de relação que o db pull gerou
     const pf = await prisma.pessoafisica.findUnique({
       where: { cpf: documentoLimpo },
     });
@@ -206,7 +233,66 @@ const atualizarCliente = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao atualizar cliente:", error);
-    return res.status(500).json({ erro: "Erro interno no servidor." });
+
+    // 1. Erro de Duplicidade (Tentou usar um dado que já é de outra pessoa)
+    if (error.code === "P2002") {
+      const textoDoErroBruto = error.message.toLowerCase();
+      const alvo = error.meta?.target;
+
+      const stringAlvo = Array.isArray(alvo)
+        ? alvo.join(" ").toLowerCase()
+        : typeof alvo === "string"
+          ? alvo.toLowerCase()
+          : "";
+
+      const textoParaBusca = textoDoErroBruto + " " + stringAlvo;
+
+      // Verificação de telefone
+      if (
+        textoParaBusca.includes("telefone_cliente") ||
+        textoParaBusca.includes("telefone")
+      ) {
+        return res
+          .status(409)
+          .json({
+            erro: "Este telefone já está vinculado a outro cliente. Tente outro.",
+          });
+      }
+
+      if (textoParaBusca.includes("email")) {
+        return res
+          .status(409)
+          .json({ erro: "Este email já pertence a outro cliente." });
+      }
+
+      // CPF/CNPJ geralmente não se atualiza, mas  deixa-se a trava por segurança
+      if (
+        textoParaBusca.includes("cpf") ||
+        textoParaBusca.includes("cnpj") ||
+        textoParaBusca.includes("pessoafisica") ||
+        textoParaBusca.includes("pessoajuridica")
+      ) {
+        return res
+          .status(409)
+          .json({ erro: "Este documento já pertence a outro cliente." });
+      }
+
+      return res.status(409).json({
+        erro: "Atenção: O dado que você tentou usar já está cadastrado no sistema.",
+      });
+    }
+
+    if (error.code === "P2025") {
+      return res
+        .status(404)
+        .json({
+          erro: "Cliente não encontrado na base de dados para atualização.",
+        });
+    }
+
+    return res
+      .status(500)
+      .json({ erro: "Erro interno no servidor ao atualizar." });
   }
 };
 
