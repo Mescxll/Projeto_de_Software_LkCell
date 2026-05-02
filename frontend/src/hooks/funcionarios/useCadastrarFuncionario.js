@@ -1,7 +1,7 @@
 // Lógica da Tela de Cadastro de Funcionários
 import { useState } from "react";
 
-export function useCadastroFuncionario() {
+export function useCadastrarFuncionario() {
   const [modal, setModal] = useState(null);
   const [erroMsg, setErroMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

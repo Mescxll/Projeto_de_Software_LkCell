@@ -2,7 +2,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { useCadastroFuncionario } from "@/hooks/funcionarios/useCadastroFuncionario";
+import { useCadastrarFuncionario } from "@/hooks/funcionarios/useCadastrarFuncionario";
 import {
   User,
   Calendar,
@@ -33,7 +33,7 @@ export default function CadastrarFuncionario() {
     setForm,
     setModal,
     resetForm,
-  } = useCadastroFuncionario();
+  } = useCadastrarFuncionario();
 
   const inputIconClass =
     "w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
