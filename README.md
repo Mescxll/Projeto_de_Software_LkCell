@@ -1,16 +1,19 @@
 *Status: Em produção*
+*Sprint 1 concluída*
 
 # Projeto de Software - LKCell 
-Projeto criado para a matéria de Processo de Desenvolvimento de Software (PDS), com o objetivo de implementar o sistema anteriormente analisado, LKCell.
+Projeto criado para a matéria de Processo de Desenvolvimento de Software (PDS), com o objetivo de implementar o sistema anteriormente analisado, LKCell. 
 
 ## Tecnologias utilizadas
 
 - Node.js
-- Express
+- PostgreSQL
+- Next.js
+- React
+- Prisma
 - CORS
-- dotenv
-- Prisma ORM
-- Supabase (PostgreSQL)
+- Tailwind CSS
+- Supabase
 
 ### Utilização 
 
