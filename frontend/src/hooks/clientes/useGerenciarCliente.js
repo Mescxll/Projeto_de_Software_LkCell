@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 
 export function useGerenciarCliente() {
   const [loading, setLoading] = useState(true);
-  const [clientes, setClientes] = useState([]);
+  const [clientes, setClientes] = useState(/** @type {any[]} */ ([]));
   const [busca, setBusca] = useState("");
   const [menuAberto, setMenuAberto] = useState(null);
   const [modalConfirmar, setModalConfirmar] = useState(false);

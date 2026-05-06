@@ -18,8 +18,7 @@ import {
 export default function GerenciarClientes() {
   
   const {
-    loading,
-    busca,
+    loading,    
     setBusca,
     menuAberto,
     setMenuAberto,

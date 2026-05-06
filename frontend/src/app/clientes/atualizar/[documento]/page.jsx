@@ -22,8 +22,7 @@ export default function AtualizarCliente() {
   // Extraindo a lógica em uma linha
   const {
     loading,
-    modal,
-    setModal,
+    modal,    
     modalErro,
     setModalErro,
     erroMsg,
@@ -85,7 +84,7 @@ export default function AtualizarCliente() {
                 <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  value={documento as string}
+                  value={documento}
                   disabled
                   className="w-full pl-9 pr-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed"
                 />
