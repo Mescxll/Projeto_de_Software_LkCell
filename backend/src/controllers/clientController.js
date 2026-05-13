@@ -321,16 +321,9 @@ const deletarCliente = async (req, res) => {
       return res
         .status(404)
         .json({ erro: "Cliente não encontrado na base de dados." });
-    }
+    }   
 
-    // Como o  schema tem 'onDelete: Cascade' em PF, PJ e Vendas,
-    // ao deletar o Cliente, o banco apaga os dependentes automaticamente.
-
-    await prisma.$transaction([
-      // Como telefone_cliente está como 'NoAction' no seu schema, deletamos ele primeiro manualmente
-      prisma.telefone_cliente.deleteMany({
-        where: { telefone_cliente_pk: clienteId },
-      }),
+    await prisma.$transaction([      
       // Agora deletamos o cliente e o Cascade faz o resto na nuvem
       prisma.cliente.delete({ where: { id_cliente: clienteId } }),
     ]);
