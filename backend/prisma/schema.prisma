@@ -100,7 +100,7 @@ model produto {
 model telefone_cliente {
   telefone_cliente    String  @unique @db.VarChar(14)
   telefone_cliente_pk Int
-  cliente             cliente @relation(fields: [telefone_cliente_pk], references: [id_cliente], onDelete: NoAction, onUpdate: NoAction, map: "fk_telefone_cliente_2")
+  cliente             cliente @relation(fields: [telefone_cliente_pk], references: [id_cliente], onDelete: Cascade, onUpdate: NoAction, map: "fk_telefone_cliente_2")
 
   @@id([telefone_cliente_pk, telefone_cliente])
 }
@@ -108,7 +108,7 @@ model telefone_cliente {
 model telefone_fornecedor {
   telefone_fornecedor     String     @unique @db.VarChar(14)
   telefone_forncecedor_pk Int
-  fornecedor              fornecedor @relation(fields: [telefone_forncecedor_pk], references: [id_fornecedor], onDelete: NoAction, onUpdate: NoAction, map: "fk_telefone_forncecedor_2")
+  fornecedor              fornecedor @relation(fields: [telefone_forncecedor_pk], references: [id_fornecedor], onDelete: Cascade, onUpdate: NoAction, map: "fk_telefone_forncecedor_2")
 
   @@id([telefone_forncecedor_pk, telefone_fornecedor])
 }
