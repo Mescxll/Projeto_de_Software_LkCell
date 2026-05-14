@@ -11,6 +11,7 @@ export function useAtualizarCliente(uuid) {
     documento: "",
     nome: "",
     telefone: "",
+    email: "",
     logradouro: "",
     numero: "",
     bairro: "",
@@ -70,6 +71,7 @@ export function useAtualizarCliente(uuid) {
           telefone: formatarTelefone(
             data.telefone_cliente?.[0]?.telefone_cliente,
           ),
+          email: data.email || "",
           logradouro: data.logradouro || "",
           numero: data.numero?.toString() || "",
           bairro: data.bairro || "",
@@ -146,13 +148,14 @@ export function useAtualizarCliente(uuid) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nome: form.nome,
-          telefone: telefoneLimpo, // 👈 Enviando limpo pro Prisma
+          telefone: telefoneLimpo, // Enviando limpo pro Prisma
+          email: form.email,
           logradouro: form.logradouro,
           numero: form.numero,
           bairro: form.bairro,
           cidade: form.cidade,
           uf: form.uf,
-          cep: cepLimpo, // 👈 Enviando limpo pro Prisma
+          cep: cepLimpo, // Enviando limpo pro Prisma
         }),
       });
 
