@@ -89,6 +89,7 @@ model pessoajuridica {
 
 model produto {
   id_produto   Int           @id @default(autoincrement())
+  codigo_produto String?     @unique @db.VarChar(25)
   nome         String?       @db.VarChar(50)
   descricao    String?       @db.VarChar(100)
   preco_custo  Decimal?      @db.Decimal(10, 2)
