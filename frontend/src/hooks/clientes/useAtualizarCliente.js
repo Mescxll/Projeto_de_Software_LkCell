@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export function useAtualizarCliente(documento) {
+export function useAtualizarCliente(uuid) {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [modalErro, setModalErro] = useState(false);
@@ -8,6 +8,7 @@ export function useAtualizarCliente(documento) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tipo, setTipo] = useState("FISICA");
   const [form, setForm] = useState({
+    documento: "",
     nome: "",
     telefone: "",
     logradouro: "",
@@ -38,13 +39,33 @@ export function useAtualizarCliente(documento) {
 
   // Mascarando os dados que chegam da API
   useEffect(() => {
-    if (!documento) return;
+    if (!uuid) return;
 
-    fetch(`http://localhost:3000/api/clientes/${documento}`)
+    fetch(`http://localhost:3000/api/clientes/${uuid}`)
       .then((res) => res.json())
       .then((data) => {
-        setTipo(data.tipo_cliente === "FISICO" ? "FISICA" : "JURIDICA");
+        const tipoCliente =
+          data.tipo_cliente === "FISICO" ? "FISICA" : "JURIDICA";
+        setTipo(tipoCliente);
+
+        const docBruto =
+          data.pessoafisica?.cpf || data.pessoajuridica?.cnpj || "";
+
+        let docFormatado = docBruto;
+        if (tipoCliente === "FISICA" && docBruto.length === 11) {
+          docFormatado = docBruto.replace(
+            /(\d{3})(\d{3})(\d{3})(\d{2})/,
+            "$1.$2.$3-$4",
+          );
+        } else if (tipoCliente === "JURIDICA" && docBruto.length === 14) {
+          docFormatado = docBruto.replace(
+            /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+            "$1.$2.$3/$4-$5",
+          );
+        }
+
         setForm({
+          documento: docFormatado,
           nome: data.nome || "",
           telefone: formatarTelefone(
             data.telefone_cliente?.[0]?.telefone_cliente,
@@ -62,7 +83,7 @@ export function useAtualizarCliente(documento) {
         console.error("Erro ao buscar cliente:", err);
         setLoading(false);
       });
-  }, [documento]);
+  }, [uuid]);
 
   // Mantendo a máscara enquanto o usuário digita
   const handleChange = (e) => {
@@ -120,23 +141,20 @@ export function useAtualizarCliente(documento) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(
-        `http://localhost:3000/api/clientes/${documento}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            nome: form.nome,
-            telefone: telefoneLimpo, // 👈 Enviando limpo pro Prisma
-            logradouro: form.logradouro,
-            numero: form.numero,
-            bairro: form.bairro,
-            cidade: form.cidade,
-            uf: form.uf,
-            cep: cepLimpo, // 👈 Enviando limpo pro Prisma
-          }),
-        },
-      );
+      const res = await fetch(`http://localhost:3000/api/clientes/${uuid}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: form.nome,
+          telefone: telefoneLimpo, // 👈 Enviando limpo pro Prisma
+          logradouro: form.logradouro,
+          numero: form.numero,
+          bairro: form.bairro,
+          cidade: form.cidade,
+          uf: form.uf,
+          cep: cepLimpo, // 👈 Enviando limpo pro Prisma
+        }),
+      });
 
       if (res.ok) {
         setModal(true);

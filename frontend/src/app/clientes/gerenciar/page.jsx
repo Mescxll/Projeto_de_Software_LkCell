@@ -26,6 +26,8 @@ export default function GerenciarClientes() {
     setModalConfirmar,
     modalSucesso,
     setModalSucesso,
+    modalErro,
+    setModalErro,
     isDeleting,
     clienteSelecionado,
     setClienteSelecionado,
@@ -116,7 +118,7 @@ export default function GerenciarClientes() {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Link
-                        href={`/clientes/atualizar/${c.pessoafisica?.cpf || c.pessoajuridica?.cnpj}`}
+                        href={`/clientes/atualizar/${c.uuid}`}
                       >
                         <button className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-blue-500 hover:bg-blue-50 transition-colors">
                           <Pencil className="w-4 h-4" /> Atualizar
@@ -211,6 +213,29 @@ export default function GerenciarClientes() {
               className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold text-sm transition-all"
             >
               Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Erro Exclusão */}
+      {modalErro && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-9 h-9 text-red-500" />
+              </div>
+            </div>
+            <h2 className="text-lg font-bold text-gray-800 mb-1">Algo Errado!</h2>
+            <p className="text-xs text-gray-400 mb-6">
+              Não foi possível excluir este cliente. O servidor pode estar fora do ar.
+            </p>
+            <button
+              onClick={() => setModalErro(false)}
+              className="w-full py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm transition-all"
+            >
+              Entendido
             </button>
           </div>
         </div>

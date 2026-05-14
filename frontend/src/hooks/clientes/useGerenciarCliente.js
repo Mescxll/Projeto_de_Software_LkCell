@@ -7,10 +7,11 @@ export function useGerenciarCliente() {
   const [busca, setBusca] = useState("");
   const [menuAberto, setMenuAberto] = useState(null);
   const [modalConfirmar, setModalConfirmar] = useState(false);
+  const [modalErro, setModalErro] = useState(false);
   const [modalSucesso, setModalSucesso] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
-  
+
   const menuRef = useRef(null);
 
   // Busca os clientes quando a tela abre
@@ -53,24 +54,28 @@ export function useGerenciarCliente() {
 
     setIsDeleting(true);
 
-    const doc =
-      clienteSelecionado.pessoafisica?.cpf ||
-      clienteSelecionado.pessoajuridica?.cnpj;
+    const uuidDoCliente = clienteSelecionado.uuid;
 
     try {
-      await fetch(`http://localhost:3000/api/clientes/${doc}`, {
-        method: "DELETE",
-      });
-
-      setClientes((prev) =>
-        prev.filter((c) => c.id_cliente !== clienteSelecionado.id_cliente),
+      const res = await fetch(
+        `http://localhost:3000/api/clientes/${uuidDoCliente}`,
+        {
+          method: "DELETE",
+        },
       );
+
+      if (!res.ok) {
+         throw new Error("Falha ao deletar no servidor");
+      }
+
+      setClientes((prev) => prev.filter((c) => c.uuid !== uuidDoCliente));
 
       setModalConfirmar(false);
       setMenuAberto(null);
       setModalSucesso(true);
     } catch (error) {
       console.error("Erro ao excluir cliente:", error);
+      setModalErro(true);
     } finally {
       setIsDeleting(false);
     }
@@ -110,6 +115,8 @@ export function useGerenciarCliente() {
     setModalConfirmar,
     modalSucesso,
     setModalSucesso,
+    modalErro,
+    setModalErro,
     isDeleting,
     clienteSelecionado,
     setClienteSelecionado,

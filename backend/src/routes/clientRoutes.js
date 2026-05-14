@@ -12,7 +12,7 @@ router.post(
 
 // Rota do tipo GET para buscar cliente por CPF/CNPJ
 router.get(
-    '/:documento',
+    '/:uuid',
     clientController.buscarCliente
 );
 
@@ -21,13 +21,13 @@ router.get('/', clientController.buscarTodos);
 
 // Rota do tipo PUT para atualizar cliente por CPF/CNPJ
 router.put(
-    '/:documento',
+    '/:uuid',
     clientController.atualizarCliente
 );
 
 // Rota do tipo DELETE para remover cliente por CPF/CNPJ
 router.delete(
-    '/:documento',
+    '/:uuid',
     clientController.deletarCliente
 );
 

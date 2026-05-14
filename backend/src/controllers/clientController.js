@@ -19,10 +19,11 @@ const cadastrarCliente = async (req, res) => {
       nome_fantasia,
     } = req.body;
 
-    const tipoNormalizado =
-      tipo_cliente === "FISICA" || tipo_cliente === "FISICO"
-        ? "FISICO"
-        : "JURIDICO";
+    const tipoNormalizado = ["FISICA", "FISICO"].includes(
+      tipo_cliente?.toUpperCase(),
+    )
+      ? "FISICO"
+      : "JURIDICO";
 
     const novoCliente = await prisma.cliente.create({
       data: {
@@ -42,13 +43,13 @@ const cadastrarCliente = async (req, res) => {
             }
           : undefined,
         pessoafisica:
-          tipo_cliente === "FISICA"
+          tipoNormalizado === "FISICO"
             ? {
                 create: { cpf },
               }
             : undefined,
         pessoajuridica:
-          tipo_cliente === "JURIDICA"
+          tipoNormalizado === "JURIDICO"
             ? {
                 create: { cnpj, razao_social, nome_fantasia },
               }
@@ -61,7 +62,7 @@ const cadastrarCliente = async (req, res) => {
       cliente: novoCliente,
     });
   } catch (error) {
-    console.error("Erro Prisma Completo:", error); // Continua imprimindo no terminal pra você debugar
+    console.error("Erro Prisma Completo:", error); // Continua imprimindo no terminal pra debugar
 
     if (error.code === "P2002") {
       const textoDoErroBruto = error.message.toLowerCase();
@@ -80,16 +81,16 @@ const cadastrarCliente = async (req, res) => {
         textoParaBusca.includes("telefone_cliente") ||
         textoParaBusca.includes("telefone")
       ) {
-        return res
-          .status(409)
-          .json({ erro: "Este telefone já está vinculado a outro cliente. Tente outro." });
+        return res.status(409).json({
+          erro: "Este telefone já está vinculado a outro cliente. Tente outro.",
+        });
       }
 
       // Checa Email (Tabela: cliente)
       if (textoParaBusca.includes("email")) {
-        return res
-          .status(409)
-          .json({ erro: "Este e-mail já está vinculado a outro cliente. Tente outro." });
+        return res.status(409).json({
+          erro: "Este e-mail já está vinculado a outro cliente. Tente outro.",
+        });
       }
 
       // Checa Documento (Tabelas: pessoafisica ou pessoajuridica)
@@ -99,9 +100,9 @@ const cadastrarCliente = async (req, res) => {
         textoParaBusca.includes("cnpj") ||
         textoParaBusca.includes("pessoajuridica")
       ) {
-        return res
-          .status(409)
-          .json({ erro: "Este CPF/CNPJ já está vinculado a outro cliente. Tente outro." });
+        return res.status(409).json({
+          erro: "Este CPF/CNPJ já está vinculado a outro cliente. Tente outro.",
+        });
       }
 
       // Fallback de segurança
@@ -118,27 +119,15 @@ const cadastrarCliente = async (req, res) => {
 
 const buscarCliente = async (req, res) => {
   try {
-    const { documento } = req.params;
-    const documentoLimpo = documento.replace(/\D/g, "");
-
-    if (!documentoLimpo) {
-      return res.status(400).json({
-        erro: "Documento inválido. Certifique-se de enviar apenas números.",
-      });
-    }
+    const { uuid } = req.params;
 
     // O Prisma faz o busca
-    const cliente = await prisma.cliente.findFirst({
-      where: {
-        OR: [
-          { pessoafisica: { cpf: documentoLimpo } },
-          { pessoajuridica: { cnpj: documentoLimpo } },
-        ],
-      },
+    const cliente = await prisma.cliente.findUnique({
+      where: { uuid: uuid },
       include: {
         pessoafisica: true,
         pessoajuridica: true,
-        telefone_cliente: true, // Traz os telefones na mesma viagem ao banco
+        telefone_cliente: true,
       },
     });
 
@@ -178,38 +167,28 @@ const buscarTodos = async (req, res) => {
 
 const atualizarCliente = async (req, res) => {
   try {
-    const { documento } = req.params;
-    const { nome, logradouro, cidade, uf, numero, cep, bairro, telefone } =
-      req.body;
-    const documentoLimpo = documento.replace(/\D/g, "");
+    const { uuid } = req.params;
+    const {
+      nome,
+      logradouro,
+      cidade,
+      uf,
+      numero,
+      cep,
+      bairro,
+      telefone,
+      email,
+    } = req.body;
 
-    if (!documentoLimpo) {
-      return res.status(400).json({ erro: "Documento inválido." });
-    }
-    const pf = await prisma.pessoafisica.findUnique({
-      where: { cpf: documentoLimpo },
-    });
-    const pj = await prisma.pessoajuridica.findUnique({
-      where: { cnpj: documentoLimpo },
-    });
-
-    const clienteId = pf?.fk_cliente_id_cliente || pj?.fk_cliente_id_cliente;
-
-    if (!clienteId) {
-      return res
-        .status(404)
-        .json({ erro: "Cliente não encontrado na base de dados." });
-    }
-
-    // O update do Prisma só altera o que foi enviado
     const clienteAtualizado = await prisma.cliente.update({
-      where: { id_cliente: clienteId },
+      where: { uuid: uuid },
       data: {
         nome,
+        email: email || undefined,
         logradouro,
         cidade,
         uf,
-        numero: numero ? parseInt(numero) : undefined, // Garantindo que é Int para o Postgres
+        numero: numero ? parseInt(numero) : undefined,
         cep,
         bairro,
         telefone_cliente: telefone
@@ -219,7 +198,6 @@ const atualizarCliente = async (req, res) => {
             }
           : undefined,
       },
-      // Incluir para aparecer no JSON de resposta
       include: {
         telefone_cliente: true,
         pessoafisica: true,
@@ -234,7 +212,7 @@ const atualizarCliente = async (req, res) => {
   } catch (error) {
     console.error("Erro ao atualizar cliente:", error);
 
-    // 1. Erro de Duplicidade (Tentou usar um dado que já é de outra pessoa)
+    // Erro de Duplicidade (Tentou usar um dado que já é de outra pessoa)
     if (error.code === "P2002") {
       const textoDoErroBruto = error.message.toLowerCase();
       const alvo = error.meta?.target;
@@ -252,11 +230,9 @@ const atualizarCliente = async (req, res) => {
         textoParaBusca.includes("telefone_cliente") ||
         textoParaBusca.includes("telefone")
       ) {
-        return res
-          .status(409)
-          .json({
-            erro: "Este telefone já está vinculado a outro cliente. Tente outro.",
-          });
+        return res.status(409).json({
+          erro: "Este telefone já está vinculado a outro cliente. Tente outro.",
+        });
       }
 
       if (textoParaBusca.includes("email")) {
@@ -265,7 +241,7 @@ const atualizarCliente = async (req, res) => {
           .json({ erro: "Este email já pertence a outro cliente." });
       }
 
-      // CPF/CNPJ geralmente não se atualiza, mas  deixa-se a trava por segurança
+      // CPF/CNPJ geralmente não se atualiza
       if (
         textoParaBusca.includes("cpf") ||
         textoParaBusca.includes("cnpj") ||
@@ -283,11 +259,9 @@ const atualizarCliente = async (req, res) => {
     }
 
     if (error.code === "P2025") {
-      return res
-        .status(404)
-        .json({
-          erro: "Cliente não encontrado na base de dados para atualização.",
-        });
+      return res.status(404).json({
+        erro: "Cliente não encontrado na base de dados para atualização.",
+      });
     }
 
     return res
@@ -298,41 +272,24 @@ const atualizarCliente = async (req, res) => {
 
 const deletarCliente = async (req, res) => {
   try {
-    const { documento } = req.params;
-    const documentoLimpo = documento.replace(/\D/g, "");
+    const { uuid } = req.params;
 
-    if (!documentoLimpo) {
-      return res.status(400).json({
-        erro: "Documento inválido. Certifique-se de enviar apenas números.",
-      });
-    }
-
-    // Localiza o ID do cliente (PF ou PJ)
-    const pf = await prisma.pessoafisica.findUnique({
-      where: { cpf: documentoLimpo },
+    const cliente = await prisma.cliente.delete({
+      where: { uuid: uuid },
     });
-    const pj = await prisma.pessoajuridica.findUnique({
-      where: { cnpj: documentoLimpo },
-    });
-
-    const clienteId = pf?.fk_cliente_id_cliente || pj?.fk_cliente_id_cliente;
-
-    if (!clienteId) {
-      return res
-        .status(404)
-        .json({ erro: "Cliente não encontrado na base de dados." });
-    }   
-
-    await prisma.$transaction([      
-      // Agora deletamos o cliente e o Cascade faz o resto na nuvem
-      prisma.cliente.delete({ where: { id_cliente: clienteId } }),
-    ]);
 
     return res.status(200).json({
       mensagem: "Cliente deletado com sucesso!",
     });
   } catch (error) {
     console.error("Erro ao deletar cliente:", error);
+
+    if (error.code === "P2025") {
+      return res
+        .status(404)
+        .json({ erro: "Cliente não encontrado na base de dados." });
+    }
+
     return res
       .status(500)
       .json({ erro: "Erro interno no servidor ao deletar." });
