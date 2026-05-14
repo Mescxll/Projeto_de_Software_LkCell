@@ -87,16 +87,56 @@ model pessoajuridica {
   cliente               cliente @relation(fields: [fk_cliente_id_cliente], references: [id_cliente], onDelete: Cascade, onUpdate: NoAction, map: "fk_pessoajuridica_2")
 }
 
+model categoria {
+  id_categoria Int       @id @default(autoincrement())
+  nome         String    @unique @db.VarChar(50)
+  produto      produto[]
+}
+
+model marca {
+  id_marca Int       @id @default(autoincrement())
+  nome     String    @unique @db.VarChar(50)
+  produto  produto[]
+}
+
+
+model modelo {
+  id_modelo Int       @id @default(autoincrement())
+  nome      String    @unique @db.VarChar(50) 
+  produto   produto[]
+}
+
 model produto {
-  id_produto   Int           @id @default(autoincrement())
-  codigo_produto String?     @unique @db.VarChar(25)
-  nome         String?       @db.VarChar(50)
-  descricao    String?       @db.VarChar(100)
-  preco_custo  Decimal?      @db.Decimal(10, 2)
-  preco_compra Decimal?      @db.Decimal(10, 2)
-  margem_lucro Decimal?      @db.Decimal(10, 2)
-  itenscompra  itenscompra[]
-  itensvenda   itensvenda[]
+  id_produto     Int       @id @default(autoincrement())
+  
+  // Dados Base
+  codigo_produto String    @unique @db.VarChar(25) 
+  nome           String?   @db.VarChar(50) 
+  descricao      String    @db.VarChar(100)        
+  
+  // Relacionamentos de Categoria, Marca e Modelo
+  fk_categoria_id Int      // Obrigatório
+  fk_marca_id     Int?
+  fk_modelo_id    Int?
+
+  categoria      categoria @relation(fields: [fk_categoria_id], references: [id_categoria], onUpdate: NoAction)
+  marca          marca?    @relation(fields: [fk_marca_id], references: [id_marca], onUpdate: NoAction)
+  modelo         modelo?   @relation(fields: [fk_modelo_id], references: [id_modelo], onUpdate: NoAction)
+  
+  // Controle de Estoque
+  estoque_minimo Int?
+  estoque_ideal  Int?
+  estoque_atual  Int       @default(0)             // Obrigatório
+
+  // Dados Financeiros
+  preco_compra   Decimal?  @db.Decimal(10, 2)      // Valor de Compra
+  preco_custo    Decimal?  @db.Decimal(10, 2)
+  preco_venda    Decimal   @db.Decimal(10, 2)      // OBRIGATÓRIO
+  margem_lucro   Decimal?  @db.Decimal(10, 2)
+  
+  // Histórico
+  itenscompra    itenscompra[]
+  itensvenda     itensvenda[]
 }
 
 model telefone_cliente {
