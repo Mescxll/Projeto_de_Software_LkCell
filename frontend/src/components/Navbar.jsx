@@ -7,13 +7,13 @@ import { Users, UserCog, Package, Truck, TrendingUp, ShoppingBasket, Wrench, Wal
 const modulos = [
   { titulo: "Clientes", icone: Users, link: "/clientes/gerenciar" },
   { titulo: "Funcionários", icone: UserCog, link: "/funcionarios/gerenciar" },
-  { titulo: "Produtos", icone: Package, link: "#" },
-  { titulo: "Fornecedores", icone: Truck, link: "#" },
-  { titulo: "Vendas", icone: TrendingUp, link: "#" },
-  { titulo: "Compras", icone: ShoppingBasket, link: "#" },
-  { titulo: "Ordens de Serviço", icone: Wrench, link: "#" },
-  { titulo: "Despesas", icone: Wallet, link: "#" },
-  { titulo: "Estoque", icone: Boxes, link: "#" },
+  { titulo: "Produtos", icone: Package, link: "/produtos/gerenciar" },
+  { titulo: "Fornecedores", icone: Truck, link: "/fornecedores/gerenciar" },
+  { titulo: "Vendas", icone: TrendingUp, link: "/vendas/gerenciar" },
+  { titulo: "Compras", icone: ShoppingBasket, link: "/compras/gerenciar" },
+  { titulo: "Ordens de Serviço", icone: Wrench, link: "/ordemServicos/gerenciar" },
+  { titulo: "Despesas", icone: Wallet, link: "/despesas/gerenciar" },
+  { titulo: "Estoque", icone: Boxes, link: "/estoque/gerenciar" },
 ];
 
 export default function Navbar() {
