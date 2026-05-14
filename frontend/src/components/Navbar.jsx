@@ -1,7 +1,7 @@
 "use client";
 import { Search, Bell, Settings } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Users, UserCog, Package, Truck, TrendingUp, ShoppingBasket, Wrench, Wallet, Boxes } from "lucide-react";
 
 const modulos = [
@@ -18,6 +18,19 @@ const modulos = [
 
 export default function Navbar() {
   const [busca, setBusca] = useState("");
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickFora = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setBusca("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickFora);
+    return () => document.removeEventListener("mousedown", handleClickFora);
+  }, []);
+
+
 
   const modulosFiltrados = busca.trim()
     ? modulos.filter(m => m.titulo.toLowerCase().includes(busca.toLowerCase()))
@@ -39,7 +52,7 @@ export default function Navbar() {
       </div>
 
       {/* Busca com dropdown */}
-      <div className="flex-1 max-w-2xl px-8 relative">
+      <div className="flex-1 max-w-2xl px-8 relative" ref={dropdownRef}>
         <div className="relative flex items-center">
           <Search className="absolute left-3 text-gray-400 w-4 h-4" />
           <input
@@ -47,7 +60,6 @@ export default function Navbar() {
             placeholder="Buscar Módulo..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            onBlur={() => setTimeout(() => setBusca(""), 150)}
             className="w-full pl-10 pr-4 py-2 bg-[#f4f6f8] border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
           />
         </div>
@@ -56,7 +68,7 @@ export default function Navbar() {
         {modulosFiltrados.length > 0 && (
           <div className="absolute top-full left-8 right-8 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
             {modulosFiltrados.map((m) => (
-              <Link href={m.link} key={m.titulo}>
+              <Link href={m.link} key={m.titulo} onClick={() => setBusca("")}>
                 <div className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
                   <m.icone className="w-4 h-4 text-gray-500" />
                   <span className="text-sm text-gray-700">{m.titulo}</span>
