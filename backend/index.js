@@ -1,11 +1,12 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
 
 dotenv.config();
 
-const clientRoutes = require('./src/routes/clientRoutes');
-const funcionarioRoutes = require('./src/routes/funcionarioRoutes');
+const clientRoutes = require("./src/routes/clientRoutes");
+const funcionarioRoutes = require("./src/routes/funcionarioRoutes");
+const produtoRoutes = require("./src/routes/produtoRoutes");
 
 const app = express();
 
@@ -14,7 +15,8 @@ app.use(cors());
 app.use(express.json());
 
 // Lista das rotas configuradas
-app.use('/api/clientes', clientRoutes);
-app.use('/api/funcionarios', funcionarioRoutes);
+app.use("/api/clientes", clientRoutes);
+app.use("/api/funcionarios", funcionarioRoutes);
+app.use("/api/produtos", produtoRoutes);
 
 module.exports = app;
