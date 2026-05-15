@@ -4,6 +4,9 @@ const router = express.Router();
 const produtoController = require("../controllers/produtoController");
 const validarAtualizarProduto = require("../middlewares/validarAtualizarProduto");
 
+// Buscar (GET)
+router.get('/', produtoController.buscarTodos);
+
 // Cadastrar (POST)
 router.post("/", produtoController.cadastrarProduto);
 
