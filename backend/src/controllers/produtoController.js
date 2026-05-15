@@ -253,9 +253,44 @@ const buscarTodos = async (req, res) => {
   }
 };
 
+const deletarProduto = async (req, res) => {
+  try {
+    const produtoExistente = req.produto;
+
+    if (!produtoExistente) {
+      return res.status(404).json({ erro: "Produto não encontrado." });
+    }
+
+    await prisma.produto.delete({
+      where: { id_produto: produtoExistente.id_produto },
+    });
+
+    return res.status(200).json({ mensagem: "Produto deletado com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao deletar produto:", error);
+
+    if (error.code === "P2025") {
+      return res
+        .status(404)
+        .json({ erro: "Produto não encontrado na base de dados." });
+    }
+
+    if (error.code === "P2003") {
+      return res.status(409).json({
+        erro: "Não é possível excluir produto devido a dependências do banco de dados.",
+      });
+    }
+
+    return res
+      .status(500)
+      .json({ erro: "Erro interno no servidor ao deletar produto." });
+  }
+};
+
 module.exports = {
   cadastrarProduto,
   atualizarProduto,
   buscarProduto,
   buscarTodos,
+  deletarProduto,
 };
