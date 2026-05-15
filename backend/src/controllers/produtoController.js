@@ -208,14 +208,10 @@ const buscarTodos = async (req, res) => {
   try {
     const produtos = await prisma.produto.findMany({
       include: {
-        codigo_produto: true,
-        descricao: true,
         categoria: true,
         modelo: true,
-        preco_venda: true,
-        estoque_minimo: true,
-        estoque_ideal: true,
-        estoque_atual: true,
+        itenscompra: true,
+        itensvenda: true,
       },
     });
 
@@ -231,4 +227,5 @@ const buscarTodos = async (req, res) => {
 module.exports = {
   cadastrarProduto,
   atualizarProduto,
+  buscarTodos,
 };
