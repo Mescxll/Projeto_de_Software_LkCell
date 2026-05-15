@@ -10,4 +10,13 @@ router.post("/", produtoController.cadastrarProduto);
 // Atualizar (PUT)
 router.put('/:uuid', validarAtualizarProduto, produtoController.atualizarProduto);
 
+// Buscar (GET)
+router.get("/", produtoController.buscarTodos);
+
+// Buscar por id (GET)
+router.get(
+    '/:uuid',
+    produtoController.buscarProduto
+);
+
 module.exports = router;

@@ -204,7 +204,58 @@ const atualizarProduto = async (req, res) => {
   }
 };
 
+const buscarProduto = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+
+    const produto = await prisma.produto.findUnique({
+      where: { id_produto: uuid },
+      include: {
+        categoria: true,
+        modelo: true,
+        itenscompra: true,
+        itensvenda: true,
+      },
+    });
+
+    if (!produto) {
+      return res
+        .status(404)
+        .json({ erro: "Produto não encontrado na base de dados." });
+    }
+
+    return res.status(200).json(produto);
+  } catch (error) {
+    console.error("Erro ao buscar o produto:", error);
+    return res
+      .status(500)
+      .json({ erro: "Erro interno no servidor ao listar o produto." });
+  }
+};
+
+const buscarTodos = async (req, res) => {
+  try {
+    const produtos = await prisma.produto.findMany({
+      include: {
+        categoria: true,
+        modelo: true,
+        itenscompra: true,
+        itensvenda: true,
+      },
+    });
+
+    return res.status(200).json(produtos);
+  } catch (error) {
+    console.error("Erro ao buscar todos os produtos:", error);
+    return res
+      .status(500)
+      .json({ erro: "Erro interno no servidor ao listar produtos." });
+  }
+};
+
 module.exports = {
   cadastrarProduto,
   atualizarProduto,
+  buscarProduto,
+  buscarTodos,
 };
