@@ -2,11 +2,12 @@ const express = require("express");
 const router = express.Router();
 
 const produtoController = require("../controllers/produtoController");
+const validarAtualizarProduto = require("../middlewares/validarAtualizarProduto");
 
-// A porta de entrada para cadastrar (POST)
+// Cadastrar (POST)
 router.post("/", produtoController.cadastrarProduto);
 
-// Futuramente você vai botar os outros aqui (GET, PUT, DELETE)...
-// router.get("/", produtoController.buscarTodos);
+// Atualizar (PUT)
+router.put('/:uuid', validarAtualizarProduto, produtoController.atualizarProduto);
 
 module.exports = router;
