@@ -209,7 +209,7 @@ const buscarProduto = async (req, res) => {
     const { uuid } = req.params;
 
     const produto = await prisma.produto.findUnique({
-      where: { uuid: uuid },
+      where: { id_produto: uuid },
       include: {
         categoria: true,
         modelo: true,
@@ -256,5 +256,6 @@ const buscarTodos = async (req, res) => {
 module.exports = {
   cadastrarProduto,
   atualizarProduto,
+  buscarProduto,
   buscarTodos,
 };
