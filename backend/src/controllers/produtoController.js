@@ -204,6 +204,30 @@ const atualizarProduto = async (req, res) => {
   }
 };
 
+const buscarTodos = async (req, res) => {
+  try {
+    const produtos = await prisma.produto.findMany({
+      include: {
+        codigo_produto: true,
+        descricao: true,
+        categoria: true,
+        modelo: true,
+        preco_venda: true,
+        estoque_minimo: true,
+        estoque_ideal: true,
+        estoque_atual: true,
+      },
+    });
+
+    return res.status(200).json(produtos);
+  } catch (error) {
+    console.error("Erro ao buscar todos os produtos:", error);
+    return res
+      .status(500)
+      .json({ erro: "Erro interno no servidor ao listar produtos." });
+  }
+};
+
 module.exports = {
   cadastrarProduto,
   atualizarProduto,
