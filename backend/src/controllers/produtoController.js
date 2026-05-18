@@ -208,31 +208,31 @@ const buscarProduto = async (req, res) => {
   try {
     const { uuid } = req.params;
 
+    // Verificar se mandaram um número (ID) ou um texto 
+    const isNumericId = /^\d+$/.test(String(uuid));
+    const whereIdentifier = isNumericId ? { id_produto: parseInt(uuid) } : { codigo_produto: uuid };
+
     const produto = await prisma.produto.findUnique({
-      where: { id_produto: uuid },
+      where: whereIdentifier, 
       include: {
         categoria: true,
-        modelo: true,
+        modelo: { include: { marca: true } }, 
         itenscompra: true,
         itensvenda: true,
       },
     });
 
     if (!produto) {
-      return res
-        .status(404)
-        .json({ erro: "Produto não encontrado na base de dados." });
+      return res.status(404).json({ erro: "Produto não encontrado na base de dados." });
     }
 
     return res.status(200).json(produto);
+    
   } catch (error) {
     console.error("Erro ao buscar o produto:", error);
-    return res
-      .status(500)
-      .json({ erro: "Erro interno no servidor ao listar o produto." });
+    return res.status(500).json({ erro: "Erro interno no servidor ao buscar o produto." });
   }
 };
-
 const buscarTodosProdutos = async (req, res) => {
   try {
     const produtos = await prisma.produto.findMany({
@@ -255,35 +255,35 @@ const buscarTodosProdutos = async (req, res) => {
 
 const deletarProduto = async (req, res) => {
   try {
-    const produtoExistente = req.produto;
+    const { uuid } = req.params;
 
-    if (!produtoExistente) {
-      return res.status(404).json({ erro: "Produto não encontrado." });
-    }
+    // Busca inteligente de novo pra saber quem a gente vai apagar
+    const isNumericId = /^\d+$/.test(String(uuid));
+    const whereIdentifier = isNumericId ? { id_produto: parseInt(uuid) } : { codigo_produto: uuid };
 
+    // A marreta cai direto aqui
     await prisma.produto.delete({
-      where: { id_produto: produtoExistente.id_produto },
+      where: whereIdentifier,
     });
 
     return res.status(200).json({ mensagem: "Produto deletado com sucesso!" });
+    
   } catch (error) {
     console.error("Erro ao deletar produto:", error);
 
+    // Caso produto não seja encontrado
     if (error.code === "P2025") {
-      return res
-        .status(404)
-        .json({ erro: "Produto não encontrado na base de dados." });
+      return res.status(404).json({ erro: "Produto não encontrado na base de dados." });
     }
 
+    // Trava de segurança pra chaves estrangeiras
     if (error.code === "P2003") {
       return res.status(409).json({
-        erro: "Não é possível excluir produto devido a dependências do banco de dados.",
+        erro: "Não é possível excluir o produto pois existem compras ou vendas vinculadas a ele.",
       });
     }
 
-    return res
-      .status(500)
-      .json({ erro: "Erro interno no servidor ao deletar produto." });
+    return res.status(500).json({ erro: "Erro interno no servidor ao deletar produto." });
   }
 };
 

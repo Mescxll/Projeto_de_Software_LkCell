@@ -5,7 +5,7 @@ const router = express.Router();
 const produtoController = require("../controllers/produtoController");
 const validarCadastrarProduto = require("../middlewares/produto/validarCadastrarProduto");
 const validarAtualizarProduto = require("../middlewares/produto/validarAtualizarProduto");
-const validarExcluirProduto = require("../middlewares/produto/validarDeletarProduto");
+const validarDeletarProduto = require("../middlewares/produto/validarDeletarProduto");
 
 
 // Cadastrar (POST)
@@ -15,7 +15,7 @@ router.post("/", validarCadastrarProduto, produtoController.cadastrarProduto);
 router.put('/:uuid', validarAtualizarProduto, produtoController.atualizarProduto);
 
 // Deletar (DELETE)
-router.delete('/:uuid', validarExcluirProduto, produtoController.deletarProduto);
+router.delete('/:uuid', validarDeletarProduto, produtoController.deletarProduto);
 
 // Buscar (GET)
 router.get("/", produtoController.buscarTodosProdutos);
