@@ -26,6 +26,11 @@ const cadastrarCliente = async (req, res) => {
       ? "FISICO"
       : "JURIDICO";
 
+    // Limpeza de Dados 
+    const cpfLimpo = cpf ? cpf.replace(/\D/g, "") : undefined;
+    const cnpjLimpo = cnpj ? cnpj.replace(/\D/g, "") : undefined;
+    const telefoneLimpo = telefone ? telefone.replace(/\D/g, "") : undefined;
+
     const novoCliente = await prisma.cliente.create({
       data: {
         nome,
@@ -38,21 +43,21 @@ const cadastrarCliente = async (req, res) => {
         cep,
         bairro,
         // Criando Telefone e PF/PJ
-        telefone_cliente: telefone
+        telefone_cliente: telefoneLimpo
           ? {
-              create: { telefone_cliente: telefone },
+              create: { telefone_cliente: telefoneLimpo },
             }
           : undefined,
         pessoafisica:
           tipoNormalizado === "FISICO"
             ? {
-                create: { cpf },
+                create: { cpf: cpfLimpo },
               }
             : undefined,
         pessoajuridica:
           tipoNormalizado === "JURIDICO"
             ? {
-                create: { cnpj, razao_social, nome_fantasia },
+                create: { cnpj: cnpjLimpo, razao_social, nome_fantasia },
               }
             : undefined,
       },
