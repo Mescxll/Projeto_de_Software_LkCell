@@ -134,7 +134,41 @@ const atualizarFornecedor = async (req, res) => {
   }
 };
 
+const buscarFornecedor = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+
+    // Busca tabelas e suas afins
+    const fornecedor = await prisma.fornecedor.findUnique({
+      where: { uuid: uuid },
+      include: {
+        telefone_fornecedor: true, 
+        // No futuro vamos mostrar as compras feitas a esse fornecedor na tela:
+        // compra: true 
+      },
+    });
+
+    // Se não houver resultados para a busca
+    if (!fornecedor) {
+      return res.status(404).json({ 
+        erro: "Fornecedor não encontrado na base de dados." 
+      });
+    }
+
+    return res.status(200).json(fornecedor);
+
+  } catch (error) {
+    console.error("Erro ao buscar o fornecedor:", error);
+    return res.status(500).json({ 
+      erro: "Erro interno no servidor ao listar o fornecedor." 
+    });
+  }
+};
+
+
 module.exports = {
   cadastrarFornecedor,
   atualizarFornecedor,
+  buscarFornecedor,
+  
 };
