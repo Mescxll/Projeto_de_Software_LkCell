@@ -66,6 +66,75 @@ const cadastrarFornecedor = async (req, res) => {
   }
 };
 
+const atualizarFornecedor = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const { email, politica_preco, prazo_entrega, telefones } = req.body;
+
+    // Verifica se o fornecedor existe no banco 
+    const fornecedorExistente = await prisma.fornecedor.findUnique({
+      where: { uuid: uuid }
+    });
+
+    if (!fornecedorExistente) {
+      return res.status(404).json({ erro: "Fornecedor não encontrado na base de dados." });
+    }
+
+    // Monta a carga de atualização só com o que o front-end manda
+    const updateData = {};
+
+    if (email !== undefined) {
+      updateData.email = email ? email.trim().toLowerCase() : null;
+    }
+
+    if (politica_preco !== undefined) {
+      updateData.politica_preco = parseFloat(politica_preco);
+    }
+
+    if (prazo_entrega !== undefined) {
+      updateData.prazo_entrega = prazo_entrega ? parseInt(prazo_entrega) : null;
+    }
+
+    if (telefones !== undefined) {
+      // Limpa as máscaras de cada número recebido
+      const telefonesLimpos = telefones
+        .map(tel => ({ telefone_fornecedor: tel.replace(/\D/g, "") }))
+        .filter(tel => tel.telefone_fornecedor !== ""); // Tira os vazios
+
+      updateData.telefone_fornecedor = {
+        deleteMany: {}, // Apaga todas as amarrações antigas desse fornecedor
+        create: telefonesLimpos 
+      };
+    }
+
+    // Executa a transação no banco
+    const fornecedorAtualizado = await prisma.fornecedor.update({
+      where: { uuid: uuid },
+      data: updateData,
+      include: {
+        // Devolve os telefones atualizados pra gente confirmar
+        telefone_fornecedor: true 
+      }
+    });
+
+    return res.status(200).json({
+      mensagem: "Fornecedor atualizado com sucesso!",
+      fornecedor: fornecedorAtualizado
+    });
+
+  } catch (error) {
+    console.error("Erro ao atualizar fornecedor:", error);
+
+    // Se o usuário tentar colocar um telefone que já é de outro fornecedor
+    if (error.code === "P2002" && error.message.includes("telefone_fornecedor")) {
+      return res.status(409).json({ erro: "Um dos telefones informados já está cadastrado no sistema!" });
+    }
+
+    return res.status(500).json({ erro: "Erro interno no servidor ao atualizar fornecedor." });
+  }
+};
+
 module.exports = {
   cadastrarFornecedor,
+  atualizarFornecedor,
 };
