@@ -1,9 +1,10 @@
+// Tela de Gerenciamento de Produtos (Atualização e Exclusão)
 "use client";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import LoadingGerenciar from "@/components/LoadingGerenciar";
 import { ArrowLeft, Plus, Search, SlidersHorizontal } from "lucide-react";
-import { useGerenciarProduto } from "@/hooks/produtos/useGerenciarProduto";
+import { useGerenciarProduto } from "@/hooks/produto/useGerenciarProduto";
 
 export default function GerenciarProdutos() {
   // Puxando todos os do Hook 
@@ -42,7 +43,7 @@ export default function GerenciarProdutos() {
               <p className="text-xs text-gray-400">Gerencie os produtos do sistema</p>
             </div>
           </div>
-          <Link href="/produtos/cadastrar">
+          <Link href="/produto/cadastrar">
             <button className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all text-sm">
               <Plus className="w-4 h-4" /> Cadastrar Produto
             </button>

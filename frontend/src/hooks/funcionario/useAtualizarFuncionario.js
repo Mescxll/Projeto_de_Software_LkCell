@@ -1,29 +1,27 @@
-// Lógica da Tela de Atualização de Funcionários
 import { useState, useEffect } from "react";
 
 export function useAtualizarFuncionario(id) {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [modal, setModal] = useState(null); // 👈 Sem tipagens do TypeScript!
+  const [modal, setModal] = useState(null); 
   const [erroMsg, setErroMsg] = useState("");
   const [form, setForm] = useState({
     nome: "",
     data_nascimento: null, 
   });
 
-  // Busca os dados assim que o Hook é chamado
   useEffect(() => {
-    if (!id) return; // Trava de segurança caso o ID não exista ainda
+    if (!id) return; 
     
-    fetch(`http://localhost:3000/api/funcionarios?busca=${id}`)
+    fetch(`http://localhost:3000/api/funcionarios/${id}`)
       .then((res) => res.json())
       .then((data) => {
-        const funcionario = Array.isArray(data) ? data[0] : data;
         setForm({
-          nome: funcionario?.nome || "",
-          data_nascimento: funcionario?.data_aniversario
-            ? new Date(funcionario.data_aniversario)
-            : null,
+          nome: data?.nome || "",
+          // Pega a string do banco e transforma num Date pro calendário entender
+          data_nascimento: data?.data_aniversario
+            ? new Date(data.data_aniversario)
+            : null, 
         });
         setLoading(false);
       })
@@ -44,15 +42,26 @@ export function useAtualizarFuncionario(id) {
     }
     setIsSubmitting(true);
 
+  // Pega o Date do calendário e vira string pro Backend
+    let dataFormatada = undefined;
+    
+    if (form.data_nascimento) {
+      // Garantindo que o fuso horário não mude o dia na hora de mandar
+      const ano = form.data_nascimento.getFullYear();
+      const mes = String(form.data_nascimento.getMonth() + 1).padStart(2, "0");
+      const dia = String(form.data_nascimento.getDate()).padStart(2, "0");
+      dataFormatada = `${ano}-${mes}-${dia}`;
+    }
+
+    console.log("Data purificada indo pro back:", dataFormatada);
+
     try {
       const res = await fetch(`http://localhost:3000/api/funcionarios/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nome: form.nome,
-          data_nascimento: form.data_nascimento
-            ? form.data_nascimento.toISOString().split("T")[0]
-            : null,
+          data_nascimento: dataFormatada, // Agora vai no formato perfeito que a API espera
         }),
       });
 
@@ -71,7 +80,6 @@ export function useAtualizarFuncionario(id) {
     }
   };
 
-  // O hook disponibiliza essas variáveis pra quem quiser usar!
   return {
     loading,
     isSubmitting,

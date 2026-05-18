@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "src/app/clientes/gerenciar/page.jsx", "src/app/clientes/cadastrar/page.jsx", "src/app/funcionarios/atualizar/[id]/page.jsx", "src/app/funcionarios/cadastrar/page.jsx", "src/app/funcionarios/gerenciar/page.jsx", "src/app/clientes/atualizar/[uuid]/page.jsx", "src/app/layout.jsx", "src/app/page.jsx", "src/components/LoadingGerenciar.jsx", "src/components/Navbar.jsx"  ],
+, "src/app/cliente/gerenciar/page.jsx", "src/app/cliente/cadastrar/page.jsx", "src/app/funcionario/atualizar/[id]/page.jsx", "src/app/funcionario/cadastrar/page.jsx", "src/app/funcionario/gerenciar/page.jsx", "src/app/cliente/atualizar/[uuid]/page.jsx", "src/app/layout.jsx", "src/app/page.jsx", "src/components/LoadingGerenciar.jsx", "src/components/Navbar.jsx"  ],
   "exclude": ["node_modules"]
 }

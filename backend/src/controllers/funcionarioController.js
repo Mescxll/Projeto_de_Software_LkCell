@@ -6,7 +6,7 @@ const cadastrarFuncionario = async (req, res) => {
     const { nome, data_nascimento } = req.body;
 
     // Limpeza e Padronização
-    const nomeLimpo = nome.trim().toUpperCase();
+    const nomeLimpo = nome.trim();
     
     // Convertendo para objeto Date com a blindagem de fuso horário
     const dataAniversarioLimpa = data_nascimento 
@@ -99,7 +99,12 @@ const atualizarFuncionario = async (req, res) => {
     const updateData = {};
     
     if (nome !== undefined) {
-      updateData.nome = nome.trim().toUpperCase(); // Padroniza tudo pra maiúsculo
+      updateData.nome = nome
+        .trim()
+        .toLowerCase()
+        .split(" ")
+        .map((palavra) => palavra.charAt(0).toUpperCase() + palavra.slice(1))
+        .join(" ");// Padroniza tudo pra maiúsculo
     }
     
     if (data_nascimento !== undefined) {

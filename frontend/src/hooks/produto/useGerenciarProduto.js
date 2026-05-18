@@ -1,3 +1,4 @@
+// Lógica da Tela de Gerenciamento de Produtos (Exlusão, Busca e Listagem)
 import { useState, useEffect, useRef } from "react";
 
 export function useGerenciarProduto() {

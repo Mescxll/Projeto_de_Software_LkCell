@@ -2,7 +2,7 @@
 "use client";
 import { useRouter, useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { useAtualizarCliente } from "@/hooks/clientes/useAtualizarCliente"
+import { useAtualizarCliente } from "@/hooks/cliente/useAtualizarCliente"
 import {
   ArrowLeft,
   FileText,
@@ -56,7 +56,7 @@ export default function AtualizarCliente() {
       <main className="min-h-screen bg-[#f4f6fb] p-8 px-55">
         {/* Voltar */}
         <button
-          onClick={() => router.push("/clientes/gerenciar")}
+          onClick={() => router.push("/cliente/gerenciar")}
           className="self-start flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Voltar para Clientes
@@ -214,7 +214,7 @@ export default function AtualizarCliente() {
             {/* Botões */}
             <div className="flex gap-3">
               <button
-                onClick={() => router.push("/clientes/gerenciar")}
+                onClick={() => router.push("/cliente/gerenciar")}
                 className="flex-1 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all"
               >
                 Cancelar
@@ -253,7 +253,7 @@ export default function AtualizarCliente() {
               Cliente atualizado com sucesso.
             </p>
             <button
-              onClick={() => router.push("/clientes/gerenciar")}
+              onClick={() => router.push("/cliente/gerenciar")}
               className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold text-sm transition-all"
             >
               Fechar
