@@ -1,5 +1,5 @@
 // Validar Cadastro Fornecedor
-const validarCadastroFornecedor = (req, res, next) => {
+const validarCadastrarFornecedor = (req, res, next) => {
   const { cnpj, razao_social, politica_preco } = req.body;
 
   // Verificação de Valores Obrigatórios
@@ -21,4 +21,4 @@ const validarCadastroFornecedor = (req, res, next) => {
   next();
 };
 
-module.exports = validarCadastroFornecedor;
+module.exports = validarCadastrarFornecedor;

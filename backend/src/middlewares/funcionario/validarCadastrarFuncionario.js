@@ -1,4 +1,4 @@
-const validarCadastroFuncionario = (req, res, next) => {
+const validarCadastrarFuncionario = (req, res, next) => {
   const { nome, data_nascimento } = req.body;
 
   if (!nome) {
@@ -57,4 +57,4 @@ const validarCadastroFuncionario = (req, res, next) => {
   next();
 };
 
-module.exports = validarCadastroFuncionario;
+module.exports = validarCadastrarFuncionario;

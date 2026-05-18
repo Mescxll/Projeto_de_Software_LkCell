@@ -1,3 +1,4 @@
+// Validação Buscar Cliente
 const validarBuscarCliente = (req, res, next) => {
   const { uuid } = req.params;
 

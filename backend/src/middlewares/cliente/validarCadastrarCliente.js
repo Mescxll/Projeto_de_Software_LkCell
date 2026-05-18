@@ -1,5 +1,5 @@
 // Validação de Cadastro de Cliente
-const validarCadastroCliente = (req, res, next) => {
+const validarCadastrarCliente = (req, res, next) => {
     const { 
         tipo_cliente, 
         nome, 
@@ -58,4 +58,4 @@ const validarCadastroCliente = (req, res, next) => {
     next(); 
 };
 
-module.exports = validarCadastroCliente;
+module.exports = validarCadastrarCliente;
