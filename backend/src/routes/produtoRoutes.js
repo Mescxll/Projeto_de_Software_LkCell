@@ -3,11 +3,13 @@ const express = require("express");
 const router = express.Router();
 
 const produtoController = require("../controllers/produtoController");
-const validarAtualizarProduto = require("../middlewares/validarAtualizarProduto");
-const validarExcluirProduto = require("../middlewares/validarExcluirProduto");
+const validarCadastrarProduto = require("../middlewares/produto/validarCadastrarProduto");
+const validarAtualizarProduto = require("../middlewares/produto/validarAtualizarProduto");
+const validarExcluirProduto = require("../middlewares/produto/validarDeletarProduto");
+
 
 // Cadastrar (POST)
-router.post("/", produtoController.cadastrarProduto);
+router.post("/", validarCadastrarProduto, produtoController.cadastrarProduto);
 
 // Atualizar (PUT)
 router.put('/:uuid', validarAtualizarProduto, produtoController.atualizarProduto);

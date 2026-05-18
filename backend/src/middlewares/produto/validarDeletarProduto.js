@@ -1,6 +1,6 @@
-const prisma = require("../lib/prisma");
+const prisma = require("../../lib/prisma");
 
-module.exports = async function validarExcluirProduto(req, res, next) {
+module.exports = async function validarDeletarProduto(req, res, next) {
   try {
     const { uuid } = req.params;
 
