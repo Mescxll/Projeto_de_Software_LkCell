@@ -16,7 +16,7 @@ router.put('/:uuid', validarAtualizarProduto, produtoController.atualizarProduto
 router.delete('/:uuid', validarExcluirProduto, produtoController.deletarProduto);
 
 // Buscar (GET)
-router.get("/", produtoController.buscarTodos);
+router.get("/", produtoController.buscarTodosProdutos);
 
 // Buscar por id (GET)
 router.get(

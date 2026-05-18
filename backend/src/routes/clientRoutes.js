@@ -18,7 +18,7 @@ router.get(
 );
 
 // Rota do tipo GET para buscar todos os clientes
-router.get('/', clientController.buscarTodos);
+router.get('/', clientController.buscarTodosClientes);
 
 // Rota do tipo PUT para atualizar cliente por CPF/CNPJ
 router.put(
