@@ -234,7 +234,7 @@ const buscarProduto = async (req, res) => {
   }
 };
 
-const buscarTodos = async (req, res) => {
+const buscarTodosProdutos = async (req, res) => {
   try {
     const produtos = await prisma.produto.findMany({
       include: {
@@ -292,6 +292,6 @@ module.exports = {
   cadastrarProduto,
   atualizarProduto,
   buscarProduto,
-  buscarTodos,
+  buscarTodosProdutos,
   deletarProduto,
 };

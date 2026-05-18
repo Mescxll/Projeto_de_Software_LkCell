@@ -146,7 +146,7 @@ const buscarCliente = async (req, res) => {
   }
 };
 
-const buscarTodos = async (req, res) => {
+const buscarTodosClientes = async (req, res) => {
   try {
     // O Prisma traz as relações junto
     const clientes = await prisma.cliente.findMany({
@@ -300,7 +300,7 @@ const deletarCliente = async (req, res) => {
 module.exports = {
   cadastrarCliente,
   buscarCliente,
-  buscarTodos,
+  buscarTodosClientes,
   atualizarCliente,
   deletarCliente,
 };
