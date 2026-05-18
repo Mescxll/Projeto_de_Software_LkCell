@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 
 export function useGerenciarProduto() {
+  const [loading, setLoading] = useState(true);
   const [produtos, setProdutos] = useState([]);
   const [busca, setBusca] = useState("");
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   const [categoria, setCategoria] = useState("Todas");
   const [marca, setMarca] = useState("Todas");
   const [modelo, setModelo] = useState("Todos");
-  
+
   const filtroRef = useRef(null);
 
   // Busca os dados iniciais
@@ -15,7 +16,10 @@ export function useGerenciarProduto() {
     fetch("http://localhost:3000/api/produtos")
       .then((res) => res.json())
       .then((data) => setProdutos(Array.isArray(data) ? data : []))
-      .catch((err) => console.error("Erro ao buscar produtos:", err));
+      .catch((err) => console.error("Erro ao buscar produtos:", err))
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   // Fecha os filtros se o usuário clicar fora da caixinha!
@@ -25,17 +29,26 @@ export function useGerenciarProduto() {
         setFiltrosAbertos(false);
       }
     };
-    
+
     if (filtrosAbertos) {
       document.addEventListener("mousedown", handleClickFora);
     }
     return () => document.removeEventListener("mousedown", handleClickFora);
   }, [filtrosAbertos]);
 
-  // Listas únicas para os selects 
-  const categorias = ["Todas", ...new Set(produtos.map((p) => p.categoria).filter(Boolean))];
-  const marcas = ["Todas", ...new Set(produtos.map((p) => p.marca).filter(Boolean))];
-  const modelos = ["Todos", ...new Set(produtos.map((p) => p.modelo).filter(Boolean))];
+  // Listas únicas para os selects
+  const categorias = [
+    "Todas",
+    ...new Set(produtos.map((p) => p.categoria).filter(Boolean)),
+  ];
+  const marcas = [
+    "Todas",
+    ...new Set(produtos.map((p) => p.marca).filter(Boolean)),
+  ];
+  const modelos = [
+    "Todos",
+    ...new Set(produtos.map((p) => p.modelo).filter(Boolean)),
+  ];
 
   // Motor de busca e filtros
   const produtosFiltrados = produtos.filter((p) => {
@@ -46,16 +59,20 @@ export function useGerenciarProduto() {
     const matchCategoria = categoria === "Todas" || p.categoria === categoria;
     const matchMarca = marca === "Todas" || p.marca === marca;
     const matchModelo = modelo === "Todos" || p.modelo === modelo;
-    
+
     return matchBusca && matchCategoria && matchMarca && matchModelo;
   });
 
   // Função utilitária de formatação
   const formatarPreco = (valor) =>
-    Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    Number(valor).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
 
-  // Exportando tudo que a tela precisa 
+  // Exportando tudo que a tela precisa
   return {
+    loading,
     busca,
     setBusca,
     filtrosAbertos,

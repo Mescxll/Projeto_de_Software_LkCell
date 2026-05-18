@@ -82,6 +82,13 @@ const cadastrarCliente = async (req, res) => {
 
       const textoParaBusca = textoDoErroBruto + " " + stringAlvo;
 
+      // Checa Email (Tabela: cliente)
+      if (textoParaBusca.includes("email")) {
+        return res.status(409).json({
+          erro: "Este e-mail já está vinculado a outro cliente. Tente outro.",
+        });
+      }
+
       // Checa Telefone (Tabela: telefone_cliente)
       if (
         textoParaBusca.includes("telefone_cliente") ||
