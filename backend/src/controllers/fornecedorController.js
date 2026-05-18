@@ -165,10 +165,71 @@ const buscarFornecedor = async (req, res) => {
   }
 };
 
+const buscarTodosFornecedores = async (req, res) => {
+  try {
+    // Busca todos os Fornecedores
+    const fornecedores = await prisma.fornecedor.findMany({
+      include: {
+        telefone_fornecedor: true, // Manda os telefones pro frontend montar os cards
+      },
+      orderBy: {
+        razao_social: "asc", // Ordenação nativa no banco
+      },
+    });
+
+    return res.status(200).json(fornecedores);
+
+  } catch (error) {
+    console.error("Erro ao buscar todos os fornecedores:", error);
+    return res.status(500).json({ 
+      erro: "Erro interno no servidor ao listar fornecedores." 
+    });
+  }
+};
+
+const deletarFornecedor = async (req, res) => {
+  try {
+    const { uuid } = req.params;
+
+    // Confirma se o fornecedor existe antes de tentar apagar
+    const fornecedorExistente = await prisma.fornecedor.findUnique({
+      where: { uuid: uuid },
+    });
+
+    if (!fornecedorExistente) {
+      return res.status(404).json({ erro: "Fornecedor não encontrado na base de dados." });
+    }
+
+    // Ação do Cascade Delete
+    await prisma.fornecedor.delete({
+      where: { uuid: uuid },
+    });
+
+    return res.status(200).json({ mensagem: "Fornecedor deletado com sucesso!" });
+
+  } catch (error) {
+    console.error("Erro ao deletar fornecedor:", error);
+
+    // Tratamento de segurança caso algo dê errado no banco de dados na hora de apagar
+    if (error.code === "P2025") {
+      return res.status(404).json({ erro: "Fornecedor não encontrado na base de dados." });
+    }
+
+    // Caso alguma tabela segure a exclusão
+    if (error.code === "P2003") {
+      return res.status(409).json({
+        erro: "Não é possível excluir este fornecedor pois existem registros de compras vinculados a ele.",
+      });
+    }
+
+    return res.status(500).json({ erro: "Erro interno no servidor ao deletar fornecedor." });
+  }
+};
 
 module.exports = {
   cadastrarFornecedor,
   atualizarFornecedor,
   buscarFornecedor,
-  
+  buscarTodosFornecedores, 
+  deletarFornecedor
 };
