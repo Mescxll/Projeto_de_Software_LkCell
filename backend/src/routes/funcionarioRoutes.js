@@ -1,3 +1,4 @@
+// Rotas Funcionário
 const express = require('express');
 const router = express.Router();
 const funcionarioController = require('../controllers/funcionarioController');

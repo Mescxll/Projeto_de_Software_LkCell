@@ -1,3 +1,4 @@
+// Controller Funcionario
 const prisma = require("../lib/prisma");
 
 const cadastrarFuncionario = async (req, res) => {

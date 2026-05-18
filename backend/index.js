@@ -1,3 +1,4 @@
+// Index
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
@@ -7,6 +8,7 @@ dotenv.config();
 const clientRoutes = require("./src/routes/clientRoutes");
 const funcionarioRoutes = require("./src/routes/funcionarioRoutes");
 const produtoRoutes = require("./src/routes/produtoRoutes");
+const catalogoRoutes = require("./src/routes/catalogoRoutes");
 
 const app = express();
 
@@ -18,5 +20,6 @@ app.use(express.json());
 app.use("/api/clientes", clientRoutes);
 app.use("/api/funcionarios", funcionarioRoutes);
 app.use("/api/produtos", produtoRoutes);
+app.use("/api/catalogo", catalogoRoutes);
 
 module.exports = app;

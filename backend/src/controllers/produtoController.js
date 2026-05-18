@@ -1,3 +1,4 @@
+// Controller Produto
 const prisma = require("../lib/prisma");
 
 const cadastrarProduto = async (req, res) => {

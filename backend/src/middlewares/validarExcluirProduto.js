@@ -1,4 +1,4 @@
-const produtoRepository = require("../repositories/produtoRepository");
+const prisma = require("../lib/prisma");
 
 module.exports = async function validarExcluirProduto(req, res, next) {
   try {
@@ -15,7 +15,7 @@ module.exports = async function validarExcluirProduto(req, res, next) {
       ? { id_produto: parseInt(uuid, 10) }
       : { codigo_produto: uuid.trim() };
 
-    const produto = await produtoRepository.findByIdentifier(whereIdentifier);
+    const produto = await prisma.findByIdentifier(whereIdentifier);
 
     if (!produto) {
       return res.status(404).json({ erro: "Produto não encontrado." });
