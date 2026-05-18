@@ -2,7 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const clienteController = require('../controllers/clienteController');
-const validarCadastroCliente = require('../middlewares/validarCadastroCliente');
+const validarCadastroCliente = require('../middlewares/cliente/validarCadastroCliente');
+const validarAtualizarCliente = require('../middlewares/cliente/validarAtualizarCliente')
 
 //Rota do tipo POST para cadastro de clientes
 router.post(
@@ -23,6 +24,7 @@ router.get('/', clienteController.buscarTodosClientes);
 // Rota do tipo PUT para atualizar cliente por CPF/CNPJ
 router.put(
     '/:uuid',
+    validarAtualizarCliente,
     clienteController.atualizarCliente
 );
 

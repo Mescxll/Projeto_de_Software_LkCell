@@ -171,6 +171,7 @@ const buscarTodosClientes = async (req, res) => {
   }
 };
 
+
 const atualizarCliente = async (req, res) => {
   try {
     const { uuid } = req.params;
@@ -185,22 +186,34 @@ const atualizarCliente = async (req, res) => {
       telefone,
       email,
     } = req.body;
+  
+    // Limpeza de Dados
+    // Limpa telefone e CEP (tira pontos, traços, etc)
+    const telefoneLimpo = telefone ? telefone.replace(/\D/g, "") : undefined;
+    const cepLimpo = cep ? cep.replace(/\D/g, "") : undefined;
+    
+    // Padroniza as strings para o banco  
+    const emailLimpo = email ? email.trim().toLowerCase() : undefined;
+    const ufLimpa = uf ? uf.trim().toUpperCase() : undefined;
 
+    // Atualização do Banco
     const clienteAtualizado = await prisma.cliente.update({
       where: { uuid: uuid },
       data: {
         nome,
-        email: email || undefined,
+        email: emailLimpo,
         logradouro,
         cidade,
-        uf,
+        uf: ufLimpa,
         numero: numero ? parseInt(numero) : undefined,
-        cep,
+        cep: cepLimpo,
         bairro,
-        telefone_cliente: telefone
+        
+        // Full Replacement pros telefones
+        telefone_cliente: telefoneLimpo
           ? {
               deleteMany: {},
-              create: { telefone_cliente: telefone },
+              create: { telefone_cliente: telefoneLimpo },
             }
           : undefined,
       },
@@ -215,64 +228,37 @@ const atualizarCliente = async (req, res) => {
       mensagem: "Cliente atualizado com sucesso!",
       cliente: clienteAtualizado,
     });
+    
   } catch (error) {
     console.error("Erro ao atualizar cliente:", error);
 
-    // Erro de Duplicidade (Tentou usar um dado que já é de outra pessoa)
+    // Tratamento de Erros
     if (error.code === "P2002") {
       const textoDoErroBruto = error.message.toLowerCase();
       const alvo = error.meta?.target;
-
-      const stringAlvo = Array.isArray(alvo)
-        ? alvo.join(" ").toLowerCase()
-        : typeof alvo === "string"
-          ? alvo.toLowerCase()
-          : "";
-
+      const stringAlvo = Array.isArray(alvo) ? alvo.join(" ").toLowerCase() : typeof alvo === "string" ? alvo.toLowerCase() : "";
       const textoParaBusca = textoDoErroBruto + " " + stringAlvo;
 
-      // Verificação de telefone
-      if (
-        textoParaBusca.includes("telefone_cliente") ||
-        textoParaBusca.includes("telefone")
-      ) {
-        return res.status(409).json({
-          erro: "Este telefone já está vinculado a outro cliente. Tente outro.",
-        });
+      if (textoParaBusca.includes("telefone_cliente") || textoParaBusca.includes("telefone")) {
+        return res.status(409).json({ erro: "Este telefone já está vinculado a outro cliente. Tente outro." });
       }
 
       if (textoParaBusca.includes("email")) {
-        return res
-          .status(409)
-          .json({ erro: "Este email já pertence a outro cliente." });
+        return res.status(409).json({ erro: "Este email já pertence a outro cliente." });
       }
 
-      // CPF/CNPJ geralmente não se atualiza
-      if (
-        textoParaBusca.includes("cpf") ||
-        textoParaBusca.includes("cnpj") ||
-        textoParaBusca.includes("pessoafisica") ||
-        textoParaBusca.includes("pessoajuridica")
-      ) {
-        return res
-          .status(409)
-          .json({ erro: "Este documento já pertence a outro cliente." });
+      if (textoParaBusca.includes("cpf") || textoParaBusca.includes("cnpj") || textoParaBusca.includes("pessoafisica") || textoParaBusca.includes("pessoajuridica")) {
+        return res.status(409).json({ erro: "Este documento já pertence a outro cliente." });
       }
 
-      return res.status(409).json({
-        erro: "Atenção: O dado que você tentou usar já está cadastrado no sistema.",
-      });
+      return res.status(409).json({ erro: "Atenção: O dado que você tentou usar já está cadastrado no sistema." });
     }
 
     if (error.code === "P2025") {
-      return res.status(404).json({
-        erro: "Cliente não encontrado na base de dados para atualização.",
-      });
+      return res.status(404).json({ erro: "Cliente não encontrado na base de dados para atualização." });
     }
 
-    return res
-      .status(500)
-      .json({ erro: "Erro interno no servidor ao atualizar." });
+    return res.status(500).json({ erro: "Erro interno no servidor ao atualizar." });
   }
 };
 
