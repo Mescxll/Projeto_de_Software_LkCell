@@ -8,7 +8,7 @@ const validarDeletarFornecedor = (req, res, next) => {
     });
   }
 
-  // Pode passar pro Controller!
+  // Pode passar pro Controller
   next();
 };
 

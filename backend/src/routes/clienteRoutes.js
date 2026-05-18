@@ -3,7 +3,8 @@ const express = require('express');
 const router = express.Router();
 const clienteController = require('../controllers/clienteController');
 const validarCadastroCliente = require('../middlewares/cliente/validarCadastroCliente');
-const validarAtualizarCliente = require('../middlewares/cliente/validarAtualizarCliente')
+const validarAtualizarCliente = require('../middlewares/cliente/validarAtualizarCliente');
+const validarDeletarCliente = require("../middlewares/cliente/validarDeletarCliente")
 
 //Rota do tipo POST para cadastro de clientes
 router.post(
@@ -31,6 +32,7 @@ router.put(
 // Rota do tipo DELETE para remover cliente por CPF/CNPJ
 router.delete(
     '/:uuid',
+    validarDeletarCliente,
     clienteController.deletarCliente
 );
 

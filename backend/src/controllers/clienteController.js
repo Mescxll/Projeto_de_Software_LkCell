@@ -266,25 +266,31 @@ const deletarCliente = async (req, res) => {
   try {
     const { uuid } = req.params;
 
-    const cliente = await prisma.cliente.delete({
+    // Delete + Cascade
+    await prisma.cliente.delete({
       where: { uuid: uuid },
     });
 
     return res.status(200).json({
       mensagem: "Cliente deletado com sucesso!",
     });
+
   } catch (error) {
     console.error("Erro ao deletar cliente:", error);
 
+    // Se não encontrar  o cliente para ser deletado
     if (error.code === "P2025") {
-      return res
-        .status(404)
-        .json({ erro: "Cliente não encontrado na base de dados." });
+      return res.status(404).json({ erro: "Cliente não encontrado na base de dados." });
     }
 
-    return res
-      .status(500)
-      .json({ erro: "Erro interno no servidor ao deletar." });
+    // Trava de segurança caso alguma tabela no futuro não tenha o "onDelete: Cascade"
+    if (error.code === "P2003") {
+      return res.status(409).json({
+        erro: "Não é possível excluir este cliente pois existem registros (como vendas) vinculados a ele.",
+      });
+    }
+
+    return res.status(500).json({ erro: "Erro interno no servidor ao deletar." });
   }
 };
 
