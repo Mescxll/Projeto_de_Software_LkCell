@@ -1,3 +1,4 @@
+// Validação Cadastro de Cliente
 const validarCadastroCliente = (req, res, next) => {
     const { 
         tipo_cliente, 
