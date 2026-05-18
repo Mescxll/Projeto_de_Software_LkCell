@@ -6,13 +6,13 @@ const router = express.Router();
 const fornecedorController = require("../controllers/fornecedorController");
 
 // Importando os Middlewares 
-const validarCadastroFornecedor = require("../middlewares/fornecedor/validarCadastroFornecedor");
+const validarCadastrarFornecedor = require("../middlewares/fornecedor/validarCadastrarFornecedor");
 const validarAtualizarFornecedor = require("../middlewares/fornecedor/validarAtualizarFornecedor");
 const validarBuscarFornecedor = require("../middlewares/fornecedor/validarBuscarFornecedor");
 const validarDeletarFornecedor = require("../middlewares/fornecedor/validarDeletarFornecedor");
 
 // Cadastra um novo fornecedor (POST)
-router.post("/", validarCadastroFornecedor, fornecedorController.cadastrarFornecedor);
+router.post("/", validarCadastrarFornecedor, fornecedorController.cadastrarFornecedor);
 
 // Busca todos os fornecedores (GET) 
 router.get("/", fornecedorController.buscarTodosFornecedores);

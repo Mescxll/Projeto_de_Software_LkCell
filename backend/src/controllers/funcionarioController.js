@@ -27,16 +27,38 @@ const cadastrarFuncionario = async (req, res) => {
 
 const buscarFuncionario = async (req, res) => {
   try {
+    const { id } = req.params; 
+
+    // Busca por ID
+    const funcionario = await prisma.funcionario.findUnique({
+      where: { id_funcionario: parseInt(id) },
+    });
+
+    if (!funcionario) {
+      return res.status(404).json({ erro: "Funcionário não encontrado na base de dados." });
+    }
+
+    return res.status(200).json(funcionario);
+
+  } catch (error) {
+    console.error("Erro ao buscar funcionário específico:", error);
+    return res.status(500).json({ erro: "Erro interno no servidor." });
+  }
+};
+
+const buscarTodosFuncionarios = async (req, res) => {
+  try {
     const { busca } = req.query;
 
+    // Se o front não mandou filtro nenhum, traz todos em ordem alfabética
     if (!busca) {
       const funcionarios = await prisma.funcionario.findMany({
-        orderBy: { id_funcionario: "asc" },
+        orderBy: { nome: "asc" }, 
       });
-
       return res.status(200).json(funcionarios);
     }
 
+    // Se tem busca, aciona o radar inteligente (ID ou Nome)
     const isNumero = !isNaN(busca);
 
     const funcionarios = await prisma.funcionario.findMany({
@@ -46,38 +68,19 @@ const buscarFuncionario = async (req, res) => {
           {
             nome: {
               contains: busca,
-              mode: "insensitive",
+              mode: "insensitive", // maiúscula/minúscula
             },
           },
         ],
       },
+      orderBy: { nome: "asc" },
     });
 
     return res.status(200).json(funcionarios);
+
   } catch (error) {
-    console.error("Erro Prisma:", error);
-
-    // P2002 = Falha de restrição única (Unique Constraint)
-    if (error.code === "P2002") {
-      return res
-        .status(409)
-        .json({
-          erro: "Já existe um funcionário com este dado único cadastrado no sistema.",
-        });
-    }
-
-    // Se a tipagem dos dados enviada não bater com o Schema do banco
-    if (error.name === "PrismaClientValidationError") {
-      return res
-        .status(400)
-        .json({
-          erro: "Os dados enviados estão em um formato inválido para o banco de dados.",
-        });
-    }
-
-    return res
-      .status(500)
-      .json({ erro: "Erro interno no servidor ao salvar." });
+    console.error("Erro ao buscar todos os funcionários:", error);
+    return res.status(500).json({ erro: "Erro interno no servidor ao listar funcionários." });
   }
 };
 
@@ -141,6 +144,7 @@ const deletarFuncionario = async (req, res) => {
 module.exports = {
   cadastrarFuncionario,
   buscarFuncionario,
+  buscarTodosFuncionarios,
   atualizarFuncionario,
   deletarFuncionario,
 };
