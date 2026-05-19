@@ -33,7 +33,7 @@ const cadastrarCliente = async (req, res) => {
 
     const novoCliente = await prisma.cliente.create({
       data: {
-        nome,
+        nome: nome,
         tipo_cliente: tipoNormalizado, // Ajuste para o ENUM do schema
         email: email || null,
         logradouro,
@@ -207,7 +207,7 @@ const atualizarCliente = async (req, res) => {
     const clienteAtualizado = await prisma.cliente.update({
       where: { uuid: uuid },
       data: {
-        nome,
+        nome: nome,
         email: emailLimpo,
         logradouro,
         cidade,
