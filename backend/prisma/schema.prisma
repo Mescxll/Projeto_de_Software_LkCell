@@ -49,9 +49,10 @@ model fornecedor {
 
 model funcionario {
   id_funcionario   Int       @id @default(autoincrement())
-  nome             String?   @db.VarChar(100)
-  data_aniversario DateTime? @db.Date
+  nome             String    @db.VarChar(100)
+  data_aniversario DateTime  @db.Date
   venda            venda[]
+  @@unique([nome, data_aniversario])
 }
 
 model itenscompra {
@@ -112,6 +113,8 @@ model modelo {
   marca marca @relation(fields: [fk_marca_id], references: [id_marca])
 
   produtos produto[]
+  @@unique([nome, fk_marca_id])
+
 }
 
 model produto {
