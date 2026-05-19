@@ -105,16 +105,16 @@ export default function GerenciarProdutos() {
         {/* Loading */}
         {loading ? <LoadingGerenciar /> : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-fr">
               {produtosFiltrados.map((p) => (
                 <div
                   key={p.id_produto}
-                  className="relative bg-white border border-gray-100 rounded-xl px-5 py-4 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer"
+                  className="relative bg-white border border-gray-100 rounded-xl px-5 py-4 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer h-full flex flex-col"
                   onClick={() => setMenuAberto(menuAberto === p.id_produto ? null : p.id_produto)}
                 >
-                  <p className="text-sm font-semibold text-gray-800 leading-tight">{p.nome}</p>
+                  <p className="text-sm font-semibold text-gray-800 leading-tight">{p.descricao}</p>
                   <p className="text-xs text-gray-400 mt-1">
-                    {[p.modelo?.marca?.nome, p.categoria?.nome].filter(Boolean).join(" • ")}
+                    {[p.modelo?.marca?.nome, p.categoria?.nome, p.modelo?.nome].filter(Boolean).join(" • ")}
                   </p>
                   <div className="flex items-center justify-between mt-3">
                     <span className="text-sm font-bold text-blue-600">
@@ -166,7 +166,7 @@ export default function GerenciarProdutos() {
             <h2 className="text-lg font-bold text-gray-800 mb-2">Confirmar Exclusão</h2>
             <p className="text-sm text-gray-500 mb-1">
               Tem certeza de que deseja excluir o produto{" "}
-              <span className="font-semibold text-gray-800">{produtoSelecionado?.nome}</span>?
+              <span className="font-semibold text-gray-800">{produtoSelecionado?.descricao}</span>?
             </p>
             <p className="text-xs text-gray-400 mb-6">Esta ação não pode ser desfeita.</p>
             <div className="flex gap-3">

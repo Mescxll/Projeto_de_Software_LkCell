@@ -1,4 +1,4 @@
-// Lógica da Tela de Cadastro de Clientes
+// Tela de Cadastro de Clientes
 "use client";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
