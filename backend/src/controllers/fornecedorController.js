@@ -69,7 +69,7 @@ const cadastrarFornecedor = async (req, res) => {
 const atualizarFornecedor = async (req, res) => {
   try {
     const { uuid } = req.params;
-    const { email, politica_preco, prazo_entrega, telefones } = req.body;
+    const { email, razao_social, politica_preco, prazo_entrega, telefones } = req.body;
 
     // Verifica se o fornecedor existe no banco 
     const fornecedorExistente = await prisma.fornecedor.findUnique({
@@ -82,6 +82,10 @@ const atualizarFornecedor = async (req, res) => {
 
     // Monta a carga de atualização só com o que o front-end manda
     const updateData = {};
+
+    if (razao_social !== undefined) {
+      updateData.razao_social = razao_social.trim().toUpperCase();
+    }
 
     if (email !== undefined) {
       updateData.email = email ? email.trim().toLowerCase() : null;

@@ -1,10 +1,11 @@
 "use client";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { useAtualizarFornecedor } from "@/hooks/fornecedor/useAtualizarFornecedor";
+import { useCadastrarFornecedor } from "@/hooks/fornecedor/useCadastrarFornecedor";
 import {
   ArrowLeft,
   Building2,
+  FileText,
   Mail,
   Phone,
   DollarSign,
@@ -12,38 +13,25 @@ import {
   Loader2,
   CheckCircle,
   AlertTriangle,
+  UserPlus,
 } from "lucide-react";
 
-export default function AtualizarFornecedor() {
+export default function CadastroFornecedor() {
   const router = useRouter();
-  const { uuid } = useParams();
-
   const {
-    loading,
     form,
+    setForm,
     modal,
     modalErro,
     erroMsg,
     isSubmitting,
     handleChange,
-    handleSalvar,
+    handleSubmit,
     setModal,
-    setModalErro,
-  } = useAtualizarFornecedor(uuid);
+  } = useCadastrarFornecedor();
 
   const inputClass =
     "w-full pl-12 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
-
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <main className="min-h-screen bg-[#f4f6fb] flex items-center justify-center">
-          <p className="text-gray-400 text-sm">Carregando fornecedor...</p>
-        </main>
-      </>
-    );
-  }
 
   return (
     <>
@@ -60,37 +48,40 @@ export default function AtualizarFornecedor() {
           <div className="w-full max-w-lg">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
               <div className="mb-6">
-                <h1 className="text-xl font-bold text-gray-800">Atualizar Fornecedor</h1>
+                <h1 className="text-xl font-bold text-gray-800">Cadastro de Fornecedor</h1>
                 <p className="text-xs text-gray-400 mt-1">
-                  Edite os dados do fornecedor selecionado
+                  Preencha os dados do novo fornecedor
                 </p>
               </div>
 
               <div className="grid gap-4">
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    CNPJ
+                    CNPJ <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
+                      name="cnpj"
+                      placeholder="00.000.000/0000-00"
                       value={form.cnpj}
-                      disabled
-                      className="w-full pl-12 pr-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed"
+                      onChange={handleChange}
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    Razão Social
+                    Razão Social <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
                     <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       name="razao_social"
+                      placeholder="Digite a razão social"
                       value={form.razao_social}
                       onChange={handleChange}
                       className={inputClass}
@@ -107,6 +98,7 @@ export default function AtualizarFornecedor() {
                     <input
                       type="email"
                       name="email"
+                      placeholder="email@provedor.com"
                       value={form.email}
                       onChange={handleChange}
                       className={inputClass}
@@ -117,13 +109,14 @@ export default function AtualizarFornecedor() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                      Política de Preço
+                      Política de Preço <span className="text-red-400">*</span>
                     </label>
                     <div className="relative">
                       <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
                         type="text"
                         name="politica_preco"
+                        placeholder="0.00"
                         value={form.politica_preco}
                         onChange={handleChange}
                         className={inputClass}
@@ -139,6 +132,7 @@ export default function AtualizarFornecedor() {
                       <input
                         type="number"
                         name="prazo_entrega"
+                        placeholder="Dias"
                         value={form.prazo_entrega}
                         onChange={handleChange}
                         className={inputClass}
@@ -150,13 +144,14 @@ export default function AtualizarFornecedor() {
 
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    Telefone
+                    Telefone <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       name="telefone"
+                      placeholder="(00) 00000-0000"
                       value={form.telefone}
                       onChange={handleChange}
                       className={inputClass}
@@ -172,7 +167,7 @@ export default function AtualizarFornecedor() {
                     Cancelar
                   </button>
                   <button
-                    onClick={handleSalvar}
+                    onClick={handleSubmit}
                     disabled={isSubmitting}
                     className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md ${
                       isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
@@ -184,7 +179,7 @@ export default function AtualizarFornecedor() {
                       </>
                     ) : (
                       <>
-                        <CheckCircle className="w-4 h-4" /> Salvar
+                        <UserPlus className="w-4 h-4" /> Cadastrar
                       </>
                     )}
                   </button>
@@ -203,15 +198,15 @@ export default function AtualizarFornecedor() {
                 <CheckCircle className="w-9 h-9 text-green-500" />
               </div>
             </div>
-            <h2 className="text-lg font-bold text-gray-800 mb-1">Fornecedor atualizado!</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-1">Fornecedor cadastrado!</h2>
             <p className="text-xs text-gray-400 mb-6">
-              As alterações foram salvas com sucesso.
+              O fornecedor foi criado com sucesso.
             </p>
             <button
               onClick={() => router.push("/fornecedor/gerenciar")}
               className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold text-sm transition-all"
             >
-              Voltar para gerenciamento
+              Ir para gerenciamento
             </button>
           </div>
         </div>
