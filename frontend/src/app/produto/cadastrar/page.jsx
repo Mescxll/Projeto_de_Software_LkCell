@@ -1,10 +1,10 @@
-
 // Tela de Cadastro de Produtos
 "use client";
 
 import Navbar from "@/components/Navbar";
 import { useRouter } from "next/navigation";
 import { useCadastrarProduto } from "@/hooks/produto/useCadastrarProduto";
+import { blockNonNumericKeys } from "@/lib/blockNonNumericKeys";
 
 import {
   Package,
@@ -25,7 +25,7 @@ export default function CadastroProduto() {
   const router = useRouter();
 
   const {
-    form,    
+    form,
     modal,
     setModal,
     erroMsg,
@@ -36,7 +36,7 @@ export default function CadastroProduto() {
     sugestoesCategoria,
     selecionarModelo,
     selecionarMarca,
-    selecionarCategoria,    
+    selecionarCategoria,
     handleChange,
     handleSubmit,
     dropdownRef,
@@ -53,7 +53,6 @@ export default function CadastroProduto() {
       <Navbar />
 
       <main className="min-h-screen bg-[#f4f6fb] p-8 px-55">
-
         <button
           onClick={() => router.push("/produto/gerenciar")}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
@@ -63,9 +62,7 @@ export default function CadastroProduto() {
         </button>
 
         <div className="flex justify-center">
-
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-2xl p-8">
-
             {/* Título */}
             <div className="mb-6">
               <h1 className="text-xl font-bold text-gray-800">
@@ -99,7 +96,6 @@ export default function CadastroProduto() {
 
             {/* Categoria / Marca / Modelo */}
             <div className="grid grid-cols-3 gap-3 mb-4" ref={dropdownRef}>
-
               {/* Categoria */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
@@ -164,7 +160,9 @@ export default function CadastroProduto() {
                           onClick={() => selecionarMarca(marca)}
                           className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b border-gray-100"
                         >
-                          <p className="text-sm font-medium text-gray-800">{marca.nome}</p>
+                          <p className="text-sm font-medium text-gray-800">
+                            {marca.nome}
+                          </p>
                         </button>
                       ))}
                     </div>
@@ -199,15 +197,18 @@ export default function CadastroProduto() {
                           onClick={() => selecionarModelo(modelo)}
                           className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b border-gray-100"
                         >
-                          <p className="text-sm font-medium text-gray-800">{modelo.nome}</p>
-                          <p className="text-xs text-gray-400">{modelo.marca.nome}</p>
+                          <p className="text-sm font-medium text-gray-800">
+                            {modelo.nome}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {modelo.marca.nome}
+                          </p>
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
               </div>
-
             </div>
             {/* Descrição */}
             <div className="mb-4">
@@ -229,7 +230,6 @@ export default function CadastroProduto() {
 
             {/* Estoque */}
             <div className="grid grid-cols-3 gap-3 mb-4">
-
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                   Estoque Atual <span className="text-red-400">*</span>
@@ -240,6 +240,9 @@ export default function CadastroProduto() {
                   name="estoque_atual"
                   value={form.estoque_atual}
                   onChange={handleChange}
+                  onKeyDown={blockNonNumericKeys}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   className={inputClass}
                 />
               </div>
@@ -254,6 +257,9 @@ export default function CadastroProduto() {
                   name="estoque_minimo"
                   value={form.estoque_minimo}
                   onChange={handleChange}
+                  onKeyDown={blockNonNumericKeys}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   className={inputClass}
                 />
               </div>
@@ -268,10 +274,12 @@ export default function CadastroProduto() {
                   name="estoque_ideal"
                   value={form.estoque_ideal}
                   onChange={handleChange}
+                  onKeyDown={blockNonNumericKeys}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   className={inputClass}
                 />
               </div>
-
             </div>
 
             {/* Preços */}
@@ -291,10 +299,10 @@ export default function CadastroProduto() {
 
                     <input
                       type="text"
-                      step="0.01"
                       name={name}
                       value={form[name]}
                       onChange={handleChange}
+                      inputMode="decimal"
                       placeholder="0,00"
                       className={inputIconClass}
                     />
@@ -321,12 +329,10 @@ export default function CadastroProduto() {
                   />
                 </div>
               </div>
-
             </div>
 
             {/* Botões */}
             <div className="flex gap-3">
-
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
@@ -357,20 +363,15 @@ export default function CadastroProduto() {
               >
                 Cancelar
               </button>
-
             </div>
-
           </div>
-
         </div>
       </main>
 
       {/* Modal Sucesso */}
       {modal === "sucesso" && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-
           <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
-
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
                 <CheckCircle className="w-9 h-9 text-green-500" />
@@ -391,18 +392,14 @@ export default function CadastroProduto() {
             >
               Fechar
             </button>
-
           </div>
-
         </div>
       )}
 
       {/* Modal Erro */}
       {modal === "erro" && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-
           <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
-
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
                 <AlertTriangle className="w-9 h-9 text-red-500" />
@@ -413,9 +410,7 @@ export default function CadastroProduto() {
               Erro ao cadastrar produto
             </h2>
 
-            <p className="text-xs text-gray-400 mb-6">
-              {erroMsg}
-            </p>
+            <p className="text-xs text-gray-400 mb-6">{erroMsg}</p>
 
             <button
               onClick={() => setModal(null)}
@@ -423,9 +418,7 @@ export default function CadastroProduto() {
             >
               Tentar novamente
             </button>
-
           </div>
-
         </div>
       )}
     </>

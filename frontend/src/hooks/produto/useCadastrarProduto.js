@@ -29,6 +29,24 @@ export function useCadastrarProduto() {
 
   const dropdownRef = useRef(null);
 
+  const formatarPrecoBrasil = (valor) => {
+    const somenteNumeros = valor.replace(/[^\d,]/g, "");
+    const partes = somenteNumeros.split(",");
+
+    if (partes.length <= 1) {
+      return somenteNumeros;
+    }
+
+    return `${partes[0]},${partes.slice(1).join("")}`;
+  };
+
+  const converterPrecoBrasil = (valor) => {
+    if (!valor) return null;
+
+    const numero = Number(valor.replace(/\./g, "").replace(",", "."));
+    return Number.isFinite(numero) ? numero : null;
+  };
+
   // Fechar dropdowns quando clicar fora
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -47,28 +65,17 @@ export function useCadastrarProduto() {
     const { name, value } = e.target;
 
     if (["preco_compra", "preco_custo", "preco_venda"].includes(name)) {
-      // Bloqueia caracteres inválidos (só permite números, vírgula e ponto)
-      if (value !== "" && !/^[\d.,]*$/.test(value)) return;
+      const valorFormatado = formatarPrecoBrasil(value);
+      const novoForm = { ...form, [name]: valorFormatado };
 
-      const novoForm = { ...form, [name]: value };
+      const custo = converterPrecoBrasil(
+        name === "preco_custo" ? valorFormatado : form.preco_custo,
+      );
+      const venda = converterPrecoBrasil(
+        name === "preco_venda" ? valorFormatado : form.preco_venda,
+      );
 
-      // Atualiza os valores conforme qual campo está sendo editado
-      const custoRaw = name === "preco_custo" ? value : form.preco_custo;
-      const vendaRaw = name === "preco_venda" ? value : form.preco_venda;
-
-      // Converte vírgula para ponto para parseFloat
-      const custoStr = custoRaw?.toString().replace(",", ".") || "";
-      const vendaStr = vendaRaw?.toString().replace(",", ".") || "";
-
-      const custo = parseFloat(custoStr) || 0;
-      const venda = parseFloat(vendaStr) || 0;
-
-      // Verifica se os números estão completos (não terminam com ponto)
-      const custoValido = custoStr && !custoStr.endsWith(".");
-      const vendaValida = vendaStr && !vendaStr.endsWith(".");
-
-      // Calcula margem apenas se ambos os valores são válidos e maiores que zero
-      if (custo > 0 && venda > 0 && custoValido && vendaValida) {
+      if (custo !== null && venda !== null && custo > 0 && venda > 0) {
         const margem = (((venda - custo) / custo) * 100).toFixed(2);
         novoForm.margem_lucro = margem.replace(".", ",");
       } else {
@@ -79,9 +86,11 @@ export function useCadastrarProduto() {
       return;
     }
 
-    // Campos de estoque: bloqueia negativo
+    // Campos de estoque: aceita apenas dígitos
     if (["estoque_atual", "estoque_minimo", "estoque_ideal"].includes(name)) {
-      if (value !== "" && parseInt(value) < 0) return;
+      const somenteNumeros = value.replace(/\D/g, "");
+      setForm((prev) => ({ ...prev, [name]: somenteNumeros }));
+      return;
     }
 
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -107,6 +116,11 @@ export function useCadastrarProduto() {
     setIsSubmitting(true);
 
     try {
+      const precoCompra = converterPrecoBrasil(form.preco_compra);
+      const precoCusto = converterPrecoBrasil(form.preco_custo);
+      const precoVenda = converterPrecoBrasil(form.preco_venda);
+      const margemLucro = converterPrecoBrasil(form.margem_lucro);
+
       const res = await fetch("http://localhost:3000/api/produtos", {
         method: "POST",
         headers: {
@@ -114,10 +128,10 @@ export function useCadastrarProduto() {
         },
         body: JSON.stringify({
           ...form,
-          preco_compra: form.preco_compra?.toString().replace(",", "."),
-          preco_custo: form.preco_custo?.toString().replace(",", "."),
-          preco_venda: form.preco_venda?.toString().replace(",", "."),
-          margem_lucro: form.margem_lucro?.toString().replace(",", "."),
+          preco_compra: precoCompra,
+          preco_custo: precoCusto,
+          preco_venda: precoVenda,
+          margem_lucro: margemLucro,
         }),
       });
 

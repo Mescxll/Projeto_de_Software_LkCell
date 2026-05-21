@@ -2,6 +2,7 @@
 import { useRouter, useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { useAtualizarFornecedor } from "@/hooks/fornecedor/useAtualizarFornecedor";
+import { blockNonNumericKeys } from "@/lib/blockNonNumericKeys";
 import {
   ArrowLeft,
   Building2,
@@ -60,7 +61,9 @@ export default function AtualizarFornecedor() {
           <div className="w-full max-w-lg">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
               <div className="mb-6">
-                <h1 className="text-xl font-bold text-gray-800">Atualizar Fornecedor</h1>
+                <h1 className="text-xl font-bold text-gray-800">
+                  Atualizar Fornecedor
+                </h1>
                 <p className="text-xs text-gray-400 mt-1">
                   Edite os dados do fornecedor selecionado
                 </p>
@@ -141,6 +144,9 @@ export default function AtualizarFornecedor() {
                         name="prazo_entrega"
                         value={form.prazo_entrega}
                         onChange={handleChange}
+                        onKeyDown={blockNonNumericKeys}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         className={inputClass}
                         min="0"
                       />
@@ -175,7 +181,9 @@ export default function AtualizarFornecedor() {
                     onClick={handleSalvar}
                     disabled={isSubmitting}
                     className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md ${
-                      isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+                      isSubmitting
+                        ? "bg-blue-400 cursor-not-allowed"
+                        : "bg-blue-500 hover:bg-blue-600"
                     }`}
                   >
                     {isSubmitting ? (
@@ -203,7 +211,9 @@ export default function AtualizarFornecedor() {
                 <CheckCircle className="w-9 h-9 text-green-500" />
               </div>
             </div>
-            <h2 className="text-lg font-bold text-gray-800 mb-1">Fornecedor atualizado!</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-1">
+              Fornecedor atualizado!
+            </h2>
             <p className="text-xs text-gray-400 mb-6">
               As alterações foram salvas com sucesso.
             </p>

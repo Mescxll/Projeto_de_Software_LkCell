@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { useCadastrarFornecedor } from "@/hooks/fornecedor/useCadastrarFornecedor";
+import { blockNonNumericKeys } from "@/lib/blockNonNumericKeys";
 import {
   ArrowLeft,
   Building2,
@@ -48,7 +49,9 @@ export default function CadastroFornecedor() {
           <div className="w-full max-w-lg">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
               <div className="mb-6">
-                <h1 className="text-xl font-bold text-gray-800">Cadastro de Fornecedor</h1>
+                <h1 className="text-xl font-bold text-gray-800">
+                  Cadastro de Fornecedor
+                </h1>
                 <p className="text-xs text-gray-400 mt-1">
                   Preencha os dados do novo fornecedor
                 </p>
@@ -135,6 +138,9 @@ export default function CadastroFornecedor() {
                         placeholder="Dias"
                         value={form.prazo_entrega}
                         onChange={handleChange}
+                        onKeyDown={blockNonNumericKeys}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         className={inputClass}
                         min="0"
                       />
@@ -170,7 +176,9 @@ export default function CadastroFornecedor() {
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                     className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md ${
-                      isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+                      isSubmitting
+                        ? "bg-blue-400 cursor-not-allowed"
+                        : "bg-blue-500 hover:bg-blue-600"
                     }`}
                   >
                     {isSubmitting ? (
@@ -198,7 +206,9 @@ export default function CadastroFornecedor() {
                 <CheckCircle className="w-9 h-9 text-green-500" />
               </div>
             </div>
-            <h2 className="text-lg font-bold text-gray-800 mb-1">Fornecedor cadastrado!</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-1">
+              Fornecedor cadastrado!
+            </h2>
             <p className="text-xs text-gray-400 mb-6">
               O fornecedor foi criado com sucesso.
             </p>
