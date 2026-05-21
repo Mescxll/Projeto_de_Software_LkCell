@@ -9,6 +9,9 @@ const validarDeletarProduto = require("../middlewares/produto/validarDeletarProd
 const validarBuscarProduto = require("../middlewares/produto/validarBuscarProduto");
 
 
+// Listar produtos (GET)
+router.get("/", produtoController.buscarTodosProdutos);
+
 // Cadastrar (POST)
 router.post("/", validarCadastrarProduto, produtoController.cadastrarProduto);
 
