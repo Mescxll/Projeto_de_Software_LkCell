@@ -10,7 +10,7 @@ datasource db {
 model cliente {
   id_cliente       Int                @id @default(autoincrement())
   uuid             String             @unique @default(uuid())
-  nome             String?            @db.VarChar(100)
+  nome             String             @db.VarChar(100)
   tipo_cliente     tipo_cliente_enum?
   email            String?            @unique @db.VarChar(100)
   cidade           String?            @db.VarChar(50)
@@ -37,18 +37,22 @@ model compra {
 
 model fornecedor {
   id_fornecedor       Int                   @id @default(autoincrement())
-  razao_social        String?               @db.VarChar(100)
+  uuid                String                @unique @default(uuid()) @db.Uuid
+  cnpj                String                @unique @db.VarChar(14)
+  razao_social        String                @db.VarChar(100)
   email               String?               @db.VarChar(50)
-  politica_preco      Decimal?              @db.Decimal(10, 2)
+  politica_preco      Decimal               @db.Decimal(10, 2)
+  prazo_entrega       Int?
   compra              compra[]
   telefone_fornecedor telefone_fornecedor[]
 }
 
 model funcionario {
   id_funcionario   Int       @id @default(autoincrement())
-  nome             String?   @db.VarChar(100)
-  data_aniversario DateTime? @db.Date
+  nome             String    @db.VarChar(100)
+  data_aniversario DateTime  @db.Date
   venda            venda[]
+  @@unique([nome, data_aniversario])
 }
 
 model itenscompra {
@@ -109,6 +113,8 @@ model modelo {
   marca marca @relation(fields: [fk_marca_id], references: [id_marca])
 
   produtos produto[]
+  @@unique([nome, fk_marca_id])
+
 }
 
 model produto {
@@ -162,14 +168,14 @@ model telefone_fornecedor {
 model venda {
   id_venda                      Int                    @id @default(autoincrement())
   valor_total                   Decimal?               @db.Decimal(10, 2)
-  status_pagamento              status_pagamento_enum?
+  status_pagamento              status_pagamento_enum
   data_vencimento               DateTime?              @db.Date
-  data_hora                     DateTime?              @db.Timestamp(6)
-  fk_cliente_id_cliente         Int?
-  fk_funcionario_id_funcionario Int?
+  data_hora                     DateTime               @db.Timestamp(6)
+  fk_cliente_id_cliente         Int
+  fk_funcionario_id_funcionario Int
   itensvenda                    itensvenda[]
-  cliente                       cliente?               @relation(fields: [fk_cliente_id_cliente], references: [id_cliente], onDelete: Cascade, onUpdate: NoAction, map: "fk_venda_2")
-  funcionario                   funcionario?           @relation(fields: [fk_funcionario_id_funcionario], references: [id_funcionario], onDelete: Cascade, onUpdate: NoAction, map: "fk_venda_3")
+  cliente                       cliente               @relation(fields: [fk_cliente_id_cliente], references: [id_cliente], onDelete: Cascade, onUpdate: NoAction, map: "fk_venda_2")
+  funcionario                   funcionario           @relation(fields: [fk_funcionario_id_funcionario], references: [id_funcionario], onDelete: Cascade, onUpdate: NoAction, map: "fk_venda_3")
 }
 
 enum status_pagamento_enum {

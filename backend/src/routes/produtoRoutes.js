@@ -1,16 +1,30 @@
+// Rotas Produto
 const express = require("express");
 const router = express.Router();
 
 const produtoController = require("../controllers/produtoController");
-const validarAtualizarProduto = require("../middlewares/validarAtualizarProduto");
+const validarCadastrarProduto = require("../middlewares/produto/validarCadastrarProduto");
+const validarAtualizarProduto = require("../middlewares/produto/validarAtualizarProduto");
+const validarDeletarProduto = require("../middlewares/produto/validarDeletarProduto");
+const validarBuscarProduto = require("../middlewares/produto/validarBuscarProduto");
+
 
 // Listar produtos (GET)
 router.get("/", produtoController.buscarTodosProdutos);
 
 // Cadastrar (POST)
-router.post("/", produtoController.cadastrarProduto);
+router.post("/", validarCadastrarProduto, produtoController.cadastrarProduto);
 
 // Atualizar (PUT)
 router.put('/:uuid', validarAtualizarProduto, produtoController.atualizarProduto);
+
+// Deletar (DELETE)
+router.delete('/:uuid', validarDeletarProduto, produtoController.deletarProduto);
+
+// Buscar (GET)
+router.get("/", produtoController.buscarTodosProdutos);
+
+// Buscar por id (GET)
+router.get('/:uuid', validarBuscarProduto, produtoController.buscarProduto);
 
 module.exports = router;

@@ -1,31 +1,25 @@
+// Rotas Funcionário
 const express = require('express');
 const router = express.Router();
 const funcionarioController = require('../controllers/funcionarioController');
-const validarCadastroFuncionario = require('../middlewares/validarCadastroFuncionario');
+const validarCadastrarFuncionario = require('../middlewares/funcionario/validarCadastrarFuncionario');
+const validarBuscarFuncionario = require("../middlewares/funcionario/validarBuscarFuncionario");
+const validarAtualizarFuncionario = require("../middlewares/funcionario/validarAtualizarFuncionario");
+const validarDeletarFuncionario = require("../middlewares/funcionario/validarDeletarFuncionario");
 
 // Criar
-router.post(
-    '/',
-    validarCadastroFuncionario,
-    funcionarioController.cadastrarFuncionario
-);
+router.post('/', validarCadastrarFuncionario, funcionarioController.cadastrarFuncionario);
 
 // Buscar (tudo, por nome ou por id)
-router.get(
-    '/',
-    funcionarioController.buscarFuncionario
-);
+router.get("/:id", validarBuscarFuncionario, funcionarioController.buscarFuncionario);
+
+// Rota GET para buscar todos os funcionários
+router.get("/", funcionarioController.buscarTodosFuncionarios);
 
 // Atualizar
-router.put(
-    '/:id',
-    funcionarioController.atualizarFuncionario
-);
+router.put('/:id', validarAtualizarFuncionario, funcionarioController.atualizarFuncionario);
 
 // Deletar
-router.delete(
-    '/:id',
-    funcionarioController.deletarFuncionario
-);
+router.delete('/:id', validarDeletarFuncionario, funcionarioController.deletarFuncionario);
 
 module.exports = router;

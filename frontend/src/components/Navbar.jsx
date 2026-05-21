@@ -5,14 +5,14 @@ import { useState, useRef, useEffect } from "react";
 import { Users, UserCog, Package, Truck, TrendingUp, ShoppingBasket, Wrench, Wallet, Boxes } from "lucide-react";
 
 const modulos = [
-  { titulo: "Clientes", icone: Users, link: "/clientes/gerenciar" },
-  { titulo: "Funcionários", icone: UserCog, link: "/funcionarios/gerenciar" },
-  { titulo: "Produtos", icone: Package, link: "/produtos/gerenciar" },
-  { titulo: "Fornecedores", icone: Truck, link: "/fornecedores/gerenciar" },
-  { titulo: "Vendas", icone: TrendingUp, link: "/vendas/gerenciar" },
-  { titulo: "Compras", icone: ShoppingBasket, link: "/compras/gerenciar" },
-  { titulo: "Ordens de Serviço", icone: Wrench, link: "/ordemServicos/gerenciar" },
-  { titulo: "Despesas", icone: Wallet, link: "/despesas/gerenciar" },
+  { titulo: "Clientes", icone: Users, link: "/cliente/gerenciar" },
+  { titulo: "Funcionários", icone: UserCog, link: "/funcionario/gerenciar" },
+  { titulo: "Produtos", icone: Package, link: "/produto/gerenciar" },
+  { titulo: "Fornecedores", icone: Truck, link: "/fornecedor/gerenciar" },
+  { titulo: "Vendas", icone: TrendingUp, link: "/venda/gerenciar" },
+  { titulo: "Compras", icone: ShoppingBasket, link: "/compra/gerenciar" },
+  { titulo: "Ordens de Serviço", icone: Wrench, link: "/ordemServico/gerenciar" },
+  { titulo: "Despesas", icone: Wallet, link: "/despesa/gerenciar" },
   { titulo: "Estoque", icone: Boxes, link: "/estoque/gerenciar" },
 ];
 

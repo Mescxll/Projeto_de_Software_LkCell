@@ -3,10 +3,10 @@ import Navbar from "@/components/Navbar";
 import { Users, UserCog, Package, Truck, TrendingUp, ShoppingBasket, Wrench, Wallet, Boxes } from "lucide-react";
 
 const painel = [
-  { titulo: "Clientes", icone: Users, cor: "azul", link: "/clientes/gerenciar"},
-  { titulo: "Funcionários", icone: UserCog, cor: "azul", link: "/funcionarios/gerenciar"},
-  { titulo: "Produtos", icone: Package, cor: "verde", link: "/produtos/gerenciar" },
-  { titulo: "Fornecedores", icone: Truck, cor: "cinza" },
+  { titulo: "Clientes", icone: Users, cor: "azul", link: "/cliente/gerenciar"},
+  { titulo: "Funcionários", icone: UserCog, cor: "azul", link: "/funcionario/gerenciar"},
+  { titulo: "Produtos", icone: Package, cor: "verde", link: "/produto/gerenciar" },
+  { titulo: "Fornecedores", icone: Truck, cor: "azul", link: "/fornecedor/gerenciar" },
   { titulo: "Vendas", icone: TrendingUp, cor: "cinza" },
   { titulo: "Compras", icone: ShoppingBasket, cor: "cinza" },
   { titulo: "Ordens de Serviço", icone: Wrench, cor: "cinza" },
