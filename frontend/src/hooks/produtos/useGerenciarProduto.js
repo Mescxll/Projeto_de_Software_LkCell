@@ -12,10 +12,37 @@ export function useGerenciarProduto() {
 
   // Busca os dados iniciais
   useEffect(() => {
-    fetch("http://localhost:3000/api/produtos")
-      .then((res) => res.json())
-      .then((data) => setProdutos(Array.isArray(data) ? data : []))
-      .catch((err) => console.error("Erro ao buscar produtos:", err));
+    const carregarProdutos = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/produtos");
+
+        if (!res.ok) {
+          throw new Error(`Falha ao carregar produtos (${res.status})`);
+        }
+
+        const data = await res.json();
+
+        if (!Array.isArray(data)) {
+          console.error("Dados recebidos não são uma lista:", data);
+          setProdutos([]);
+          return;
+        }
+
+        setProdutos(
+          data.map((produto) => ({
+            ...produto,
+            categoria: produto.categoria?.nome ?? produto.categoria ?? null,
+            marca: produto.marca ?? produto.modelo?.marca?.nome ?? null,
+            modelo: produto.modelo?.nome ?? produto.modelo ?? null,
+          })),
+        );
+      } catch (err) {
+        console.error("Erro ao buscar produtos:", err);
+        setProdutos([]);
+      }
+    };
+
+    carregarProdutos();
   }, []);
 
   // Fecha os filtros se o usuário clicar fora da caixinha!

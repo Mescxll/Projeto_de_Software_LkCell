@@ -1,5 +1,36 @@
 const prisma = require("../lib/prisma");
 
+const montarNomeMarca = (produto) => produto?.modelo?.marca?.nome || null;
+const montarNomeCategoria = (produto) => produto?.categoria?.nome || null;
+
+const buscarTodosProdutos = async (_req, res) => {
+  try {
+    const produtos = await prisma.produto.findMany({
+      orderBy: { id_produto: "asc" },
+      include: {
+        categoria: true,
+        modelo: {
+          include: {
+            marca: true,
+          },
+        },
+      },
+    });
+
+    const produtosFormatados = produtos.map((produto) => ({
+      ...produto,
+      marca: montarNomeMarca(produto),
+      categoria: montarNomeCategoria(produto),
+      modelo: produto?.modelo?.nome || null,
+    }));
+
+    return res.status(200).json(produtosFormatados);
+  } catch (error) {
+    console.error("Erro ao listar produtos:", error);
+    return res.status(500).json({ erro: "Erro interno no servidor ao listar produtos." });
+  }
+};
+
 const cadastrarProduto = async (req, res) => {
   try {
     const {
@@ -205,6 +236,7 @@ const atualizarProduto = async (req, res) => {
 };
 
 module.exports = {
+  buscarTodosProdutos,
   cadastrarProduto,
   atualizarProduto,
 };
