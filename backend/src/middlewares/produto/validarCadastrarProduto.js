@@ -18,6 +18,7 @@ const validarCadastrarProduto = (req, res, next) => {
     !nome_marca ||
     !nome_modelo ||
     preco_venda === undefined ||
+    String(preco_venda).trim() === "" ||
     estoque_atual === undefined
   ) {
     return res.status(400).json({
@@ -44,7 +45,7 @@ const validarCadastrarProduto = (req, res, next) => {
       erro: "O Estoque Atual e o Preço de Venda devem ser valores numéricos válidos.",
     });
   }
- 
+
   next();
 };
 

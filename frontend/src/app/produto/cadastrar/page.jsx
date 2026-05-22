@@ -288,11 +288,14 @@ export default function CadastroProduto() {
               {[
                 ["preco_compra", "Preço Compra"],
                 ["preco_custo", "Preço Custo"],
-                ["preco_venda", "Preço Venda"],
+                ["preco_venda", "Preço Venda", true],
               ].map(([name, label]) => (
                 <div key={name}>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    {label}
+                    {label}{" "}
+                    {name === "preco_venda" && (
+                      <span className="text-red-400">*</span>
+                    )}
                   </label>
 
                   <div className="relative">

@@ -106,9 +106,11 @@ export function useCadastrarProduto() {
       !form.nome_categoria ||
       !form.nome_marca ||
       !form.nome_modelo ||
-      !form.preco_venda
+      !form.preco_venda?.trim()
     ) {
-      setErroMsg("Preencha todos os campos obrigatórios.");
+      setErroMsg(
+        "Preencha todos os campos obrigatórios, incluindo o Preço de Venda.",
+      );
       setModal("erro");
       return;
     }
