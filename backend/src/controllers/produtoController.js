@@ -99,11 +99,9 @@ const cadastrarProduto = async (req, res) => {
 
     // Tratamento de erro de código de produto duplicado (Unique Key)
     if (error.code === "P2002" && error.message.includes("codigo_produto")) {
-      return res
-        .status(409)
-        .json({
-          erro: "Este Código de Produto já está cadastrado no sistema!",
-        });
+      return res.status(409).json({
+        erro: "Este Código de Produto já está cadastrado no sistema!",
+      });
     }
 
     return res
@@ -116,18 +114,14 @@ const atualizarProduto = async (req, res) => {
   try {
     const { uuid } = req.params;
     const {
-      codigo_produto,
       descricao,
       nome_categoria,
-      nome_marca,
-      nome_modelo,
       estoque_minimo,
       estoque_ideal,
       estoque_atual,
       preco_compra,
       preco_custo,
       preco_venda,
-      margem_lucro,
     } = req.body;
 
     // Busca e Regras de Negócio
@@ -149,18 +143,6 @@ const atualizarProduto = async (req, res) => {
       return res
         .status(404)
         .json({ erro: "Produto não encontrado na base de dados." });
-    }
-
-    // Trava de Imutabilidade do Código
-    if (
-      codigo_produto !== undefined &&
-      codigo_produto.trim() !== produtoExistente.codigo_produto
-    ) {
-      return res
-        .status(400)
-        .json({
-          erro: "O Código do Produto é imutável e não pode ser alterado.",
-        });
     }
 
     // Limpeza de dados
@@ -186,9 +168,6 @@ const atualizarProduto = async (req, res) => {
     if (preco_custo !== undefined)
       updateData.preco_custo =
         preco_custo === null ? null : parseFloat(preco_custo);
-    if (margem_lucro !== undefined)
-      updateData.margem_lucro =
-        margem_lucro === null ? null : parseFloat(margem_lucro);
 
     // Resolvendo chaves estrangeiras
     // Categoria
@@ -200,44 +179,6 @@ const atualizarProduto = async (req, res) => {
       if (!catDB)
         catDB = await prisma.categoria.create({ data: { nome: catLimpa } });
       updateData.fk_categoria_id = catDB.id_categoria;
-    }
-
-    // Marca e Modelo
-    if (nome_marca !== undefined || nome_modelo !== undefined) {
-      // Pega o que o usuário mandou, ou mantém o que já tava no banco se ele não mandou
-      const marcaFinal =
-        nome_marca !== undefined
-          ? nome_marca.trim().toUpperCase()
-          : produtoExistente.modelo
-            ? produtoExistente.modelo.marca.nome
-            : null;
-
-      const modeloFinal =
-        nome_modelo !== undefined
-          ? nome_modelo.trim().toUpperCase()
-          : produtoExistente.modelo
-            ? produtoExistente.modelo.nome
-            : null;
-
-      if (marcaFinal && modeloFinal) {
-        let marcaDB = await prisma.marca.findUnique({
-          where: { nome: marcaFinal },
-        });
-        if (!marcaDB)
-          marcaDB = await prisma.marca.create({ data: { nome: marcaFinal } });
-
-        let modeloDB = await prisma.modelo.findFirst({
-          where: { nome: modeloFinal, fk_marca_id: marcaDB.id_marca },
-        });
-        if (!modeloDB) {
-          modeloDB = await prisma.modelo.create({
-            data: { nome: modeloFinal, fk_marca_id: marcaDB.id_marca },
-          });
-        }
-
-        updateData.fk_modelo_id = modeloDB.id_modelo;
-        updateData.nome = `${marcaFinal} ${modeloFinal}`; // Recalcula o nome do produto
-      }
     }
 
     // Atualização no banco de dados
@@ -258,11 +199,9 @@ const atualizarProduto = async (req, res) => {
     console.error("Erro ao atualizar produto:", error);
 
     if (error.code === "P2025") {
-      return res
-        .status(404)
-        .json({
-          erro: "Produto não encontrado na base de dados para atualização.",
-        });
+      return res.status(404).json({
+        erro: "Produto não encontrado na base de dados para atualização.",
+      });
     }
 
     return res
