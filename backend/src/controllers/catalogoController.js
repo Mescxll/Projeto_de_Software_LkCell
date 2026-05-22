@@ -3,7 +3,6 @@ const prisma = require("../lib/prisma");
 
 const listarCategorias = async (req, res) => {
   try {
-
     const { search } = req.query;
 
     const categorias = await prisma.categoria.findMany({
@@ -15,6 +14,7 @@ const listarCategorias = async (req, res) => {
             },
           }
         : {},
+      distinct: ["nome"],
       orderBy: {
         nome: "asc",
       },
@@ -22,9 +22,7 @@ const listarCategorias = async (req, res) => {
     });
 
     return res.status(200).json(categorias);
-
   } catch (error) {
-
     console.error("Erro ao buscar categorias:", error);
 
     return res.status(500).json({
@@ -35,7 +33,6 @@ const listarCategorias = async (req, res) => {
 
 const listarMarcas = async (req, res) => {
   try {
-
     const { search } = req.query;
 
     const marcas = await prisma.marca.findMany({
@@ -47,6 +44,7 @@ const listarMarcas = async (req, res) => {
             },
           }
         : {},
+      distinct: ["nome"],
       orderBy: {
         nome: "asc",
       },
@@ -54,9 +52,7 @@ const listarMarcas = async (req, res) => {
     });
 
     return res.status(200).json(marcas);
-
   } catch (error) {
-
     console.error("Erro ao buscar marcas:", error);
 
     return res.status(500).json({
@@ -84,6 +80,7 @@ const listarModelos = async (req, res) => {
 
     const modelos = await prisma.modelo.findMany({
       where: filtro,
+      distinct: ["nome", "fk_marca_id"],
       include: {
         marca: true,
       },
@@ -94,7 +91,6 @@ const listarModelos = async (req, res) => {
     });
 
     return res.status(200).json(modelos);
-
   } catch (error) {
     console.error("Erro ao buscar modelos:", error);
 
@@ -105,7 +101,7 @@ const listarModelos = async (req, res) => {
 };
 
 module.exports = {
-    listarCategorias,
-    listarMarcas, 
-    listarModelos,
+  listarCategorias,
+  listarMarcas,
+  listarModelos,
 };
