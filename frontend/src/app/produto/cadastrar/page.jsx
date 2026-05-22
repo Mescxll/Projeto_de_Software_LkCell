@@ -220,10 +220,11 @@ export default function CadastroProduto() {
                 <textarea
                   rows={4}
                   name="descricao"
+                  maxLength={100}
                   value={form.descricao}
                   onChange={handleChange}
                   className="w-full pl-10 pr-4 pt-4 pb-3 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-                  placeholder="Digite a descrição do produto..."
+                  placeholder="Digite a descrição do produto (até 100 caracteres)..."
                 />
               </div>
             </div>
