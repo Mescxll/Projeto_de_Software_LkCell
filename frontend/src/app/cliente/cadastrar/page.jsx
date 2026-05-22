@@ -56,7 +56,7 @@ export default function CadastroCliente() {
               {/* Título */}
               <div className="mb-6">
                 <h1 className="text-xl font-bold text-gray-800">
-                  Cadastro de Cliente
+                  Cadastrar Cliente
                 </h1>
                 <p className="text-xs text-gray-400 mt-1">
                   Preencha as informações do novo cliente

@@ -2,7 +2,7 @@
 "use client";
 import { useRouter, useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { useAtualizarFuncionario } from "@/hooks/funcionario/useAtualizarFuncionario"
+import { useAtualizarFuncionario } from "@/hooks/funcionario/useAtualizarFuncionario";
 import {
   ArrowLeft,
   User,
@@ -31,8 +31,8 @@ export default function AtualizarFuncionario() {
     setForm,
     handleChange,
     handleSalvar,
-  } = useAtualizarFuncionario(id);  
-  
+  } = useAtualizarFuncionario(id);
+
   const inputIconClass =
     "w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
 
@@ -60,19 +60,18 @@ export default function AtualizarFuncionario() {
 
         {/* Centro */}
         <div className="flex flex-col items-center">
-          <div className="w-full max-w-xl">
-            {/* Título */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">
-                Atualizar Funcionário
-              </h1>
-              <p className="text-sm text-gray-400 mt-1">
-                Edite as informações do funcionário
-              </p>
-            </div>
-
+          <div className="w-full max-w-lg">
             {/* Formulário */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+              {/* Título */}
+              <div className="mb-6">
+                <h1 className="text-xl font-bold text-gray-800">
+                  Atualizar Funcionário
+                </h1>
+                <p className="text-xs text-gray-400 mt-1">
+                  Edite as informações do funcionário
+                </p>
+              </div>
               {/* ID (somente leitura) */}
               <div className="mb-4">
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">

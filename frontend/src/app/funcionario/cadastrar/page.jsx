@@ -111,7 +111,7 @@ export default function CadastrarFuncionario() {
                     dropdownMode="select"
                     yearDropdownItemNumber={100}
                     scrollableYearDropdown
-                    maxDate={new Date()} // Trava de engenharia: Sem viajantes do tempo!
+                    maxDate={new Date()} // Sem viajantes do tempo
                   />
                 </div>
               </div>

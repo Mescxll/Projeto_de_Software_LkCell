@@ -2,7 +2,7 @@
 "use client";
 import { useRouter, useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { useAtualizarCliente } from "@/hooks/cliente/useAtualizarCliente"
+import { useAtualizarCliente } from "@/hooks/cliente/useAtualizarCliente";
 import {
   ArrowLeft,
   FileText,
@@ -19,11 +19,11 @@ import {
 export default function AtualizarCliente() {
   const router = useRouter();
   const { uuid } = useParams();
-  
+
   // Extraindo a lógica em uma linha
   const {
     loading,
-    modal,    
+    modal,
     modalErro,
     setModalErro,
     erroMsg,
@@ -33,7 +33,6 @@ export default function AtualizarCliente() {
     handleChange,
     handleSalvar,
   } = useAtualizarCliente(uuid);
-  
 
   const inputClass =
     "w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
@@ -63,179 +62,179 @@ export default function AtualizarCliente() {
         </button>
         <div className="flex flex-col items-center">
           <div className="w-full max-w-xl">
-            {/* Título */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">
-                Atualizar Cliente
-              </h1>
-              <p className="text-sm text-gray-400 mt-1">
-                Edite as informações do cliente
-              </p>
-            </div>
-          </div>
-          {/* Formulário */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-xl p-8">
-            {/* CPF/CNPJ (somente leitura) */}
-            <div className="mb-4">
-              <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                {tipo === "FISICA" ? "CPF" : "CNPJ"}{" "}
-                <span className="text-red-400">*</span>
-              </label>
-              <div className="relative">
-                <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  value={form.documento}
-                  disabled
-                  className="w-full pl-9 pr-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed"
-                />
+            {/* Formulário */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-xl p-8">
+              {/* Título */}
+              <div className="mb-6">
+                <h1 className="text-xl font-bold text-gray-800">
+                  Atualizar Cliente
+                </h1>
+                <p className="text-xs text-gray-400 mt-1">
+                  Edite as informações do cliente
+                </p>
               </div>
-            </div>
-
-            {/* Nome */}
-            <div className="mb-4">
-              <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                Nome Completo <span className="text-red-400">*</span>
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  name="nome"
-                  value={form.nome}
-                  onChange={handleChange}
-                  placeholder="Digite o nome completo"
-                  className={inputIconClass}
-                />
-              </div>
-            </div>
-
-            {/* Telefone */}
-            <div className="mb-4">
-              <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                Telefone <span className="text-red-400">*</span>
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  name="telefone"
-                  value={form.telefone}
-                  onChange={handleChange}
-                  placeholder="DDD + Número (Ex: 77999999999)"
-                  className={inputIconClass}
-                />
-              </div>
-            </div>
-            {/* E-mail */}
-            <div className="mb-4">
-              <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                E-mail
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="cliente@exemplo.com"
-                  className={inputIconClass}
-                />
-              </div>
-            </div>
-            {/* Endereço */}
-            <div className="mb-6">
-              <label className="text-xs font-semibold text-gray-600 mb-2 block">
-                Endereço
-              </label>
-              <div className="flex flex-col gap-3">
+              {/* CPF/CNPJ (somente leitura) */}
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                  {tipo === "FISICA" ? "CPF" : "CNPJ"}{" "}
+                  <span className="text-red-400">*</span>
+                </label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
-                    name="logradouro"
-                    value={form.logradouro}
+                    value={form.documento}
+                    disabled
+                    className="w-full pl-9 pr-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* Nome */}
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                  Nome Completo <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    name="nome"
+                    value={form.nome}
                     onChange={handleChange}
-                    placeholder="Logradouro"
+                    placeholder="Digite o nome completo"
                     className={inputIconClass}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+              </div>
+
+              {/* Telefone */}
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                  Telefone <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
-                    name="numero"
-                    value={form.numero}
+                    name="telefone"
+                    value={form.telefone}
                     onChange={handleChange}
-                    placeholder="Número"
-                    className={inputClass}
-                  />
-                  <input
-                    type="text"
-                    name="bairro"
-                    value={form.bairro}
-                    onChange={handleChange}
-                    placeholder="Bairro"
-                    className={inputClass}
+                    placeholder="DDD + Número (Ex: 77999999999)"
+                    className={inputIconClass}
                   />
                 </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="col-span-2">
+              </div>
+              {/* E-mail */}
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                  E-mail
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    placeholder="cliente@exemplo.com"
+                    className={inputIconClass}
+                  />
+                </div>
+              </div>
+              {/* Endereço */}
+              <div className="mb-6">
+                <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                  Endereço
+                </label>
+                <div className="flex flex-col gap-3">
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
-                      name="cidade"
-                      value={form.cidade}
+                      name="logradouro"
+                      value={form.logradouro}
                       onChange={handleChange}
-                      placeholder="Cidade"
+                      placeholder="Logradouro"
+                      className={inputIconClass}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      name="numero"
+                      value={form.numero}
+                      onChange={handleChange}
+                      placeholder="Número"
                       className={inputClass}
+                    />
+                    <input
+                      type="text"
+                      name="bairro"
+                      value={form.bairro}
+                      onChange={handleChange}
+                      placeholder="Bairro"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <input
+                        type="text"
+                        name="cidade"
+                        value={form.cidade}
+                        onChange={handleChange}
+                        placeholder="Cidade"
+                        className={inputClass}
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      name="uf"
+                      value={form.uf}
+                      onChange={handleChange}
+                      placeholder="UF"
+                      maxLength={2}
+                      className={`${inputClass} uppercase`}
                     />
                   </div>
                   <input
                     type="text"
-                    name="uf"
-                    value={form.uf}
+                    name="cep"
+                    value={form.cep}
                     onChange={handleChange}
-                    placeholder="UF"
-                    maxLength={2}
-                    className={`${inputClass} uppercase`}
+                    placeholder="CEP (00000-000)"
+                    className={inputClass}
                   />
                 </div>
-                <input
-                  type="text"
-                  name="cep"
-                  value={form.cep}
-                  onChange={handleChange}
-                  placeholder="CEP (00000-000)"
-                  className={inputClass}
-                />
               </div>
-            </div>
 
-            {/* Botões */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => router.push("/cliente/gerenciar")}
-                className="flex-1 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSalvar}
-                disabled={isSubmitting}
-                className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md
-                  ${isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}
-                `}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Salvando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" /> Salvar
-                  </>
-                )}
-              </button>
+              {/* Botões */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => router.push("/cliente/gerenciar")}
+                  className="flex-1 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSalvar}
+                  disabled={isSubmitting}
+                  className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md
+                    ${isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}
+                  `}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" /> Salvar
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
