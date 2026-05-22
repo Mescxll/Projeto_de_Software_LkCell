@@ -23,7 +23,7 @@ export default function CadastroFornecedor() {
     form,
     modal,
     modalErro,
-    setModalErro,
+    fecharModalErro,
     erroMsg,
     isSubmitting,
     handleChange,
@@ -118,7 +118,7 @@ export default function CadastroFornecedor() {
                       <input
                         type="text"
                         name="politica_preco"
-                        placeholder="0.00"
+                        placeholder="0,00"
                         value={form.politica_preco}
                         onChange={handleChange}
                         className={inputClass}
@@ -215,7 +215,7 @@ export default function CadastroFornecedor() {
               onClick={() => router.push("/fornecedor/gerenciar")}
               className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold text-sm transition-all"
             >
-              Ir para gerenciamento
+              Fechar
             </button>
           </div>
         </div>
@@ -232,7 +232,7 @@ export default function CadastroFornecedor() {
             <h2 className="text-lg font-bold text-gray-800 mb-1">Erro</h2>
             <p className="text-xs text-gray-400 mb-6">{erroMsg}</p>
             <button
-              onClick={() => setModalErro(false)}
+              onClick={fecharModalErro}
               className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold text-sm transition-all"
             >
               Fechar

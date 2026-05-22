@@ -32,6 +32,17 @@ export function useCadastrarFornecedor() {
       .slice(0, 15);
   };
 
+  const formatarPrecoReal = (value) => {
+    const somenteNumeros = value.replace(/[^\d,]/g, "");
+    const partes = somenteNumeros.split(",");
+
+    if (partes.length <= 1) {
+      return somenteNumeros;
+    }
+
+    return `${partes[0]},${partes.slice(1).join("")}`;
+  };
+
   const handleChange = (e) => {
     const { name, value: rawValue } = e.target;
     let value = rawValue;
@@ -45,7 +56,7 @@ export function useCadastrarFornecedor() {
     }
 
     if (name === "politica_preco") {
-      value = rawValue.replace(/[^\d.,]/g, "");
+      value = formatarPrecoReal(rawValue);
     }
 
     if (name === "prazo_entrega") {
@@ -61,7 +72,7 @@ export function useCadastrarFornecedor() {
     const politicaPrecoLimpa = form.politica_preco.replace(/,/g, ".");
 
     if (!cnpjLimpo || cnpjLimpo.length !== 14) {
-      setErroMsg("O CNPJ deve ter 14 dígitos.");
+      setErroMsg("O CNPJ deve ter 14 dígitos e é um campo obrigatório.");
       setModalErro(true);
       return;
     }
@@ -73,7 +84,7 @@ export function useCadastrarFornecedor() {
     }
 
     if (!politicaPrecoLimpa || Number.isNaN(Number(politicaPrecoLimpa))) {
-      setErroMsg("A política de preço precisa ser um valor válido.");
+      setErroMsg("A política de preço é um campo obrigatório.");
       setModalErro(true);
       return;
     }
@@ -116,11 +127,17 @@ export function useCadastrarFornecedor() {
     }
   };
 
+  const fecharModalErro = () => {
+    setModalErro(false);
+    setErroMsg("");
+  };
+
   return {
     form,
     setForm,
     modal,
     modalErro,
+    fecharModalErro,
     erroMsg,
     isSubmitting,
     handleChange,
