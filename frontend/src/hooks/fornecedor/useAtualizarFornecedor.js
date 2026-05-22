@@ -34,7 +34,24 @@ export function useAtualizarFornecedor(uuid) {
   };
 
   const formatPrice = (value) => {
-    return value?.toString().replace(/[^\d.,]/g, "");
+    const somenteNumeros = value?.toString().replace(/[^\d,]/g, "") || "";
+    const partes = somenteNumeros.split(",");
+
+    if (partes.length <= 1) {
+      return somenteNumeros;
+    }
+
+    return `${partes[0]},${partes.slice(1).join("")}`;
+  };
+
+  const formatPriceBR = (value) => {
+    if (value === null || value === undefined || value === "") return "";
+
+    const numero = Number(String(value).replace(/\./g, "").replace(",", "."));
+
+    if (!Number.isFinite(numero)) return "";
+
+    return numero.toFixed(2).replace(".", ",");
   };
 
   useEffect(() => {
@@ -43,12 +60,13 @@ export function useAtualizarFornecedor(uuid) {
     fetch(`http://localhost:3000/api/fornecedores/${uuid}`)
       .then((res) => res.json())
       .then((data) => {
-        const telefone = data.telefone_fornecedor?.[0]?.telefone_fornecedor || "";
+        const telefone =
+          data.telefone_fornecedor?.[0]?.telefone_fornecedor || "";
         setForm({
           cnpj: formatCNPJ(data.cnpj || ""),
           razao_social: data.razao_social || "",
           email: data.email || "",
-          politica_preco: data.politica_preco?.toString() || "",
+          politica_preco: formatPriceBR(data.politica_preco),
           prazo_entrega: data.prazo_entrega?.toString() || "",
           telefone: formatPhone(telefone),
         });
@@ -107,10 +125,13 @@ export function useAtualizarFornecedor(uuid) {
     setIsSubmitting(true);
 
     const body = {
-      razao_social: form.razao_social?.trim() || undefined,
       email: form.email.trim() || null,
-      politica_preco: form.politica_preco ? Number(politicaPrecoLimpa) : undefined,
-      prazo_entrega: form.prazo_entrega ? Number(form.prazo_entrega) : undefined,
+      politica_preco: form.politica_preco
+        ? Number(politicaPrecoLimpa)
+        : undefined,
+      prazo_entrega: form.prazo_entrega
+        ? Number(form.prazo_entrega)
+        : undefined,
     };
 
     if (telefoneLimpo) {
@@ -118,11 +139,14 @@ export function useAtualizarFornecedor(uuid) {
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/api/fornecedores/${uuid}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(
+        `http://localhost:3000/api/fornecedores/${uuid}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
 
       if (res.ok) {
         setModal(true);

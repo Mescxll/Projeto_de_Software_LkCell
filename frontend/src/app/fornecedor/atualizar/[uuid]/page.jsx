@@ -1,3 +1,4 @@
+// Tela de Atualização de Fornecedores
 "use client";
 import { useRouter, useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -32,7 +33,7 @@ export default function AtualizarFornecedor() {
   } = useAtualizarFornecedor(uuid);
 
   const inputClass =
-    "w-full pl-12 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
+    "w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
 
   if (loading) {
     return (
@@ -74,12 +75,12 @@ export default function AtualizarFornecedor() {
                     CNPJ
                   </label>
                   <div className="relative">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       value={form.cnpj}
                       disabled
-                      className="w-full pl-12 pr-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed"
+                      className="w-full pl-9 pr-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -89,13 +90,13 @@ export default function AtualizarFornecedor() {
                     Razão Social
                   </label>
                   <div className="relative">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       name="razao_social"
                       value={form.razao_social}
-                      onChange={handleChange}
-                      className={inputClass}
+                      disabled
+                      className="w-full pl-9 pr-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -105,7 +106,7 @@ export default function AtualizarFornecedor() {
                     Email
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="email"
                       name="email"
@@ -122,7 +123,7 @@ export default function AtualizarFornecedor() {
                       Política de Preço
                     </label>
                     <div className="relative">
-                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
                         type="text"
                         name="politica_preco"
@@ -137,7 +138,7 @@ export default function AtualizarFornecedor() {
                       Prazo de Entrega
                     </label>
                     <div className="relative">
-                      <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
                         type="number"
                         name="prazo_entrega"
@@ -158,7 +159,7 @@ export default function AtualizarFornecedor() {
                     Telefone
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       name="telefone"
@@ -220,7 +221,7 @@ export default function AtualizarFornecedor() {
               onClick={() => router.push("/fornecedor/gerenciar")}
               className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold text-sm transition-all"
             >
-              Voltar para gerenciamento
+              Fechar
             </button>
           </div>
         </div>
