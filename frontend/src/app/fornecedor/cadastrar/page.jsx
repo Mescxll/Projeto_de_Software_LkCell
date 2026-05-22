@@ -21,18 +21,17 @@ export default function CadastroFornecedor() {
   const router = useRouter();
   const {
     form,
-    setForm,
     modal,
     modalErro,
+    setModalErro,
     erroMsg,
     isSubmitting,
     handleChange,
     handleSubmit,
-    setModal,
   } = useCadastrarFornecedor();
 
   const inputClass =
-    "w-full pl-12 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
+    "w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
 
   return (
     <>
@@ -63,7 +62,7 @@ export default function CadastroFornecedor() {
                     CNPJ <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       name="cnpj"
@@ -80,7 +79,7 @@ export default function CadastroFornecedor() {
                     Razão Social <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       name="razao_social"
@@ -97,7 +96,7 @@ export default function CadastroFornecedor() {
                     Email
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="email"
                       name="email"
@@ -115,7 +114,7 @@ export default function CadastroFornecedor() {
                       Política de Preço <span className="text-red-400">*</span>
                     </label>
                     <div className="relative">
-                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
                         type="text"
                         name="politica_preco"
@@ -131,7 +130,7 @@ export default function CadastroFornecedor() {
                       Prazo de Entrega
                     </label>
                     <div className="relative">
-                      <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
                         type="number"
                         name="prazo_entrega"
@@ -153,7 +152,7 @@ export default function CadastroFornecedor() {
                     Telefone <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       name="telefone"

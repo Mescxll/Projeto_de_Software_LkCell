@@ -28,7 +28,6 @@ export default function AtualizarFornecedor() {
     isSubmitting,
     handleChange,
     handleSalvar,
-    setModal,
     setModalErro,
   } = useAtualizarFornecedor(uuid);
 
