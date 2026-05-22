@@ -49,7 +49,7 @@ export default function CadastroFornecedor() {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
               <div className="mb-6">
                 <h1 className="text-xl font-bold text-gray-800">
-                  Cadastro de Fornecedor
+                  Cadastrar Fornecedor
                 </h1>
                 <p className="text-xs text-gray-400 mt-1">
                   Preencha os dados do novo fornecedor

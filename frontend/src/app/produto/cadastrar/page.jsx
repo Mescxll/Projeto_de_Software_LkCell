@@ -66,7 +66,7 @@ export default function CadastroProduto() {
             {/* Título */}
             <div className="mb-6">
               <h1 className="text-xl font-bold text-gray-800">
-                Cadastro de Produto
+                Cadastrar Produto
               </h1>
 
               <p className="text-xs text-gray-400 mt-1">

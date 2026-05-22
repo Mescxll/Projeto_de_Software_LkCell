@@ -61,7 +61,7 @@ export default function CadastrarFuncionario() {
               {/* Título */}
               <div className="mb-6">
                 <h1 className="text-xl font-bold text-gray-800">
-                  Cadastro de Funcionário
+                  Cadastrar Funcionário
                 </h1>
                 <p className="text-xs text-gray-400 mt-1">
                   Preencha as informações do novo funcionário
