@@ -10,7 +10,7 @@ export function useGerenciarFornecedor() {
   const [modalSucesso, setModalSucesso] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [fornecedorSelecionado, setFornecedorSelecionado] = useState(null);
-  
+
   const menuRef = useRef(null);
 
   // Busca Inicial
@@ -36,20 +36,22 @@ export function useGerenciarFornecedor() {
   const handleExcluir = async () => {
     if (!fornecedorSelecionado) return;
     setIsDeleting(true);
-    
+
     try {
-      await fetch(`http://localhost:3000/api/fornecedores/${fornecedorSelecionado.uuid}`, {
-        method: "DELETE",
-      });
-      
-      setFornecedores((prev) =>
-        prev.filter((f) => f.uuid !== fornecedorSelecionado.uuid)
+      await fetch(
+        `http://localhost:3000/api/fornecedores/${fornecedorSelecionado.uuid}`,
+        {
+          method: "DELETE",
+        },
       );
-      
+
+      setFornecedores((prev) =>
+        prev.filter((f) => f.uuid !== fornecedorSelecionado.uuid),
+      );
+
       setModalConfirmar(false);
       setMenuAberto(null);
       setModalSucesso(true);
-      
     } catch (error) {
       console.error("Erro ao excluir fornecedor:", error);
     } finally {
@@ -61,9 +63,7 @@ export function useGerenciarFornecedor() {
   const fornecedoresFiltrados = fornecedores.filter((f) => {
     const termo = busca.toLowerCase();
     return (
-      f.razao_social?.toLowerCase().includes(termo) ||
-      f.email?.toLowerCase().includes(termo) ||
-      f.cnpj?.includes(termo)
+      f.razao_social?.toLowerCase().includes(termo) || f.cnpj?.includes(termo)
     );
   });
 
