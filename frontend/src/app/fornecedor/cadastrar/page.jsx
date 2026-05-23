@@ -176,8 +176,8 @@ export default function CadastroFornecedor() {
                     disabled={isSubmitting}
                     className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md ${
                       isSubmitting
-                        ? "bg-blue-400 cursor-not-allowed"
-                        : "bg-blue-500 hover:bg-blue-600"
+                        ? "bg-green-400 cursor-not-allowed"
+                        : "bg-green-500 hover:bg-green-600"
                     }`}
                   >
                     {isSubmitting ? (
