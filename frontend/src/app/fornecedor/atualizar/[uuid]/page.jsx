@@ -72,7 +72,7 @@ export default function AtualizarFornecedor() {
               <div className="grid gap-4">
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    CNPJ
+                    CNPJ <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -87,7 +87,7 @@ export default function AtualizarFornecedor() {
 
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    Razão Social
+                    Razão Social <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -103,7 +103,10 @@ export default function AtualizarFornecedor() {
 
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    Email
+                    Email{" "}
+                    <span className="text-gray-400 font-normal">
+                      (opcional)
+                    </span>
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />

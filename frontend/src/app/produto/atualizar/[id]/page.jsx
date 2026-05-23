@@ -81,7 +81,7 @@ export default function AtualizarProduto() {
             {/* Código - somente leitura */}
             <div className="mb-4">
               <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                Código do Produto
+                Código do Produto <span className="text-red-400">*</span>
               </label>
               <div className="relative">
                 <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -133,7 +133,7 @@ export default function AtualizarProduto() {
               {/* Marca - somente leitura */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                  Marca
+                  Marca <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
                   <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -149,7 +149,7 @@ export default function AtualizarProduto() {
               {/* Modelo - somente leitura */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                  Modelo
+                  Modelo <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
                   <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
