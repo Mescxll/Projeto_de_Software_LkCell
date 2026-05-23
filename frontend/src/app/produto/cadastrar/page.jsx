@@ -338,6 +338,13 @@ export default function CadastroProduto() {
             {/* Botões */}
             <div className="flex gap-3">
               <button
+                onClick={() => router.push("/produto/gerenciar")}
+                className="px-6 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all"
+              >
+                Cancelar
+              </button>
+
+              <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md
@@ -356,16 +363,9 @@ export default function CadastroProduto() {
                 ) : (
                   <>
                     <Archive className="w-4 h-4" />
-                    Cadastrar Produto
+                    Cadastrar
                   </>
                 )}
-              </button>
-
-              <button
-                onClick={() => router.push("/produto/gerenciar")}
-                className="px-6 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all"
-              >
-                Cancelar
               </button>
             </div>
           </div>

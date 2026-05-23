@@ -2,7 +2,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { useCadastrarCliente } from "@/hooks/cliente/useCadastrarCliente"
+import { useCadastrarCliente } from "@/hooks/cliente/useCadastrarCliente";
 import {
   User,
   Building2,
@@ -19,7 +19,7 @@ import {
 
 export default function CadastroCliente() {
   const router = useRouter();
-  
+
   // Extraindo a lógica em uma linha
   const {
     tipo,
@@ -292,6 +292,12 @@ export default function CadastroCliente() {
               {/* Botões */}
               <div className="flex gap-3">
                 <button
+                  onClick={() => router.push("/cliente/gerenciar")}
+                  className="px-6 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
                   className={`flex-1 flex items-center justify-center gap-2 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md
@@ -305,15 +311,9 @@ export default function CadastroCliente() {
                     </>
                   ) : (
                     <>
-                      <UserPlus className="w-4 h-4" /> Cadastrar Cliente
+                      <UserPlus className="w-4 h-4" /> Cadastrar
                     </>
                   )}
-                </button>
-                <button
-                  onClick={() => router.push("/cliente/gerenciar")}
-                  className="px-6 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all"
-                >
-                  Cancelar
                 </button>
               </div>
             </div>
