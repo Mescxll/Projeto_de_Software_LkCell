@@ -1,4 +1,4 @@
-// Lógica da Tela de Cadastro de Produtos
+// Lógica da Tela de Cadastrar Produtos
 import { useState, useEffect, useRef } from "react";
 
 export function useCadastrarProduto() {

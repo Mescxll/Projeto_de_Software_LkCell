@@ -1,4 +1,4 @@
-// Lógica da Tela de Cadastro de Funcionários
+// Lógica da Tela de Cadastrar Funcionários
 import { useState } from "react";
 
 export function useCadastrarFuncionario() {

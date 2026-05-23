@@ -1,5 +1,4 @@
-// Lógica da Tela de Atualização de Produtos
-
+// Lógica da Tela de Atualizar Produtos
 import { useState, useEffect, useRef } from "react";
 
 export function useAtualizarProduto(id) {

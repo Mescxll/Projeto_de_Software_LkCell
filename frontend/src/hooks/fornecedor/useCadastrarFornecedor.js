@@ -1,3 +1,4 @@
+// Lógica da Tela de Cadastrar Fornecedores 
 import { useState } from "react";
 
 export function useCadastrarFornecedor() {
