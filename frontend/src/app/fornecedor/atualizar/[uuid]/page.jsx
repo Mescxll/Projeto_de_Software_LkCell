@@ -40,7 +40,7 @@ export default function AtualizarFornecedor() {
       <>
         <Navbar />
         <main className="min-h-screen bg-[#f4f6fb] flex items-center justify-center">
-          <p className="text-gray-400 text-sm">Carregando fornecedor...</p>
+          <p className="text-gray-400 text-sm">Carregando Fornecedor...</p>
         </main>
       </>
     );
