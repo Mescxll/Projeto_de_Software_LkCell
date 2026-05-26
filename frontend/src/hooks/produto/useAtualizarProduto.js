@@ -6,21 +6,27 @@ export function useAtualizarProduto(id) {
   const [modal, setModal] = useState(null);
   const [erroMsg, setErroMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [form, setForm] = useState({
     descricao: "",
     nome_categoria: "",
-    estoque_atual: "",
-    estoque_minimo: "",
-    estoque_ideal: "",
     preco_compra: "",
     preco_custo: "",
     preco_venda: "",
     margem_lucro: "",
   });
+
   const [infoSomenteLeitura, setInfoSomenteLeitura] = useState({
     codigo_produto: "",
     nome_marca: "",
     nome_modelo: "",
+  });
+
+  // Estoque é somente leitura — vem do último registro da tabela estoque
+  const [estoqueAtual, setEstoqueAtual] = useState({
+    estoque_atual: "-",
+    estoque_minimo: "-",
+    estoque_ideal: "-",
   });
 
   const dropdownRef = useRef(null);
@@ -28,11 +34,8 @@ export function useAtualizarProduto(id) {
 
   const formatarPrecoBrasil = (valor) => {
     if (valor === null || valor === undefined) return "";
-
     const numero = Number(String(valor).replace(/\./g, "").replace(",", "."));
-
     if (!Number.isFinite(numero)) return "";
-
     return numero.toFixed(2).replace(".", ",");
   };
 
@@ -53,6 +56,14 @@ export function useAtualizarProduto(id) {
           nome_modelo: data.modelo?.nome || "",
         });
 
+        // Pega o snapshot mais recente do estoque (take: 1 já vem do backend)
+        const ultimoEstoque = data.estoque?.[0];
+        setEstoqueAtual({
+          estoque_atual: ultimoEstoque?.estoque_atual ?? "-",
+          estoque_minimo: ultimoEstoque?.estoque_minimo ?? "-",
+          estoque_ideal: ultimoEstoque?.estoque_ideal ?? "-",
+        });
+
         const precoCusto = formatarPrecoBrasil(data.preco_custo);
         const precoVenda = formatarPrecoBrasil(data.preco_venda);
 
@@ -60,22 +71,18 @@ export function useAtualizarProduto(id) {
         const custo = converterPrecoBrasil(precoCusto);
         const venda = converterPrecoBrasil(precoVenda);
         if (custo && venda && custo > 0 && venda > 0) {
-          margem = (((venda - custo) / custo) * 100)
-            .toFixed(2)
-            .replace(".", ",");
+          margem = (((venda - custo) / custo) * 100).toFixed(2).replace(".", ",");
         }
 
         setForm({
           descricao: data.descricao || "",
           nome_categoria: data.categoria?.nome || "",
-          estoque_atual: data.estoque_atual?.toString() || "",
-          estoque_minimo: data.estoque_minimo?.toString() || "",
-          estoque_ideal: data.estoque_ideal?.toString() || "",
           preco_compra: formatarPrecoBrasil(data.preco_compra),
           preco_custo: precoCusto,
           preco_venda: precoVenda,
           margem_lucro: margem,
         });
+
         setLoading(false);
       })
       .catch((err) => {
@@ -120,11 +127,6 @@ export function useAtualizarProduto(id) {
       return;
     }
 
-    if (["estoque_atual", "estoque_minimo", "estoque_ideal"].includes(name)) {
-      setForm((prev) => ({ ...prev, [name]: value.replace(/\D/g, "") }));
-      return;
-    }
-
     setForm((prev) => ({ ...prev, [name]: value }));
 
     if (name === "nome_categoria") buscarCategorias(value);
@@ -152,15 +154,8 @@ export function useAtualizarProduto(id) {
   };
 
   const handleSalvar = async () => {
-    if (
-      !form.descricao.trim() ||
-      !form.nome_categoria.trim() ||
-      !form.estoque_atual ||
-      !form.preco_venda
-    ) {
-      setErroMsg(
-        "Preencha todos os campos obrigatórios: Descrição, Categoria, Estoque Atual e Preço Venda.",
-      );
+    if (!form.descricao.trim() || !form.nome_categoria.trim() || !form.preco_venda) {
+      setErroMsg("Preencha todos os campos obrigatórios: Descrição, Categoria e Preço Venda.");
       setModal("erro");
       return;
     }
@@ -173,9 +168,6 @@ export function useAtualizarProduto(id) {
         body: JSON.stringify({
           descricao: form.descricao,
           nome_categoria: form.nome_categoria,
-          estoque_atual: form.estoque_atual,
-          estoque_minimo: form.estoque_minimo || null,
-          estoque_ideal: form.estoque_ideal || null,
           preco_compra: converterPrecoBrasil(form.preco_compra),
           preco_custo: converterPrecoBrasil(form.preco_custo),
           preco_venda: converterPrecoBrasil(form.preco_venda),
@@ -204,6 +196,7 @@ export function useAtualizarProduto(id) {
     isSubmitting,
     form,
     infoSomenteLeitura,
+    estoqueAtual,
     dropdownRef,
     sugestoesCategoria,
     selecionarCategoria,

@@ -30,6 +30,7 @@ export default function AtualizarProduto() {
     isSubmitting,
     form,
     infoSomenteLeitura,
+    estoqueAtual,
     dropdownRef,
     sugestoesCategoria,
     selecionarCategoria,
@@ -37,12 +38,12 @@ export default function AtualizarProduto() {
     handleSalvar,
   } = useAtualizarProduto(id);
 
-  const inputClass =
-    "w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
   const inputIconClass =
     "w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
   const inputDisabledClass =
     "w-full pl-9 pr-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed";
+  const inputDisabledNoIconClass =
+    "w-full px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed";
 
   if (loading)
     return (
@@ -70,12 +71,8 @@ export default function AtualizarProduto() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full max-w-2xl p-8">
             {/* Título */}
             <div className="mb-6">
-              <h1 className="text-xl font-bold text-gray-800">
-                Atualizar Produto
-              </h1>
-              <p className="text-xs text-gray-400 mt-1">
-                Edite as informações do produto
-              </p>
+              <h1 className="text-xl font-bold text-gray-800">Atualizar Produto</h1>
+              <p className="text-xs text-gray-400 mt-1">Edite as informações do produto</p>
             </div>
 
             {/* Código - somente leitura */}
@@ -94,9 +91,8 @@ export default function AtualizarProduto() {
               </div>
             </div>
 
-            {/* Marca / Modelo - somente leitura | Categoria - editável */}
+            {/* Categoria editável | Marca e Modelo somente leitura */}
             <div className="grid grid-cols-3 gap-3 mb-4" ref={dropdownRef}>
-              {/* Categoria - editável */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                   Categoria <span className="text-red-400">*</span>
@@ -120,9 +116,7 @@ export default function AtualizarProduto() {
                           onClick={() => selecionarCategoria(c)}
                           className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b border-gray-100"
                         >
-                          <p className="text-sm font-medium text-gray-800">
-                            {c.nome}
-                          </p>
+                          <p className="text-sm font-medium text-gray-800">{c.nome}</p>
                         </button>
                       ))}
                     </div>
@@ -130,11 +124,8 @@ export default function AtualizarProduto() {
                 </div>
               </div>
 
-              {/* Marca - somente leitura */}
               <div>
-                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                  Marca <span className="text-red-400">*</span>
-                </label>
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Marca</label>
                 <div className="relative">
                   <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
@@ -146,11 +137,8 @@ export default function AtualizarProduto() {
                 </div>
               </div>
 
-              {/* Modelo - somente leitura */}
               <div>
-                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                  Modelo <span className="text-red-400">*</span>
-                </label>
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Modelo</label>
                 <div className="relative">
                   <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
@@ -182,28 +170,31 @@ export default function AtualizarProduto() {
               </div>
             </div>
 
-            {/* Estoque */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              {[
-                ["estoque_atual", "Estoque Atual", true],
-                ["estoque_minimo", "Estoque Mínimo", false],
-                ["estoque_ideal", "Estoque Ideal", false],
-              ].map(([name, label, required]) => (
-                <div key={name}>
-                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    {label}{" "}
-                    {required && <span className="text-red-400">*</span>}
-                  </label>
-                  <input
-                    type="text"
-                    name={name}
-                    value={form[name]}
-                    onChange={handleChange}
-                    inputMode="numeric"
-                    className={inputClass}
-                  />
-                </div>
-              ))}
+            {/* Estoque — somente leitura, gerenciado pelo módulo de estoque */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-gray-600">Estoque</label>
+                <span className="text-[10px] text-gray-400 italic">
+                  Gerenciado pelo módulo de estoque
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  ["Estoque Atual", estoqueAtual.estoque_atual],
+                  ["Estoque Mínimo", estoqueAtual.estoque_minimo],
+                  ["Estoque Ideal", estoqueAtual.estoque_ideal],
+                ].map(([label, valor]) => (
+                  <div key={label}>
+                    <label className="text-xs text-gray-500 mb-1 block">{label}</label>
+                    <input
+                      type="text"
+                      value={valor}
+                      disabled
+                      className={inputDisabledNoIconClass}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Preços */}
@@ -211,14 +202,12 @@ export default function AtualizarProduto() {
               {[
                 ["preco_compra", "Preço Compra"],
                 ["preco_custo", "Preço Custo"],
-                ["preco_venda", "Preço Venda", true],
+                ["preco_venda", "Preço Venda"],
               ].map(([name, label]) => (
                 <div key={name}>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                     {label}{" "}
-                    {name === "preco_venda" && (
-                      <span className="text-red-400">*</span>
-                    )}
+                    {name === "preco_venda" && <span className="text-red-400">*</span>}
                   </label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -268,13 +257,9 @@ export default function AtualizarProduto() {
                   ${isSubmitting ? "bg-blue-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
               >
                 {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Salvando...
-                  </>
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
                 ) : (
-                  <>
-                    <Save className="w-4 h-4" /> Salvar
-                  </>
+                  <><Save className="w-4 h-4" /> Salvar</>
                 )}
               </button>
             </div>
@@ -292,9 +277,7 @@ export default function AtualizarProduto() {
               </div>
             </div>
             <h2 className="text-lg font-bold text-gray-800 mb-1">Sucesso!</h2>
-            <p className="text-xs text-gray-400 mb-6">
-              Produto atualizado com sucesso.
-            </p>
+            <p className="text-xs text-gray-400 mb-6">Produto atualizado com sucesso.</p>
             <button
               onClick={() => router.push("/produto/gerenciar")}
               className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold text-sm transition-all"
@@ -314,9 +297,7 @@ export default function AtualizarProduto() {
                 <AlertTriangle className="w-9 h-9 text-red-500" />
               </div>
             </div>
-            <h2 className="text-lg font-bold text-gray-800 mb-1">
-              Erro ao atualizar
-            </h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-1">Erro ao atualizar</h2>
             <p className="text-xs text-gray-400 mb-6">{erroMsg}</p>
             <button
               onClick={() => setModal(null)}
