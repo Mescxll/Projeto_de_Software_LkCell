@@ -32,6 +32,7 @@ model compra {
   prazo_entrega               DateTime?     @db.Date
   fk_fornecedor_id_fornecedor Int?
   fornecedor                  fornecedor?   @relation(fields: [fk_fornecedor_id_fornecedor], references: [id_fornecedor], onDelete: Cascade, onUpdate: NoAction, map: "fk_compra_2")
+  estoque                       estoque[]
   itenscompra                 itenscompra[]
 }
 
@@ -92,13 +93,13 @@ model pessoajuridica {
 }
 
 model categoria {
-  id_categoria Int       @id @default(autoincrement())
-  nome         String    @unique @db.VarChar(50)
-  produto      produto[]
+  id_categoria          Int     @id @default(autoincrement())
+  nome                  String  @unique @db.VarChar(50)
+  produto               produto[]
 }
 
 model marca {
-  id_marca Int @id @default(autoincrement())
+  id_marca              Int     @id @default(autoincrement())
   nome String @unique
 
   modelos modelo[]
@@ -132,11 +133,9 @@ model produto {
   categoria categoria @relation(fields: [fk_categoria_id], references: [id_categoria], onUpdate: NoAction)
 
   modelo modelo? @relation(fields: [fk_modelo_id], references: [id_modelo], onUpdate: NoAction)
-
+  
   // Controle de Estoque
-  estoque_minimo Int?
-  estoque_ideal  Int?
-  estoque_atual  Int @default(0)
+  estoque estoque[]
 
   // Dados Financeiros
   preco_compra Decimal? @db.Decimal(10, 2)
@@ -174,8 +173,34 @@ model venda {
   fk_cliente_id_cliente         Int
   fk_funcionario_id_funcionario Int
   itensvenda                    itensvenda[]
+  estoque                       estoque[]
   cliente                       cliente               @relation(fields: [fk_cliente_id_cliente], references: [id_cliente], onDelete: Cascade, onUpdate: NoAction, map: "fk_venda_2")
   funcionario                   funcionario           @relation(fields: [fk_funcionario_id_funcionario], references: [id_funcionario], onDelete: Cascade, onUpdate: NoAction, map: "fk_venda_3")
+}
+
+model estoque {
+  id_estoque                    Int                   @id @default(autoincrement())
+  estoque_minimo                Int?
+  estoque_ideal                 Int?
+  estoque_atual                 Int                   @default(0)
+  tipo_movimento                tipo_movimento_enum
+  quantidade                    Int
+  data_hora                     DateTime              @default(now()) @db.Timestamp(6)
+
+  fk_produto_id                 Int
+  produto                       produto               @relation(fields: [fk_produto_id], references: [id_produto], onDelete: Cascade, onUpdate: NoAction)
+
+  fk_venda_id                   Int?
+  venda                         venda?                @relation(fields: [fk_venda_id], references: [id_venda], onDelete: SetNull, onUpdate: NoAction)
+
+  fk_compra_id                  Int?
+  compra                        compra?               @relation(fields: [fk_compra_id], references: [id_compra], onDelete: SetNull, onUpdate: NoAction)
+}
+
+enum tipo_movimento_enum {
+  ENTRADA   // via compra ou cadastro inicial
+  SAIDA     // via venda
+  AJUSTE    // para correções manuais futuras
 }
 
 enum status_pagamento_enum {
