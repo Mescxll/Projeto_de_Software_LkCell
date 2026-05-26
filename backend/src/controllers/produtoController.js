@@ -1,9 +1,6 @@
 // Controller Produto
 const prisma = require("../lib/prisma");
 
-const montarNomeMarca = (produto) => produto?.modelo?.marca?.nome || null;
-const montarNomeCategoria = (produto) => produto?.categoria?.nome || null;
-
 const cadastrarProduto = async (req, res) => {
   try {
     const {
@@ -21,13 +18,16 @@ const cadastrarProduto = async (req, res) => {
       margem_lucro,
     } = req.body;
 
-    //Limpeza de Dados
+    // Limpeza de dados
     const categoriaLimpa = nome_categoria.trim().toUpperCase();
     const marcaLimpa = nome_marca.trim().toUpperCase();
     const modeloLimpo = nome_modelo.trim().toUpperCase();
 
+    const estoqueAtualInt = parseInt(estoque_atual) || 0;
+    const estoqueMinimoInt = estoque_minimo ? parseInt(estoque_minimo) : null;
+    const estoqueIdealInt = estoque_ideal ? parseInt(estoque_ideal) : null;
+
     // Resolução de chaves estrangeiras
-    // Resolve a Categoria
     let categoriaDB = await prisma.categoria.findUnique({
       where: { nome: categoriaLimpa },
     });
@@ -37,7 +37,6 @@ const cadastrarProduto = async (req, res) => {
       });
     }
 
-    // Resolve a Marca
     let marcaDB = await prisma.marca.findUnique({
       where: { nome: marcaLimpa },
     });
@@ -45,49 +44,49 @@ const cadastrarProduto = async (req, res) => {
       marcaDB = await prisma.marca.create({ data: { nome: marcaLimpa } });
     }
 
-    // Resolve o Modelo atrelado à Marca
     let modeloDB = await prisma.modelo.findFirst({
-      where: {
-        nome: modeloLimpo,
-        fk_marca_id: marcaDB.id_marca,
-      },
+      where: { nome: modeloLimpo, fk_marca_id: marcaDB.id_marca },
     });
     if (!modeloDB) {
       modeloDB = await prisma.modelo.create({
-        data: {
-          nome: modeloLimpo,
-          fk_marca_id: marcaDB.id_marca,
-        },
+        data: { nome: modeloLimpo, fk_marca_id: marcaDB.id_marca },
       });
     }
 
-    // Inserção no banco de dados
-    const novoProduto = await prisma.produto.create({
-      data: {
-        codigo_produto: codigo_produto.trim(),
-        nome: `${marcaLimpa} ${modeloLimpo}`,
-        descricao: descricao.trim(),
-
-        fk_categoria_id: categoriaDB.id_categoria,
-        fk_modelo_id: modeloDB.id_modelo,
-
-        estoque_atual: parseInt(estoque_atual),
-        estoque_minimo: estoque_minimo ? parseInt(estoque_minimo) : null,
-        estoque_ideal: estoque_ideal ? parseInt(estoque_ideal) : null,
-
-        preco_venda: parseFloat(preco_venda),
-        preco_compra: preco_compra ? parseFloat(preco_compra) : null,
-        preco_custo: preco_custo ? parseFloat(preco_custo) : null,
-        margem_lucro: margem_lucro ? parseFloat(margem_lucro) : null,
-      },
-      include: {
-        categoria: true,
-        modelo: {
-          include: {
-            marca: true,
-          },
+    // Criação do produto + registro inicial de estoque em uma única transação
+    const [novoProduto] = await prisma.$transaction(async (tx) => {
+      const produto = await tx.produto.create({
+        data: {
+          codigo_produto: codigo_produto.trim(),
+          nome: `${marcaLimpa} ${modeloLimpo}`,
+          descricao: descricao.trim(),
+          fk_categoria_id: categoriaDB.id_categoria,
+          fk_modelo_id: modeloDB.id_modelo,
+          preco_venda: parseFloat(preco_venda),
+          preco_compra: preco_compra ? parseFloat(preco_compra) : null,
+          preco_custo: preco_custo ? parseFloat(preco_custo) : null,
+          margem_lucro: margem_lucro ? parseFloat(margem_lucro) : null,
         },
-      },
+        include: {
+          categoria: true,
+          modelo: { include: { marca: true } },
+        },
+      });
+
+      // Registro inicial de estoque — sempre gerado ao cadastrar um produto
+      await tx.estoque.create({
+        data: {
+          fk_produto_id: produto.id_produto,
+          tipo_movimento: "ENTRADA",
+          quantidade: estoqueAtualInt,
+          estoque_atual: estoqueAtualInt,
+          estoque_minimo: estoqueMinimoInt,
+          estoque_ideal: estoqueIdealInt,
+          observacao: "Cadastro inicial do produto",
+        },
+      });
+
+      return [produto];
     });
 
     return res.status(201).json({
@@ -97,7 +96,6 @@ const cadastrarProduto = async (req, res) => {
   } catch (error) {
     console.error("Erro ao cadastrar produto:", error);
 
-    // Tratamento de erro de código de produto duplicado (Unique Key)
     if (error.code === "P2002" && error.message.includes("codigo_produto")) {
       return res.status(409).json({
         erro: "Este Código de Produto já está cadastrado no sistema!",
@@ -116,16 +114,12 @@ const atualizarProduto = async (req, res) => {
     const {
       descricao,
       nome_categoria,
-      estoque_minimo,
-      estoque_ideal,
-      estoque_atual,
       preco_compra,
       preco_custo,
       preco_venda,
     } = req.body;
 
-    // Busca e Regras de Negócio
-    // Identifica se a busca é por ID numérico ou pelo Código do Produto
+    // Busca inteligente por ID numérico ou código do produto
     const isNumericId = /^\d+$/.test(String(uuid));
     const whereIdentifier = isNumericId
       ? { id_produto: parseInt(uuid) }
@@ -145,21 +139,9 @@ const atualizarProduto = async (req, res) => {
         .json({ erro: "Produto não encontrado na base de dados." });
     }
 
-    // Limpeza de dados
     const updateData = {};
 
     if (descricao !== undefined) updateData.descricao = descricao.trim();
-
-    // Numéricos
-    if (estoque_atual !== undefined)
-      updateData.estoque_atual = parseInt(estoque_atual);
-    if (estoque_minimo !== undefined)
-      updateData.estoque_minimo =
-        estoque_minimo === null ? null : parseInt(estoque_minimo);
-    if (estoque_ideal !== undefined)
-      updateData.estoque_ideal =
-        estoque_ideal === null ? null : parseInt(estoque_ideal);
-
     if (preco_venda !== undefined)
       updateData.preco_venda = parseFloat(preco_venda);
     if (preco_compra !== undefined)
@@ -169,7 +151,6 @@ const atualizarProduto = async (req, res) => {
       updateData.preco_custo =
         preco_custo === null ? null : parseFloat(preco_custo);
 
-    // Resolvendo chaves estrangeiras
     // Categoria
     if (nome_categoria !== undefined) {
       const catLimpa = nome_categoria.trim().toUpperCase();
@@ -181,7 +162,6 @@ const atualizarProduto = async (req, res) => {
       updateData.fk_categoria_id = catDB.id_categoria;
     }
 
-    // Atualização no banco de dados
     const produtoAtualizado = await prisma.produto.update({
       where: { id_produto: produtoExistente.id_produto },
       data: updateData,
@@ -214,7 +194,6 @@ const buscarProduto = async (req, res) => {
   try {
     const { uuid } = req.params;
 
-    // Verificar se mandaram um número (ID) ou um texto
     const isNumericId = /^\d+$/.test(String(uuid));
     const whereIdentifier = isNumericId
       ? { id_produto: parseInt(uuid) }
@@ -227,6 +206,11 @@ const buscarProduto = async (req, res) => {
         modelo: { include: { marca: true } },
         itenscompra: true,
         itensvenda: true,
+        // Retorna apenas o registro mais recente para saber o estoque atual
+        estoque: {
+          orderBy: { data_hora: "desc" },
+          take: 1,
+        },
       },
     });
 
@@ -244,18 +228,20 @@ const buscarProduto = async (req, res) => {
       .json({ erro: "Erro interno no servidor ao buscar o produto." });
   }
 };
+
 const buscarTodosProdutos = async (req, res) => {
   try {
     const produtos = await prisma.produto.findMany({
       include: {
         categoria: true,
-        modelo: {
-          include: {
-            marca: true,
-          },
-        },
+        modelo: { include: { marca: true } },
         itenscompra: true,
         itensvenda: true,
+        // Retorna apenas o registro mais recente de cada produto
+        estoque: {
+          orderBy: { data_hora: "desc" },
+          take: 1,
+        },
       },
     });
 
@@ -272,13 +258,11 @@ const deletarProduto = async (req, res) => {
   try {
     const { uuid } = req.params;
 
-    // Busca inteligente de novo pra saber quem a gente vai apagar
     const isNumericId = /^\d+$/.test(String(uuid));
     const whereIdentifier = isNumericId
       ? { id_produto: parseInt(uuid) }
       : { codigo_produto: uuid };
 
-    // A marreta cai direto aqui
     await prisma.produto.delete({
       where: whereIdentifier,
     });
@@ -287,14 +271,12 @@ const deletarProduto = async (req, res) => {
   } catch (error) {
     console.error("Erro ao deletar produto:", error);
 
-    // Caso produto não seja encontrado
     if (error.code === "P2025") {
       return res
         .status(404)
         .json({ erro: "Produto não encontrado na base de dados." });
     }
 
-    // Trava de segurança pra chaves estrangeiras
     if (error.code === "P2003") {
       return res.status(409).json({
         erro: "Não é possível excluir o produto pois existem compras ou vendas vinculadas a ele.",
@@ -312,6 +294,5 @@ module.exports = {
   cadastrarProduto,
   atualizarProduto,
   buscarProduto,
-  buscarTodosProdutos,
   deletarProduto,
 };
