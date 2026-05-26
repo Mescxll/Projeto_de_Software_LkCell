@@ -186,6 +186,7 @@ model estoque {
   tipo_movimento                tipo_movimento_enum
   quantidade                    Int
   data_hora                     DateTime              @default(now()) @db.Timestamp(6)
+  observacao                    String?               @db.VarChar(200)
 
   fk_produto_id                 Int
   produto                       produto               @relation(fields: [fk_produto_id], references: [id_produto], onDelete: Cascade, onUpdate: NoAction)
