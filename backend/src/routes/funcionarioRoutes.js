@@ -7,19 +7,15 @@ const validarBuscarFuncionario = require("../middlewares/funcionario/validarBusc
 const validarAtualizarFuncionario = require("../middlewares/funcionario/validarAtualizarFuncionario");
 const validarDeletarFuncionario = require("../middlewares/funcionario/validarDeletarFuncionario");
 
-// Criar
+// Criar Funcionário
 router.post('/', validarCadastrarFuncionario, funcionarioController.cadastrarFuncionario);
-
-// Buscar (tudo, por nome ou por id)
+// Buscar Funcionário (tudo, por nome ou por id)
 router.get("/:id", validarBuscarFuncionario, funcionarioController.buscarFuncionario);
-
-// Rota GET para buscar todos os funcionários
+// Rota GET para buscar todos os Funcionários
 router.get("/", funcionarioController.buscarTodosFuncionarios);
-
-// Atualizar
+// Atualizar Funcionário 
 router.put('/:id', validarAtualizarFuncionario, funcionarioController.atualizarFuncionario);
-
-// Deletar
+// Deletar Funcionário
 router.delete('/:id', validarDeletarFuncionario, funcionarioController.deletarFuncionario);
 
 module.exports = router;

@@ -13,16 +13,12 @@ const validarDeletarFornecedor = require("../middlewares/fornecedor/validarDelet
 
 // Cadastra um novo fornecedor (POST)
 router.post("/", validarCadastrarFornecedor, fornecedorController.cadastrarFornecedor);
-
 // Busca todos os fornecedores (GET) 
 router.get("/", fornecedorController.buscarTodosFornecedores);
-
 // Busca fornecedor específico pelo UUID (GET)
 router.get("/:uuid", validarBuscarFornecedor, fornecedorController.buscarFornecedor);
-
 // Atualiza os dados de um fornecedor (PUT)
 router.put("/:uuid", validarAtualizarFornecedor, fornecedorController.atualizarFornecedor);
-
 // Deleta um fornecedor do sistema (DELETE)
 router.delete("/:uuid", validarDeletarFornecedor, fornecedorController.deletarFornecedor);
 
