@@ -11,25 +11,7 @@ const cadastrarVenda = async (req, res) => {
       itens,
     } = req.body;
 
-    //  Validações básicas 
-    if (!status_pagamento) {
-      return res.status(400).json({ erro: "Status de pagamento é obrigatório." });
-    }
-    if (!fk_funcionario_id_funcionario) {
-      return res.status(400).json({ erro: "Funcionário é obrigatório." });
-    }
-    if (!itens || !Array.isArray(itens) || itens.length === 0) {
-      return res.status(400).json({ erro: "A venda deve conter pelo menos um produto." });
-    }
-    for (const item of itens) {
-      if (!item.fk_produto_id_produto || !item.quantidade_vendida || item.quantidade_vendida <= 0) {
-        return res.status(400).json({
-          erro: "Cada item deve ter um produto e uma quantidade válida.",
-        });
-      }
-    }
-
-    //  Busca todos os produtos e seus estoques atuais 
+    // Busca todos os produtos e seus estoques atuais 
     const ids = itens.map((i) => i.fk_produto_id_produto);
 
     const produtos = await prisma.produto.findMany({
@@ -42,18 +24,16 @@ const cadastrarVenda = async (req, res) => {
       },
     });
 
-    // Verifica se todos os produtos existem
     if (produtos.length !== ids.length) {
       return res.status(404).json({ erro: "Um ou mais produtos não foram encontrados." });
     }
 
-    // Monta mapa para acesso rápido: id_produto → produto
     const mapaProdutos = {};
     for (const p of produtos) {
       mapaProdutos[p.id_produto] = p;
     }
 
-    //  Verifica estoque suficiente para cada item 
+    // ── Verifica estoque suficiente para cada item ──────────
     for (const item of itens) {
       const produto = mapaProdutos[item.fk_produto_id_produto];
       const ultimoEstoque = produto.estoque[0];
@@ -68,33 +48,31 @@ const cadastrarVenda = async (req, res) => {
 
     // Tudo válido — executa em transação 
     const novaVenda = await prisma.$transaction(async (tx) => {
-      //  Calcula valor total da venda
+      // Calcula valor total
       let valorTotal = 0;
       for (const item of itens) {
-        const produto = mapaProdutos[item.fk_produto_id_produto];
-        valorTotal += Number(produto.preco_venda) * item.quantidade_vendida;
+        valorTotal += Number(mapaProdutos[item.fk_produto_id_produto].preco_venda) * item.quantidade_vendida;
       }
 
-      // Cria a venda
+      // Cria a venda — status_venda começa sempre como ATIVA
       const venda = await tx.venda.create({
         data: {
-          data_hora: new Date(),                           // sistema define automaticamente
-          valor_total: valorTotal,                         // calculado pelo sistema
+          data_hora: new Date(),
+          valor_total: valorTotal,
           status_pagamento,
+          status_venda: "ATIVA",
           data_vencimento: data_vencimento ? new Date(data_vencimento) : null,
           fk_cliente_id_cliente: fk_cliente_id_cliente || null,
           fk_funcionario_id_funcionario,
         },
       });
 
-      // Cria os itens da venda + registro de SAIDA no estoque
+      // Cria itens + registro SAIDA no estoque
       for (const item of itens) {
         const produto = mapaProdutos[item.fk_produto_id_produto];
         const ultimoEstoque = produto.estoque[0];
-        const estoqueAnterior = ultimoEstoque?.estoque_atual ?? 0;
-        const novoEstoqueAtual = estoqueAnterior - item.quantidade_vendida;
+        const novoEstoqueAtual = (ultimoEstoque?.estoque_atual ?? 0) - item.quantidade_vendida;
 
-        //  Item da venda — preco_unitario vem do preco_venda do produto
         await tx.itensvenda.create({
           data: {
             fk_venda_id_venda: venda.id_venda,
@@ -104,7 +82,6 @@ const cadastrarVenda = async (req, res) => {
           },
         });
 
-        // Registro de SAIDA no estoque
         await tx.estoque.create({
           data: {
             fk_produto_id: item.fk_produto_id_produto,
@@ -118,15 +95,12 @@ const cadastrarVenda = async (req, res) => {
         });
       }
 
-      // 4. Retorna a venda com todos os dados
       return tx.venda.findUnique({
         where: { id_venda: venda.id_venda },
         include: {
           cliente: true,
           funcionario: true,
-          itensvenda: {
-            include: { produto: true },
-          },
+          itensvenda: { include: { produto: true } },
         },
       });
     });
@@ -143,38 +117,29 @@ const cadastrarVenda = async (req, res) => {
 
 const buscarTodasVendas = async (req, res) => {
   try {
-    const { cliente, funcionario, status, data_inicio, data_fim } = req.query;
+    const { cliente, funcionario, status_pagamento, status_venda, data_inicio, data_fim } = req.query;
 
     const where = {};
 
-    // Filtro por status de pagamento
-    if (status) {
-      where.status_pagamento = status;
-    }
+    if (status_pagamento) where.status_pagamento = status_pagamento;
+    if (status_venda)     where.status_venda     = status_venda;
 
-    // Filtro por intervalo de data
     if (data_inicio || data_fim) {
       where.data_hora = {};
       if (data_inicio) where.data_hora.gte = new Date(data_inicio);
       if (data_fim) {
-        // Inclui o dia inteiro da data_fim
         const fim = new Date(data_fim);
         fim.setHours(23, 59, 59, 999);
         where.data_hora.lte = fim;
       }
     }
 
-    // Filtro por nome do cliente (busca parcial, case-insensitive)
     if (cliente) {
-      where.cliente = {
-        nome: { contains: cliente, mode: "insensitive" },
-      };
+      where.cliente = { nome: { contains: cliente, mode: "insensitive" } };
     }
 
     if (funcionario) {
-      where.funcionario = {
-        nome: { contains: funcionario, mode: "insensitive" },
-      };
+      where.funcionario = { nome: { contains: funcionario, mode: "insensitive" } };
     }
 
     const vendas = await prisma.venda.findMany({
@@ -236,14 +201,12 @@ const buscarVenda = async (req, res) => {
   }
 };
 
+
+// Bloqueado se a venda estiver CANCELADA
 const atualizarStatusPagamento = async (req, res) => {
   try {
     const { id } = req.params;
     const { status_pagamento } = req.body;
-
-    if (!status_pagamento) {
-      return res.status(400).json({ erro: "Status de pagamento é obrigatório." });
-    }
 
     const vendaExistente = await prisma.venda.findUnique({
       where: { id_venda: parseInt(id) },
@@ -251,6 +214,12 @@ const atualizarStatusPagamento = async (req, res) => {
 
     if (!vendaExistente) {
       return res.status(404).json({ erro: "Venda não encontrada." });
+    }
+
+    if (vendaExistente.status_venda === "CANCELADA") {
+      return res.status(409).json({
+        erro: "Não é possível alterar o pagamento de uma venda cancelada. Realize uma nova venda.",
+      });
     }
 
     const vendaAtualizada = await prisma.venda.update({
@@ -263,18 +232,62 @@ const atualizarStatusPagamento = async (req, res) => {
       venda: vendaAtualizada,
     });
   } catch (error) {
+    console.error("Erro ao atualizar status de pagamento:", error);
+    return res.status(500).json({ erro: "Erro interno no servidor ao atualizar venda." });
+  }
+};
+
+
+// Apenas ATIVA → EFETUADA é permitido por aqui
+// Cancelamento é feito pela rota própria
+const atualizarStatusVenda = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status_venda } = req.body;
+
+    const vendaExistente = await prisma.venda.findUnique({
+      where: { id_venda: parseInt(id) },
+    });
+
+    if (!vendaExistente) {
+      return res.status(404).json({ erro: "Venda não encontrada." });
+    }
+
+    if (vendaExistente.status_venda === "CANCELADA") {
+      return res.status(409).json({
+        erro: "Não é possível alterar o status de uma venda cancelada. Realize uma nova venda.",
+      });
+    }
+
+    if (status_venda === "CANCELADA") {
+      return res.status(400).json({
+        erro: "Para cancelar uma venda use a rota DELETE /api/vendas/:id.",
+      });
+    }
+
+    const vendaAtualizada = await prisma.venda.update({
+      where: { id_venda: parseInt(id) },
+      data: { status_venda },
+    });
+
+    return res.status(200).json({
+      mensagem: "Status da venda atualizado com sucesso!",
+      venda: vendaAtualizada,
+    });
+  } catch (error) {
     console.error("Erro ao atualizar status da venda:", error);
     return res.status(500).json({ erro: "Erro interno no servidor ao atualizar venda." });
   }
 };
 
-// Exclui a venda e estorna o estoque de cada item com AJUSTE
+
+// - Muda status_venda para CANCELADA (irreversível)
+// - Estorna o estoque de cada item com registro AJUSTE
 const cancelarVenda = async (req, res) => {
   try {
     const { id } = req.params;
     const idVenda = parseInt(id);
 
-    // Busca a venda com seus itens
     const venda = await prisma.venda.findUnique({
       where: { id_venda: idVenda },
       include: {
@@ -297,12 +310,18 @@ const cancelarVenda = async (req, res) => {
       return res.status(404).json({ erro: "Venda não encontrada." });
     }
 
+    // Trava — venda já cancelada não pode ser cancelada novamente
+    if (venda.status_venda === "CANCELADA") {
+      return res.status(409).json({
+        erro: "Esta venda já está cancelada. Para realizar uma nova venda, cadastre-a novamente.",
+      });
+    }
+
     await prisma.$transaction(async (tx) => {
-      // Estorna o estoque de cada item com registro AJUSTE
+      // 1. Estorna o estoque de cada item com AJUSTE
       for (const item of venda.itensvenda) {
         const ultimoEstoque = item.produto.estoque[0];
-        const estoqueAnterior = ultimoEstoque?.estoque_atual ?? 0;
-        const estoqueRestaurado = estoqueAnterior + item.quantidade_vendida;
+        const estoqueRestaurado = (ultimoEstoque?.estoque_atual ?? 0) + item.quantidade_vendida;
 
         await tx.estoque.create({
           data: {
@@ -317,22 +336,18 @@ const cancelarVenda = async (req, res) => {
         });
       }
 
-      //  Exclui a venda (itensvenda e estoque vinculado à venda
-      await tx.venda.delete({
+      // 2. Marca a venda como CANCELADA — histórico preservado
+      await tx.venda.update({
         where: { id_venda: idVenda },
+        data: { status_venda: "CANCELADA" },
       });
     });
 
     return res.status(200).json({
-      mensagem: `Venda #${idVenda} cancelada com sucesso. Estoque estornado.`,
+      mensagem: `Venda #${idVenda} cancelada com sucesso. Estoque estornado. Para realizar uma nova venda, cadastre-a novamente.`,
     });
   } catch (error) {
     console.error("Erro ao cancelar venda:", error);
-
-    if (error.code === "P2025") {
-      return res.status(404).json({ erro: "Venda não encontrada." });
-    }
-
     return res.status(500).json({ erro: "Erro interno no servidor ao cancelar venda." });
   }
 };
@@ -342,5 +357,6 @@ module.exports = {
   buscarTodasVendas,
   buscarVenda,
   atualizarStatusPagamento,
+  atualizarStatusVenda,
   cancelarVenda,
 };
