@@ -1,3 +1,4 @@
+// Validar Cadastro Funcionário
 const validarCadastrarFuncionario = (req, res, next) => {
   const { nome, data_nascimento } = req.body;
 
