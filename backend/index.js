@@ -10,6 +10,7 @@ const funcionarioRoutes = require("./src/routes/funcionarioRoutes");
 const produtoRoutes = require("./src/routes/produtoRoutes");
 const catalogoRoutes = require("./src/routes/catalogoRoutes");
 const fornecedorRoutes = require("./src/routes/fornecedorRoutes");
+const vendaRoutes = require("./src/routes/vendaRoutes");
 
 const app = express();
 
@@ -23,5 +24,6 @@ app.use("/api/funcionarios", funcionarioRoutes);
 app.use("/api/produtos", produtoRoutes);
 app.use("/api/catalogo", catalogoRoutes);
 app.use("/api/fornecedores", fornecedorRoutes);
+app.use("/api/vendas", vendaRoutes);
 
 module.exports = app;
