@@ -56,7 +56,7 @@ export function useAtualizarProduto(id) {
           nome_modelo: data.modelo?.nome || "",
         });
 
-        // Pega o snapshot mais recente do estoque (take: 1 já vem do backend)
+        // Pega o snapshot mais recente do estoque 
         const ultimoEstoque = data.estoque?.[0];
         setEstoqueAtual({
           estoque_atual: ultimoEstoque?.estoque_atual ?? "-",
