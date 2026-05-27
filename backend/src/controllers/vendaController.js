@@ -54,13 +54,13 @@ const cadastrarVenda = async (req, res) => {
         valorTotal += Number(mapaProdutos[item.fk_produto_id_produto].preco_venda) * item.quantidade_vendida;
       }
 
-      // Cria a venda — status_venda começa sempre como ATIVA
+      // Cria a venda — status_venda começa sempre como Efetuada
       const venda = await tx.venda.create({
         data: {
           data_hora: new Date(),
           valor_total: valorTotal,
           status_pagamento,
-          status_venda: "ATIVA",
+          status_venda: "EFETUADA",
           data_vencimento: data_vencimento ? new Date(data_vencimento) : null,
           fk_cliente_id_cliente: fk_cliente_id_cliente || null,
           fk_funcionario_id_funcionario,
@@ -201,7 +201,6 @@ const buscarVenda = async (req, res) => {
   }
 };
 
-
 // Bloqueado se a venda estiver CANCELADA
 const atualizarStatusPagamento = async (req, res) => {
   try {
@@ -236,50 +235,6 @@ const atualizarStatusPagamento = async (req, res) => {
     return res.status(500).json({ erro: "Erro interno no servidor ao atualizar venda." });
   }
 };
-
-
-// Apenas ATIVA → EFETUADA é permitido por aqui
-// Cancelamento é feito pela rota própria
-const atualizarStatusVenda = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status_venda } = req.body;
-
-    const vendaExistente = await prisma.venda.findUnique({
-      where: { id_venda: parseInt(id) },
-    });
-
-    if (!vendaExistente) {
-      return res.status(404).json({ erro: "Venda não encontrada." });
-    }
-
-    if (vendaExistente.status_venda === "CANCELADA") {
-      return res.status(409).json({
-        erro: "Não é possível alterar o status de uma venda cancelada. Realize uma nova venda.",
-      });
-    }
-
-    if (status_venda === "CANCELADA") {
-      return res.status(400).json({
-        erro: "Para cancelar uma venda use a rota DELETE /api/vendas/:id.",
-      });
-    }
-
-    const vendaAtualizada = await prisma.venda.update({
-      where: { id_venda: parseInt(id) },
-      data: { status_venda },
-    });
-
-    return res.status(200).json({
-      mensagem: "Status da venda atualizado com sucesso!",
-      venda: vendaAtualizada,
-    });
-  } catch (error) {
-    console.error("Erro ao atualizar status da venda:", error);
-    return res.status(500).json({ erro: "Erro interno no servidor ao atualizar venda." });
-  }
-};
-
 
 // - Muda status_venda para CANCELADA (irreversível)
 // - Estorna o estoque de cada item com registro AJUSTE
@@ -357,6 +312,5 @@ module.exports = {
   buscarTodasVendas,
   buscarVenda,
   atualizarStatusPagamento,
-  atualizarStatusVenda,
   cancelarVenda,
 };

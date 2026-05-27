@@ -176,7 +176,7 @@ model venda {
   id_venda                      Int                   @id @default(autoincrement())
   valor_total                   Decimal?              @db.Decimal(10, 2)
   status_pagamento              status_pagamento_enum
-  status_venda                  status_venda_enum     @default(ATIVA)
+  status_venda                  status_venda_enum     
   data_vencimento               DateTime?             @db.Date
   data_hora                     DateTime              @db.Timestamp(6)
   fk_cliente_id_cliente         Int?
@@ -192,8 +192,7 @@ enum status_pagamento_enum {
   EM_ABERTO
 }
 
-enum status_venda_enum {
-  ATIVA
+enum status_venda_enum {  
   EFETUADA
   CANCELADA
 }

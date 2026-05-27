@@ -1,4 +1,4 @@
-// Lógica da Tela de Gerenciamento de Vendas (Exlusão, Busca e Listagem)
+// Lógica da Tela de Gerenciamento de Vendas (Exclusão, Busca e Listagem)
 import { useState, useEffect, useRef } from "react";
 
 export function useGerenciarVenda() {
@@ -9,13 +9,11 @@ export function useGerenciarVenda() {
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   const [statusPagamento, setStatusPagamento] = useState("TODOS");
   const [statusVenda, setStatusVenda] = useState("TODOS");
-  const [menuAberto, setMenuAberto] = useState(null);
   const [modalCancelar, setModalCancelar] = useState(false);
   const [modalSucesso, setModalSucesso] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [vendaSelecionada, setVendaSelecionada] = useState(null);
 
-  const menuRef = useRef(null);
   const filtroRef = useRef(null);
 
   useEffect(() => {
@@ -28,8 +26,8 @@ export function useGerenciarVenda() {
 
   useEffect(() => {
     const handleClickFora = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuAberto(null);
-      if (filtroRef.current && !filtroRef.current.contains(e.target)) setFiltrosAbertos(false);
+      if (filtroRef.current && !filtroRef.current.contains(e.target))
+        setFiltrosAbertos(false);
     };
     document.addEventListener("mousedown", handleClickFora);
     return () => document.removeEventListener("mousedown", handleClickFora);
@@ -39,9 +37,17 @@ export function useGerenciarVenda() {
     if (!vendaSelecionada) return;
     setIsCanceling(true);
     try {
-      await fetch(`http://localhost:3000/api/vendas/${vendaSelecionada.id_venda}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `http://localhost:3000/api/vendas/${vendaSelecionada.id_venda}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) {
+        const erro = await res.json();
+        console.error("Erro ao cancelar:", erro);
+        return;
+      }
+
       setVendas((prev) =>
         prev.map((v) =>
           v.id_venda === vendaSelecionada.id_venda
@@ -50,7 +56,6 @@ export function useGerenciarVenda() {
         )
       );
       setModalCancelar(false);
-      setMenuAberto(null);
       setModalSucesso(true);
     } catch (err) {
       console.error("Erro ao cancelar venda:", err);
@@ -65,7 +70,9 @@ export function useGerenciarVenda() {
       String(v.id_venda).includes(termo) ||
       v.cliente?.nome?.toLowerCase().includes(termo) ||
       v.funcionario?.nome?.toLowerCase().includes(termo) ||
-      v.itensvenda?.some((i) => i.produto?.nome?.toLowerCase().includes(termo));
+      v.itensvenda?.some((i) =>
+        i.produto?.nome?.toLowerCase().includes(termo)
+      );
 
     const matchStatus =
       statusPagamento === "TODOS" || v.status_pagamento === statusPagamento;
@@ -73,17 +80,20 @@ export function useGerenciarVenda() {
     const matchStatusVenda =
       statusVenda === "TODOS" || v.status_venda === statusVenda;
 
-    const matchData = !dataFiltro || (
-      v.data_hora &&
-      new Date(v.data_hora).toLocaleDateString("pt-BR") ===
-        new Date(dataFiltro + "T12:00:00").toLocaleDateString("pt-BR")
-    );
+    const matchData =
+      !dataFiltro ||
+      (v.data_hora &&
+        new Date(v.data_hora).toLocaleDateString("pt-BR") ===
+          new Date(dataFiltro + "T12:00:00").toLocaleDateString("pt-BR"));
 
     return matchBusca && matchStatus && matchStatusVenda && matchData;
   });
 
   const formatarPreco = (valor) =>
-    Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    Number(valor).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
 
   const formatarData = (data) => {
     if (!data) return "-";
@@ -91,18 +101,18 @@ export function useGerenciarVenda() {
   };
 
   return {
-    loading, vendas,
+    loading,
+    vendas,
     busca, setBusca,
     dataFiltro, setDataFiltro,
     filtrosAbertos, setFiltrosAbertos,
     statusPagamento, setStatusPagamento,
     statusVenda, setStatusVenda,
-    menuAberto, setMenuAberto,
     modalCancelar, setModalCancelar,
     modalSucesso, setModalSucesso,
     isCanceling,
     vendaSelecionada, setVendaSelecionada,
-    menuRef, filtroRef,
+    filtroRef,
     vendasFiltradas,
     handleCancelar,
     formatarPreco,

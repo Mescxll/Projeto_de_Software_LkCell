@@ -43,14 +43,6 @@ export default function GerenciarVendas() {
     formatarData,
   } = useGerenciarVenda();
 
-  const iconButtonClass = (color) =>
-    ({
-      green:
-        "inline-flex items-center justify-center p-1.5 rounded-md transition-colors text-green-500",
-      blue: "inline-flex items-center justify-center p-1.5 rounded-md transition-colors text-blue-500",
-      red: "inline-flex items-center justify-center p-1.5 rounded-md transition-colors text-red-500",
-    })[color];
-
   return (
     <>
       <Navbar />
@@ -140,7 +132,6 @@ export default function GerenciarVendas() {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="TODOS">Todos</option>
-                  <option value="ATIVA">Ativa</option>
                   <option value="EFETUADA">Efetuada</option>
                   <option value="CANCELADA">Cancelada</option>
                 </select>
@@ -229,24 +220,16 @@ export default function GerenciarVendas() {
                                 color: "#dc2626",
                                 borderColor: "#fca5a5",
                               }
-                            : v.status_venda === "EFETUADA"
-                              ? {
-                                  backgroundColor: "#f0fdf4",
-                                  color: "#16a34a",
-                                  borderColor: "#bbf7d0",
-                                }
-                              : {
-                                  backgroundColor: "#eff6ff",
-                                  color: "#2563eb",
-                                  borderColor: "#bfdbfe",
-                                }
+                            : {
+                                backgroundColor: "#f0fdf4",
+                                color: "#16a34a",
+                                borderColor: "#bbf7d0",
+                              }
                         }
                       >
                         {v.status_venda === "CANCELADA"
                           ? "Cancelada"
-                          : v.status_venda === "EFETUADA"
-                            ? "Efetuada"
-                            : "Ativa"}
+                          : "Efetuada"}
                       </span>
                     </td>
 
