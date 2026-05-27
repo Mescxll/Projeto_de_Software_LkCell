@@ -33,7 +33,7 @@ const cadastrarVenda = async (req, res) => {
       mapaProdutos[p.id_produto] = p;
     }
 
-    // ── Verifica estoque suficiente para cada item ──────────
+    // Verifica estoque suficiente para cada item
     for (const item of itens) {
       const produto = mapaProdutos[item.fk_produto_id_produto];
       const ultimoEstoque = produto.estoque[0];
@@ -318,7 +318,7 @@ const cancelarVenda = async (req, res) => {
     }
 
     await prisma.$transaction(async (tx) => {
-      // 1. Estorna o estoque de cada item com AJUSTE
+      // Estorna o estoque de cada item com AJUSTE
       for (const item of venda.itensvenda) {
         const ultimoEstoque = item.produto.estoque[0];
         const estoqueRestaurado = (ultimoEstoque?.estoque_atual ?? 0) + item.quantidade_vendida;
@@ -336,7 +336,7 @@ const cancelarVenda = async (req, res) => {
         });
       }
 
-      // 2. Marca a venda como CANCELADA — histórico preservado
+      // Marca a venda como CANCELADA — histórico preservado
       await tx.venda.update({
         where: { id_venda: idVenda },
         data: { status_venda: "CANCELADA" },
