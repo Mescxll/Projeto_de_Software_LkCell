@@ -162,7 +162,11 @@ export default function GerenciarVendas() {
                 {vendasFiltradas.map((v) => (
                   <tr
                     key={v.id_venda}
-                    className="hover:bg-gray-50 transition-colors text-sm text-gray-700"
+                    className={`transition-colors text-sm text-gray-700 ${
+                      v.status_venda === "CANCELADA"
+                        ? "bg-red-50/80 text-red-900/70 saturate-50"
+                        : "hover:bg-gray-50"
+                    }`}
                   >
                     <td className="px-6 py-4 font-mono font-semibold text-gray-800">
                       #{v.id_venda}
@@ -246,13 +250,15 @@ export default function GerenciarVendas() {
                           <Eye className="w-4 h-4" />
                         </Link>
 
-                        <Link
-                          href={`/vendas/atualizar/${v.id_venda}`}
-                          className="inline-flex items-center justify-center p-1.5 rounded-md transition-colors text-blue-500 icon-btn-blue"
-                          title="Atualizar venda"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Link>
+                        {v.status_venda !== "CANCELADA" && (
+                          <Link
+                            href={`/vendas/atualizar/${v.id_venda}`}
+                            className="inline-flex items-center justify-center p-1.5 rounded-md transition-colors text-blue-500 icon-btn-blue"
+                            title="Atualizar venda"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Link>
+                        )}
 
                         {v.status_venda !== "CANCELADA" && (
                           <button
