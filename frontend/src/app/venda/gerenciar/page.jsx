@@ -154,7 +154,7 @@ export default function GerenciarVendas() {
                   <th className="px-6 py-4">Valor Total</th>
                   <th className="px-6 py-4">Status Pagamento</th>
                   <th className="px-6 py-4">Status Venda</th>
-                  <th className="px-6 py-4">Data</th>
+                  <th className="px-6 py-4">Data e Hora</th>
                   <th className="px-6 py-4 text-center">Ações</th>
                 </tr>
               </thead>
