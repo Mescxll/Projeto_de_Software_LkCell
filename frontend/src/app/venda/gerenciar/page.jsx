@@ -164,7 +164,7 @@ export default function GerenciarVendas() {
                     key={v.id_venda}
                     className={`transition-colors text-sm text-gray-700 ${
                       v.status_venda === "CANCELADA"
-                        ? "bg-red-50/80 text-red-900/70 saturate-50"
+                        ? "bg-red-100/80 text-red-900/70 saturate-60"
                         : "hover:bg-gray-50"
                     }`}
                   >
