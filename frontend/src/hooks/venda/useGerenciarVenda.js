@@ -39,7 +39,7 @@ export function useGerenciarVenda() {
     try {
       const res = await fetch(
         `http://localhost:3000/api/vendas/${vendaSelecionada.id_venda}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
 
       if (!res.ok) {
@@ -52,8 +52,8 @@ export function useGerenciarVenda() {
         prev.map((v) =>
           v.id_venda === vendaSelecionada.id_venda
             ? { ...v, status_venda: "CANCELADA" }
-            : v
-        )
+            : v,
+        ),
       );
       setModalCancelar(false);
       setModalSucesso(true);
@@ -70,9 +70,7 @@ export function useGerenciarVenda() {
       String(v.id_venda).includes(termo) ||
       v.cliente?.nome?.toLowerCase().includes(termo) ||
       v.funcionario?.nome?.toLowerCase().includes(termo) ||
-      v.itensvenda?.some((i) =>
-        i.produto?.nome?.toLowerCase().includes(termo)
-      );
+      v.itensvenda?.some((i) => i.produto?.nome?.toLowerCase().includes(termo));
 
     const matchStatus =
       statusPagamento === "TODOS" || v.status_pagamento === statusPagamento;
@@ -97,21 +95,41 @@ export function useGerenciarVenda() {
 
   const formatarData = (data) => {
     if (!data) return "-";
-    return new Date(data).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+    try {
+      return new Date(data).toLocaleString("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+    } catch {
+      return new Date(data).toLocaleString("pt-BR");
+    }
   };
 
   return {
     loading,
     vendas,
-    busca, setBusca,
-    dataFiltro, setDataFiltro,
-    filtrosAbertos, setFiltrosAbertos,
-    statusPagamento, setStatusPagamento,
-    statusVenda, setStatusVenda,
-    modalCancelar, setModalCancelar,
-    modalSucesso, setModalSucesso,
+    busca,
+    setBusca,
+    dataFiltro,
+    setDataFiltro,
+    filtrosAbertos,
+    setFiltrosAbertos,
+    statusPagamento,
+    setStatusPagamento,
+    statusVenda,
+    setStatusVenda,
+    modalCancelar,
+    setModalCancelar,
+    modalSucesso,
+    setModalSucesso,
     isCanceling,
-    vendaSelecionada, setVendaSelecionada,
+    vendaSelecionada,
+    setVendaSelecionada,
     filtroRef,
     vendasFiltradas,
     handleCancelar,
