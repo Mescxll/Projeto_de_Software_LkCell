@@ -10,6 +10,9 @@ export function useCadastrarProduto() {
   const [sugestoesCategoria, setSugestoesCategoria] = useState([]);
   const [sugestoesMarca, setSugestoesMarca] = useState([]);
 
+  // Guarda o id_marca selecionado para filtrar os modelos
+  const [marcaSelecionadaId, setMarcaSelecionadaId] = useState(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [form, setForm] = useState({
@@ -32,17 +35,12 @@ export function useCadastrarProduto() {
   const formatarPrecoBrasil = (valor) => {
     const somenteNumeros = valor.replace(/[^\d,]/g, "");
     const partes = somenteNumeros.split(",");
-
-    if (partes.length <= 1) {
-      return somenteNumeros;
-    }
-
+    if (partes.length <= 1) return somenteNumeros;
     return `${partes[0]},${partes.slice(1).join("")}`;
   };
 
   const converterPrecoBrasil = (valor) => {
     if (!valor) return null;
-
     const numero = Number(valor.replace(/\./g, "").replace(",", "."));
     return Number.isFinite(numero) ? numero : null;
   };
@@ -56,7 +54,6 @@ export function useCadastrarProduto() {
         setSugestoesMarca([]);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -86,7 +83,6 @@ export function useCadastrarProduto() {
       return;
     }
 
-    // Campos de estoque: aceita apenas dígitos
     if (["estoque_atual", "estoque_minimo", "estoque_ideal"].includes(name)) {
       const somenteNumeros = value.replace(/\D/g, "");
       setForm((prev) => ({ ...prev, [name]: somenteNumeros }));
@@ -97,7 +93,14 @@ export function useCadastrarProduto() {
 
     if (name === "nome_modelo") buscarModelos(value);
     if (name === "nome_categoria") buscarCategorias(value);
-    if (name === "nome_marca") buscarMarcas(value);
+
+    if (name === "nome_marca") {
+      // Ao editar a marca manualmente, limpa o id e os modelos já buscados
+      setMarcaSelecionadaId(null);
+      setSugestoesModelo([]);
+      setForm((prev) => ({ ...prev, nome_marca: value, nome_modelo: "" }));
+      buscarMarcas(value);
+    }
   };
 
   const handleSubmit = async () => {
@@ -125,9 +128,7 @@ export function useCadastrarProduto() {
 
       const res = await fetch("http://localhost:3000/api/produtos", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
           preco_compra: precoCompra,
@@ -141,7 +142,6 @@ export function useCadastrarProduto() {
 
       if (res.ok) {
         setNomeProduto(`${form.nome_marca} ${form.nome_modelo}`);
-
         setModal("sucesso");
       } else {
         setErroMsg(data.erro || "Erro ao cadastrar produto.");
@@ -155,6 +155,8 @@ export function useCadastrarProduto() {
     }
   };
 
+  // Busca modelos filtrando por marca_id se uma marca já foi selecionada,
+  // caso contrário busca livremente pelo texto digitado
   const buscarModelos = async (texto) => {
     if (!texto.trim()) {
       setSugestoesModelo([]);
@@ -162,12 +164,13 @@ export function useCadastrarProduto() {
     }
 
     try {
+      const params = new URLSearchParams({ search: texto });
+      if (marcaSelecionadaId) params.set("marca_id", marcaSelecionadaId);
+
       const res = await fetch(
-        `http://localhost:3000/api/catalogo/modelos?search=${texto}`,
+        `http://localhost:3000/api/catalogo/modelos?${params}`,
       );
-
       const data = await res.json();
-
       setSugestoesModelo(data);
     } catch (error) {
       console.error(error);
@@ -179,14 +182,11 @@ export function useCadastrarProduto() {
       setSugestoesCategoria([]);
       return;
     }
-
     try {
       const res = await fetch(
         `http://localhost:3000/api/catalogo/categorias?search=${texto}`,
       );
-
       const data = await res.json();
-
       setSugestoesCategoria(data);
     } catch (error) {
       console.error(error);
@@ -198,35 +198,30 @@ export function useCadastrarProduto() {
       setSugestoesMarca([]);
       return;
     }
-
     try {
       const res = await fetch(
         `http://localhost:3000/api/catalogo/marcas?search=${texto}`,
       );
-
       const data = await res.json();
-
       setSugestoesMarca(data);
     } catch (error) {
       console.error(error);
     }
   };
+
   const selecionarModelo = (modelo) => {
     setForm((prev) => ({
       ...prev,
       nome_modelo: modelo.nome,
       nome_marca: modelo.marca.nome,
     }));
-
+    // Ao selecionar um modelo, também fixa o id da marca
+    setMarcaSelecionadaId(modelo.fk_marca_id ?? modelo.marca?.id_marca ?? null);
     setSugestoesModelo([]);
   };
 
   const selecionarCategoria = (categoria) => {
-    setForm((prev) => ({
-      ...prev,
-      nome_categoria: categoria.nome,
-    }));
-
+    setForm((prev) => ({ ...prev, nome_categoria: categoria.nome }));
     setSugestoesCategoria([]);
   };
 
@@ -234,9 +229,13 @@ export function useCadastrarProduto() {
     setForm((prev) => ({
       ...prev,
       nome_marca: marca.nome,
+      // Limpa o modelo pois a marca mudou
+      nome_modelo: "",
     }));
-
+    // Guarda o id para filtrar modelos a seguir
+    setMarcaSelecionadaId(marca.id_marca);
     setSugestoesMarca([]);
+    setSugestoesModelo([]);
   };
 
   return {

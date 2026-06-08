@@ -3,6 +3,8 @@
 import { useRouter, useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { useAtualizarProduto } from "@/hooks/produto/useAtualizarProduto";
+import AsyncSearchableInput from "@/components/AsyncSearchableInput";
+
 import {
   ArrowLeft,
   Package,
@@ -93,37 +95,24 @@ export default function AtualizarProduto() {
 
             {/* Categoria editável | Marca e Modelo somente leitura */}
             <div className="grid grid-cols-3 gap-3 mb-4" ref={dropdownRef}>
+              {/* Categoria — AsyncSearchableInput */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                   Categoria <span className="text-red-400">*</span>
                 </label>
-                <div className="relative">
-                  <Boxes className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    name="nome_categoria"
-                    value={form.nome_categoria}
-                    onChange={handleChange}
-                    placeholder="Categoria"
-                    className={inputIconClass}
-                  />
-                  {sugestoesCategoria.length > 0 && (
-                    <div className="absolute bottom-full mb-1 z-50 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
-                      {sugestoesCategoria.map((c) => (
-                        <button
-                          key={c.id_categoria}
-                          type="button"
-                          onClick={() => selecionarCategoria(c)}
-                          className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b border-gray-100"
-                        >
-                          <p className="text-sm font-medium text-gray-800">{c.nome}</p>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <AsyncSearchableInput
+                  name="nome_categoria"
+                  value={form.nome_categoria}
+                  onChange={handleChange}
+                  onSelect={selecionarCategoria}
+                  sugestoes={sugestoesCategoria}
+                  renderLabel={(c) => c.nome}
+                  placeholder="Categoria"
+                  icon={<Boxes className="w-4 h-4" />}
+                />
               </div>
 
+              {/* Marca — somente leitura */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Marca</label>
                 <div className="relative">
@@ -137,6 +126,7 @@ export default function AtualizarProduto() {
                 </div>
               </div>
 
+              {/* Modelo — somente leitura */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Modelo</label>
                 <div className="relative">
@@ -170,7 +160,7 @@ export default function AtualizarProduto() {
               </div>
             </div>
 
-            {/* Estoque — somente leitura, gerenciado pelo módulo de estoque */}
+            {/* Estoque — somente leitura */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-semibold text-gray-600">Estoque</label>
