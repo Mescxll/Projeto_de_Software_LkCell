@@ -225,7 +225,7 @@ export default function CadastroProduto() {
                 <div key={name}>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                     {label}{" "}
-                    {name === "preco_venda" && (
+                    {(name === "preco_venda" || name === "preco_compra") && (
                       <span className="text-red-400">*</span>
                     )}
                   </label>
@@ -241,6 +241,21 @@ export default function CadastroProduto() {
                       className={inputIconClass}
                     />
                   </div>
+                  {name === "preco_compra" && (
+                    <span className="text-[10px] text-gray-400 italic">
+                      Preço unitário de compra do produto
+                    </span>
+                  )}
+                  {name === "preco_venda" && (
+                    <span className="text-[10px] text-gray-400 italic">
+                      Preço unitário de venda do produto
+                    </span>
+                  )}
+                  {name === "preco_custo" && (
+                    <span className="text-[10px] text-gray-400 italic">
+                      Preço de compra somado as despesas
+                    </span>
+                  )}
                 </div>
               ))}
 
@@ -307,7 +322,9 @@ export default function CadastroProduto() {
             <h2 className="text-lg font-bold text-gray-800 mb-1">
               Produto cadastrado!
             </h2>
-            <p className="text-sm text-blue-500 font-medium mb-6">{nomeProduto}</p>
+            <p className="text-sm text-blue-500 font-medium mb-6">
+              {nomeProduto}
+            </p>
             <button
               onClick={() => router.push("/produto/gerenciar")}
               className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold text-sm transition-all"
