@@ -11,7 +11,7 @@ const cadastrarVenda = async (req, res) => {
       itens,
     } = req.body;
 
-    // Busca todos os produtos e seus estoques atuais 
+    // Busca todos os produtos e seus estoques atuais
     const ids = itens.map((i) => i.fk_produto_id_produto);
 
     const produtos = await prisma.produto.findMany({
@@ -25,7 +25,9 @@ const cadastrarVenda = async (req, res) => {
     });
 
     if (produtos.length !== ids.length) {
-      return res.status(404).json({ erro: "Um ou mais produtos não foram encontrados." });
+      return res
+        .status(404)
+        .json({ erro: "Um ou mais produtos não foram encontrados." });
     }
 
     const mapaProdutos = {};
@@ -46,12 +48,14 @@ const cadastrarVenda = async (req, res) => {
       }
     }
 
-    // Tudo válido — executa em transação 
+    // Tudo válido — executa em transação
     const novaVenda = await prisma.$transaction(async (tx) => {
       // Calcula valor total
       let valorTotal = 0;
       for (const item of itens) {
-        valorTotal += Number(mapaProdutos[item.fk_produto_id_produto].preco_venda) * item.quantidade_vendida;
+        valorTotal +=
+          Number(mapaProdutos[item.fk_produto_id_produto].preco_venda) *
+          item.quantidade_vendida;
       }
 
       // Cria a venda — status_venda começa sempre como Efetuada
@@ -71,7 +75,8 @@ const cadastrarVenda = async (req, res) => {
       for (const item of itens) {
         const produto = mapaProdutos[item.fk_produto_id_produto];
         const ultimoEstoque = produto.estoque[0];
-        const novoEstoqueAtual = (ultimoEstoque?.estoque_atual ?? 0) - item.quantidade_vendida;
+        const novoEstoqueAtual =
+          (ultimoEstoque?.estoque_atual ?? 0) - item.quantidade_vendida;
 
         await tx.itensvenda.create({
           data: {
@@ -111,18 +116,27 @@ const cadastrarVenda = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao cadastrar venda:", error);
-    return res.status(500).json({ erro: "Erro interno no servidor ao cadastrar venda." });
+    return res
+      .status(500)
+      .json({ erro: "Erro interno no servidor ao cadastrar venda." });
   }
 };
 
 const buscarTodasVendas = async (req, res) => {
   try {
-    const { cliente, funcionario, status_pagamento, status_venda, data_inicio, data_fim } = req.query;
+    const {
+      cliente,
+      funcionario,
+      status_pagamento,
+      status_venda,
+      data_inicio,
+      data_fim,
+    } = req.query;
 
     const where = {};
 
     if (status_pagamento) where.status_pagamento = status_pagamento;
-    if (status_venda)     where.status_venda     = status_venda;
+    if (status_venda) where.status_venda = status_venda;
 
     if (data_inicio || data_fim) {
       where.data_hora = {};
@@ -139,7 +153,9 @@ const buscarTodasVendas = async (req, res) => {
     }
 
     if (funcionario) {
-      where.funcionario = { nome: { contains: funcionario, mode: "insensitive" } };
+      where.funcionario = {
+        nome: { contains: funcionario, mode: "insensitive" },
+      };
     }
 
     const vendas = await prisma.venda.findMany({
@@ -164,7 +180,9 @@ const buscarTodasVendas = async (req, res) => {
     return res.status(200).json(vendas);
   } catch (error) {
     console.error("Erro ao buscar vendas:", error);
-    return res.status(500).json({ erro: "Erro interno no servidor ao buscar vendas." });
+    return res
+      .status(500)
+      .json({ erro: "Erro interno no servidor ao buscar vendas." });
   }
 };
 
@@ -197,7 +215,9 @@ const buscarVenda = async (req, res) => {
     return res.status(200).json(venda);
   } catch (error) {
     console.error("Erro ao buscar venda:", error);
-    return res.status(500).json({ erro: "Erro interno no servidor ao buscar venda." });
+    return res
+      .status(500)
+      .json({ erro: "Erro interno no servidor ao buscar venda." });
   }
 };
 
@@ -221,6 +241,16 @@ const atualizarStatusPagamento = async (req, res) => {
       });
     }
 
+    // Não permitir reverter pagamento de PAGO para EM_ABERTO
+    if (
+      vendaExistente.status_pagamento === "PAGO" &&
+      status_pagamento === "EM_ABERTO"
+    ) {
+      return res.status(409).json({
+        erro: "Não é permitido alterar o status de pagamento de 'PAGO' para 'EM_ABERTO'.",
+      });
+    }
+
     const vendaAtualizada = await prisma.venda.update({
       where: { id_venda: parseInt(id) },
       data: { status_pagamento },
@@ -232,7 +262,9 @@ const atualizarStatusPagamento = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao atualizar status de pagamento:", error);
-    return res.status(500).json({ erro: "Erro interno no servidor ao atualizar venda." });
+    return res
+      .status(500)
+      .json({ erro: "Erro interno no servidor ao atualizar venda." });
   }
 };
 
@@ -276,7 +308,8 @@ const cancelarVenda = async (req, res) => {
       // Estorna o estoque de cada item com AJUSTE
       for (const item of venda.itensvenda) {
         const ultimoEstoque = item.produto.estoque[0];
-        const estoqueRestaurado = (ultimoEstoque?.estoque_atual ?? 0) + item.quantidade_vendida;
+        const estoqueRestaurado =
+          (ultimoEstoque?.estoque_atual ?? 0) + item.quantidade_vendida;
 
         await tx.estoque.create({
           data: {
@@ -303,7 +336,9 @@ const cancelarVenda = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao cancelar venda:", error);
-    return res.status(500).json({ erro: "Erro interno no servidor ao cancelar venda." });
+    return res
+      .status(500)
+      .json({ erro: "Erro interno no servidor ao cancelar venda." });
   }
 };
 

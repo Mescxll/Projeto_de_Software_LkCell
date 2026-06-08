@@ -1,25 +1,26 @@
-// Tela de Visualização de Venda
+// Lógica de Tela para visualização de Compra
+
 import { useState, useEffect } from "react";
 
-export function useVisualizarVenda(id) {
+export function useVisualizarCompra(id) {
   const [loading, setLoading] = useState(true);
-  const [venda, setVenda] = useState(null);
+  const [compra, setCompra] = useState(null);
   const [erro, setErro] = useState(false);
 
   useEffect(() => {
     if (!id) return;
 
-    fetch(`http://localhost:3000/api/vendas/${id}`)
+    fetch(`http://localhost:3000/api/compras/${id}`)
       .then((res) => {
-        if (!res.ok) throw new Error("Venda não encontrada");
+        if (!res.ok) throw new Error("Compra não encontrada");
         return res.json();
       })
       .then((data) => {
-        setVenda(data);
+        setCompra(data);
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Erro ao buscar venda:", err);
+        console.error("Erro ao buscar compra:", err);
         setErro(true);
         setLoading(false);
       });
@@ -47,7 +48,7 @@ export function useVisualizarVenda(id) {
 
   return {
     loading,
-    venda,
+    compra,
     erro,
     formatarPreco,
     formatarData,

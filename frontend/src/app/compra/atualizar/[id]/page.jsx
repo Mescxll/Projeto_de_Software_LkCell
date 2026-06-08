@@ -81,7 +81,7 @@ export default function AtualizarCompra() {
           {/* Seção 1: Informações Básicas */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <h2 className="text-xl font-bold text-gray-800 mb-6">
-              Atualizar Compra #{compra?.id_compra}
+              Atualizar Compra {compra?.id_compra}
             </h2>
 
             {/* Status da Compra */}
@@ -291,12 +291,12 @@ export default function AtualizarCompra() {
                   {compra?.itenscompra && compra.itenscompra.length > 0 ? (
                     compra.itenscompra.map((item) => (
                       <tr
-                        key={item.id_itenscompra}
+                        key={item.fk_produto_id_produto}
                         className="text-sm text-gray-700 hover:bg-gray-75"
                       >
                         <td className="px-6 py-4">
                           <p className="font-medium text-gray-800">
-                            {item.produto?.nome || item.produto?.codigo_produto}
+                            {item.produto?.descricao}
                           </p>
                           <p className="text-xs text-gray-400">
                             ID: {item.fk_produto_id_produto}

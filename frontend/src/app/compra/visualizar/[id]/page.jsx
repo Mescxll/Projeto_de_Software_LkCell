@@ -1,45 +1,45 @@
-// Tela de Visualização de Venda
+// Tela de Visualização de Compra
 "use client";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import { useVisualizarVenda } from "@/hooks/venda/useVisualizarVenda";
+import { useVisualizarCompra } from "@/hooks/compra/useVisualizarCompra";
 import {
   ArrowLeft,
   Pencil,
   DollarSign,
-  User,
+  Truck,
   Package,
   Calendar,
   AlertTriangle,
   Receipt,
 } from "lucide-react";
 
-export default function VisualizarVenda() {
+export default function VisualizarCompra() {
   const router = useRouter();
   const { id } = useParams();
 
   const {
     loading,
-    venda,
+    compra,
     erro,
     formatarPreco,
     formatarData,
     formatarDataSimples,
-  } = useVisualizarVenda(parseInt(id));
+  } = useVisualizarCompra(parseInt(id));
 
   if (loading) {
     return (
       <>
         <Navbar />
         <main className="min-h-screen bg-[#f4f6fb] flex items-center justify-center">
-          <p className="text-gray-400 text-sm">Carregando venda...</p>
+          <p className="text-gray-400 text-sm">Carregando compra...</p>
         </main>
       </>
     );
   }
 
-  if (erro || !venda) {
+  if (erro || !compra) {
     return (
       <>
         <Navbar />
@@ -48,16 +48,16 @@ export default function VisualizarVenda() {
             <div className="text-center">
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
               <h2 className="text-lg font-bold text-gray-800 mb-2">
-                Venda não encontrada
+                Compra não encontrada
               </h2>
               <p className="text-sm text-gray-600 mb-6">
-                A venda que você está procurando não existe.
+                A compra que você está procurando não existe.
               </p>
               <button
-                onClick={() => router.push("/venda/gerenciar")}
+                onClick={() => router.push("/compra/gerenciar")}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold transition-all text-sm"
               >
-                Voltar para Vendas
+                Voltar para Compras
               </button>
             </div>
           </div>
@@ -66,14 +66,9 @@ export default function VisualizarVenda() {
     );
   }
 
-  const isCancelada = venda.status_venda === "CANCELADA";
+  const isCancelada = compra.status_compra === "CANCELADA";
 
-  const statusPagamentoStyle =
-    venda.status_pagamento === "PAGO"
-      ? { bg: "#f0fdf4", text: "#16a34a", border: "#bbf7d0" }
-      : { bg: "#fefce8", text: "#a16207", border: "#fde047" };
-
-  const statusVendaStyle = isCancelada
+  const statusCompraStyle = isCancelada
     ? { bg: "#fef2f2", text: "#dc2626", border: "#fca5a5" }
     : { bg: "#f0fdf4", text: "#16a34a", border: "#bbf7d0" };
 
@@ -83,10 +78,10 @@ export default function VisualizarVenda() {
       <main className="min-h-screen bg-[#f4f6fb] p-8 px-55">
         {/* Voltar */}
         <button
-          onClick={() => router.push("/venda/gerenciar")}
+          onClick={() => router.push("/compra/gerenciar")}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Voltar para Vendas
+          <ArrowLeft className="w-4 h-4" /> Voltar para Compras
         </button>
 
         <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full">
@@ -97,41 +92,29 @@ export default function VisualizarVenda() {
                 <div className="flex items-center gap-3 mb-1">
                   <Receipt className="w-5 h-5 text-gray-400" />
                   <h1 className="text-2xl font-bold text-gray-800">
-                    Venda {venda.id_venda}
+                    Compra {compra.id_compra}
                   </h1>
                 </div>
                 <p className="text-sm text-gray-400 ml-8">
-                  {formatarData(venda.data_hora)}
+                  {formatarData(compra.data_hora)}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Badges de status */}
                 <span
                   className="inline-flex items-center px-3 py-1.5 rounded-full border text-[11px] font-semibold"
                   style={{
-                    backgroundColor: statusVendaStyle.bg,
-                    color: statusVendaStyle.text,
-                    borderColor: statusVendaStyle.border,
+                    backgroundColor: statusCompraStyle.bg,
+                    color: statusCompraStyle.text,
+                    borderColor: statusCompraStyle.border,
                   }}
                 >
-                  {isCancelada ? "Cancelada" : "Efetuada"}
-                </span>
-                <span
-                  className="inline-flex items-center px-3 py-1.5 rounded-full border text-[11px] font-semibold"
-                  style={{
-                    backgroundColor: statusPagamentoStyle.bg,
-                    color: statusPagamentoStyle.text,
-                    borderColor: statusPagamentoStyle.border,
-                  }}
-                >
-                  {venda.status_pagamento === "PAGO" ? "Pago" : "Em Aberto"}
+                  {isCancelada ? "Cancelada" : "Ativa"}
                 </span>
 
-                {/* Botão Atualizar — apenas se não cancelada */}
                 {!isCancelada && (
                   <Link
-                    href={`/venda/atualizar/${venda.id_venda}`}
+                    href={`/compra/atualizar/${compra.id_compra}`}
                     className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition-all text-sm ml-2"
                   >
                     <Pencil className="w-4 h-4" /> Atualizar
@@ -146,10 +129,10 @@ export default function VisualizarVenda() {
                 <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold text-red-900">
-                    Venda Cancelada
+                    Compra Cancelada
                   </p>
                   <p className="text-xs text-red-700 mt-1">
-                    Esta venda foi cancelada. O estoque dos produtos foi
+                    Esta compra foi cancelada. O estoque dos produtos foi
                     estornado automaticamente.
                   </p>
                 </div>
@@ -158,38 +141,20 @@ export default function VisualizarVenda() {
 
             {/* Informações */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Cliente */}
+              {/* Fornecedor */}
               <div>
                 <label className="text-xs font-semibold text-gray-500 mb-2 block">
-                  Cliente
+                  Fornecedor
                 </label>
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <Truck className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-semibold text-gray-800">
-                      {venda.cliente?.nome || "Sem cliente"}
+                      {compra.fornecedor?.razao_social || "-"}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {venda.cliente ? `ID: ${venda.cliente.id_cliente}` : "-"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Funcionário */}
-              <div>
-                <label className="text-xs font-semibold text-gray-500 mb-2 block">
-                  Funcionário
-                </label>
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">
-                      {venda.funcionario?.nome || "-"}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {venda.funcionario
-                        ? `ID: ${venda.funcionario.id_funcionario}`
+                      {compra.fornecedor
+                        ? `ID: ${compra.fornecedor.id_fornecedor}`
                         : "-"}
                     </p>
                   </div>
@@ -202,24 +167,37 @@ export default function VisualizarVenda() {
                   Valor Total
                 </label>
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <DollarSign className="w-4 h-4 text-green-500 flex-shrink-0" />
-                  <p className="text-lg font-bold text-green-600">
-                    {formatarPreco(venda.valor_total || 0)}
+                  <DollarSign className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                  <p className="text-lg font-bold text-blue-600">
+                    {formatarPreco(compra.valor_total || 0)}
                   </p>
                 </div>
               </div>
 
-              {/* Data de Vencimento */}
+              {/* Data da Compra */}
               <div>
                 <label className="text-xs font-semibold text-gray-500 mb-2 block">
-                  Vencimento
+                  Data da Compra
                 </label>
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
                   <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <p className="text-sm font-semibold text-gray-800">
-                    {venda.data_vencimento
-                      ? formatarDataSimples(venda.data_vencimento)
-                      : "Sem vencimento"}
+                    {formatarData(compra.data_hora)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Prazo de Entrega */}
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-2 block">
+                  Prazo de Entrega
+                </label>
+                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <p className="text-sm font-semibold text-gray-800">
+                    {compra.prazo_entrega
+                      ? formatarDataSimples(compra.prazo_entrega)
+                      : "Sem prazo definido"}
                   </p>
                 </div>
               </div>
@@ -231,23 +209,23 @@ export default function VisualizarVenda() {
             <div className="flex items-center gap-2 mb-6">
               <Package className="w-5 h-5 text-gray-400" />
               <h2 className="text-xl font-bold text-gray-800">
-                Produtos ({venda.itensvenda?.length || 0})
+                Produtos ({compra.itenscompra?.length || 0})
               </h2>
             </div>
 
-            {venda.itensvenda && venda.itensvenda.length > 0 ? (
+            {compra.itenscompra && compra.itenscompra.length > 0 ? (
               <div className="border border-gray-100 rounded-lg overflow-hidden">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr className="text-xs font-semibold text-gray-500">
                       <th className="px-6 py-4">Produto</th>
                       <th className="px-6 py-4 text-right">Quantidade</th>
-                      <th className="px-6 py-4 text-right">Preço Unitário</th>
+                      <th className="px-6 py-4 text-right">Preço de Custo</th>
                       <th className="px-6 py-4 text-right">Subtotal</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {venda.itensvenda.map((item) => (
+                    {compra.itenscompra.map((item) => (
                       <tr
                         key={item.fk_produto_id_produto}
                         className="hover:bg-gray-50"
@@ -263,15 +241,14 @@ export default function VisualizarVenda() {
                           </p>
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-gray-800">
-                          {item.quantidade_vendida}
+                          {item.quantidade}
                         </td>
                         <td className="px-6 py-4 text-right text-gray-700">
-                          {formatarPreco(item.preco_unitario || 0)}
+                          {formatarPreco(item.preco_custo || 0)}
                         </td>
-                        <td className="px-6 py-4 text-right font-semibold text-green-600">
+                        <td className="px-6 py-4 text-right font-semibold text-blue-600">
                           {formatarPreco(
-                            (item.preco_unitario || 0) *
-                              (item.quantidade_vendida || 0),
+                            (item.preco_custo || 0) * (item.quantidade || 0),
                           )}
                         </td>
                       </tr>
@@ -279,21 +256,20 @@ export default function VisualizarVenda() {
                   </tbody>
                 </table>
 
-                {/* Rodapé com total */}
                 <div className="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end">
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold text-gray-600">
                       Total:
                     </span>
-                    <span className="text-xl font-bold text-green-600">
-                      {formatarPreco(venda.valor_total || 0)}
+                    <span className="text-xl font-bold text-blue-600">
+                      {formatarPreco(compra.valor_total || 0)}
                     </span>
                   </div>
                 </div>
               </div>
             ) : (
               <p className="text-sm text-gray-400 text-center py-8">
-                Esta venda não possui itens.
+                Esta compra não possui itens.
               </p>
             )}
           </div>

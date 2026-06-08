@@ -239,8 +239,16 @@ export default function AtualizarVenda() {
                       : ""
                   }`}
                 >
-                  <option value="EM_ABERTO">Em Aberto</option>
-                  <option value="PAGO">Pago</option>
+                  {venda.status_pagamento === "PAGO" ? (
+                    <>
+                      <option value="PAGO">Pago</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="EM_ABERTO">Em Aberto</option>
+                      <option value="PAGO">Pago</option>
+                    </>
+                  )}
                 </select>
               </div>
               {venda.status_venda === "CANCELADA" && (
@@ -319,7 +327,7 @@ export default function AtualizarVenda() {
                       >
                         <td className="px-6 py-4">
                           <p className="font-semibold text-gray-800">
-                            {item.produto?.nome || "Produto não disponível"}
+                            {item.produto?.descricao}{" "}
                           </p>
                           <p className="text-xs text-gray-400 mt-1">
                             Código: {item.produto?.codigo_produto || "-"}

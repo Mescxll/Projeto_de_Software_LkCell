@@ -50,6 +50,18 @@ export function useAtualizarVenda(id) {
       return;
     }
 
+    // Impede alterar de PAGO para EM_ABERTO no frontend também
+    if (
+      venda.status_pagamento === "PAGO" &&
+      statusPagamentoNovo === "EM_ABERTO"
+    ) {
+      setErroMsg(
+        "Não é permitido alterar o status de pagamento de 'PAGO' para 'EM_ABERTO'.",
+      );
+      setModalErro(true);
+      return;
+    }
+
     setModalConfirmar(true);
   };
 

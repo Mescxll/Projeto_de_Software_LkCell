@@ -62,11 +62,14 @@ export default function CadastroCompra() {
 
   const opcoesProdutos = produtos.map((p) => ({
     value: p.id_produto,
-    label: p.nome || p.codigo_produto,
+    label: p.descricao,
   }));
 
   const inputClass =
     "w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
+
+  const inputDisabledClass =
+    "w-full px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed";
 
   return (
     <>
@@ -231,8 +234,8 @@ export default function CadastroCompra() {
                     name="preco_custo"
                     placeholder="0.00"
                     value={itemForm.preco_custo}
-                    onChange={handleChangeItem}
-                    className={`pl-9 ${inputClass}`}
+                    disabled
+                    className={`pl-9 ${inputDisabledClass}`}
                   />
                 </div>
               </div>

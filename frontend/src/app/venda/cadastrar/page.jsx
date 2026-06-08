@@ -68,9 +68,8 @@ export default function CadastroVenda() {
 
   const opcoesProdutos = produtos.map((p) => ({
     value: p.id_produto,
-    label: p.nome || p.codigo_produto,
+    label: p.descricao,
   }));
-
   const selectClass =
     "w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none bg-white";
 
