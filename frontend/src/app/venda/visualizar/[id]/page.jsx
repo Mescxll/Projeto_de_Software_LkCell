@@ -202,7 +202,6 @@ export default function VisualizarVenda() {
                   Valor Total
                 </label>
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <DollarSign className="w-4 h-4 text-green-500 flex-shrink-0" />
                   <p className="text-lg font-bold text-green-600">
                     {formatarPreco(venda.valor_total || 0)}
                   </p>

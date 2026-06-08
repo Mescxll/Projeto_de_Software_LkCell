@@ -138,14 +138,13 @@ export default function AtualizarCompra() {
                   Valor Total
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
                     value={
                       compra ? formatarPreco(compra.valor_total || 0) : "-"
                     }
                     disabled
-                    className={`pl-9 ${inputDisabledClass}`}
+                    className={`pl-4 ${inputDisabledClass}`}
                   />
                 </div>
               </div>
