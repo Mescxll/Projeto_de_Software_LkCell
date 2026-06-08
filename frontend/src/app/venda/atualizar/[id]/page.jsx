@@ -11,6 +11,7 @@ import {
   Loader2,
   Save,
   User,
+  Lock,
 } from "lucide-react";
 
 export default function AtualizarVenda() {
@@ -304,9 +305,22 @@ export default function AtualizarVenda() {
 
           {/* Produtos */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">
-              Produtos ({venda.itensvenda?.length || 0})
-            </h2>
+            <div className="flex items-center gap-2 mb-6">
+              <h2 className="text-xl font-bold text-gray-800">
+                Produtos ({venda.itensvenda?.length || 0})
+              </h2>
+              <div className="flex items-center gap-1 px-2 py-1 rounded bg-gray-100">
+                <Lock className="w-3 h-3 text-gray-500" />
+                <span className="text-xs text-gray-500 font-semibold">
+                  Somente leitura
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400 mb-6">
+              Os itens desta venda não podem ser alterados após o cadastro. Para
+              modificar os produtos, cancele esta venda e crie uma nova.
+            </p>
 
             {venda.itensvenda && venda.itensvenda.length > 0 ? (
               <div className="border border-gray-100 rounded-lg overflow-hidden">

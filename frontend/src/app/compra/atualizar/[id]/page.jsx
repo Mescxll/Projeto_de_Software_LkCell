@@ -264,7 +264,9 @@ export default function AtualizarCompra() {
           {/* Seção 2: Produtos (Somente Leitura) */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <div className="flex items-center gap-2 mb-6">
-              <h2 className="text-xl font-bold text-gray-800">Produtos</h2>
+              <h2 className="text-xl font-bold text-gray-800">
+                Produtos ({compra.itenscompra?.length || 0})
+              </h2>
               <div className="flex items-center gap-1 px-2 py-1 rounded bg-gray-100">
                 <Lock className="w-3 h-3 text-gray-500" />
                 <span className="text-xs text-gray-500 font-semibold">
