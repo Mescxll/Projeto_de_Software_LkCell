@@ -27,10 +27,10 @@ model cliente {
 
 model compra {
   id_compra                   Int           @id @default(autoincrement())
-  data_hora                   DateTime?     @db.Timestamp(6)
-  valor_total                 Decimal?      @db.Decimal(10, 2)
+  data_hora                   DateTime      @default(now()) @db.Timestamp(6)
+  valor_total                 Decimal       @db.Decimal(10, 2)
   prazo_entrega               DateTime?     @db.Date
-  fk_fornecedor_id_fornecedor Int?
+  fk_fornecedor_id_fornecedor Int
   fornecedor                  fornecedor?   @relation(fields: [fk_fornecedor_id_fornecedor], references: [id_fornecedor], onDelete: Cascade, onUpdate: NoAction, map: "fk_compra_2")
   itenscompra                 itenscompra[]
   estoque                     estoque[]
