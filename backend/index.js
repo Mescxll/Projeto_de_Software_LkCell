@@ -11,6 +11,7 @@ const produtoRoutes = require("./src/routes/produtoRoutes");
 const catalogoRoutes = require("./src/routes/catalogoRoutes");
 const fornecedorRoutes = require("./src/routes/fornecedorRoutes");
 const vendaRoutes = require("./src/routes/vendaRoutes");
+const compraRoutes = require("./src/routes/compraRoutes");
 
 const app = express();
 
