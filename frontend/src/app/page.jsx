@@ -8,7 +8,7 @@ const painel = [
   { titulo: "Produtos", icone: Package, cor: "verde", link: "/produto/gerenciar" },
   { titulo: "Fornecedores", icone: Truck, cor: "azul", link: "/fornecedor/gerenciar" },
   { titulo: "Vendas", icone: TrendingUp, cor: "verde", link: "/venda/gerenciar" },
-  { titulo: "Compras", icone: ShoppingBasket, cor: "cinza", link: "/compra/gerenciar" },
+  { titulo: "Compras", icone: ShoppingBasket, cor: "green", link: "/compra/gerenciar" },
   { titulo: "Ordens de Serviço", icone: Wrench, cor: "cinza" },
   { titulo: "Despesas", icone: Wallet, cor: "cinza" },
   { titulo: "Estoque", icone: Boxes, cor: "cinza" },
