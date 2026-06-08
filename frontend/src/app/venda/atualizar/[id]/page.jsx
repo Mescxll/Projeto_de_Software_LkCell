@@ -35,7 +35,6 @@ export default function AtualizarVenda() {
     setModalCancelar,
     isCancelling,
     modalSucessoCancelamento,
-    setModalSucessoCancelamento,
     handleSalvar,
     handleConfirmar,
     handleCancelarVenda,
@@ -106,7 +105,7 @@ export default function AtualizarVenda() {
           <ArrowLeft className="w-4 h-4" /> Voltar para Vendas
         </button>
 
-        <div className="flex flex-col gap-6 max-w-3xl">
+        <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full">
           {/* Cabeçalho */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <div className="flex items-center justify-between mb-6">
@@ -351,7 +350,7 @@ export default function AtualizarVenda() {
           </div>
 
           {/* Botões de Ação */}
-          <div className="flex gap-3 justify-end mb-8">
+          <div className="flex gap-3 justify-end mb-8 max-w-3xl mx-auto w-full">
             <button
               onClick={() => router.push(`/venda/gerenciar`)}
               className="px-6 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"

@@ -10,6 +10,10 @@ export function useAtualizarCompra(id) {
   const [erroMsg, setErroMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modal, setModal] = useState(null);
+  const [modalCancelar, setModalCancelar] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [modalSucessoCancelamento, setModalSucessoCancelamento] =
+    useState(false);
 
   const [form, setForm] = useState({
     fk_fornecedor_id_fornecedor: "",
@@ -37,7 +41,8 @@ export function useAtualizarCompra(id) {
 
         // Preenche o formulário com os dados atuais
         setForm({
-          fk_fornecedor_id_fornecedor: dataCompra.fk_fornecedor_id_fornecedor || "",
+          fk_fornecedor_id_fornecedor:
+            dataCompra.fk_fornecedor_id_fornecedor || "",
           prazo_entrega: dataCompra.prazo_entrega
             ? new Date(dataCompra.prazo_entrega).toISOString().split("T")[0]
             : "",
@@ -107,6 +112,33 @@ export function useAtualizarCompra(id) {
     }
   };
 
+  const handleCancelarCompra = async () => {
+    setModalCancelar(false);
+    setIsCancelling(true);
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/compras/${id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setCompra((prev) =>
+          prev ? { ...prev, status_compra: "CANCELADA" } : prev,
+        );
+        setModalSucessoCancelamento(true);
+      } else {
+        const data = await res.json();
+        setErroMsg(data.erro || "Erro ao cancelar compra.");
+        setModal("erro");
+      }
+    } catch {
+      setErroMsg("Não foi possível conectar ao servidor.");
+      setModal("erro");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const formatarPreco = (valor) =>
     Number(valor).toLocaleString("pt-BR", {
       style: "currency",
@@ -138,10 +170,16 @@ export function useAtualizarCompra(id) {
     isSubmitting,
     modal,
     setModal,
+    modalCancelar,
+    setModalCancelar,
+    isCancelling,
+    modalSucessoCancelamento,
+    setModalSucessoCancelamento,
     form,
     setForm,
     handleChange,
     handleSubmit,
+    handleCancelarCompra,
     formatarPreco,
     formatarData,
   };

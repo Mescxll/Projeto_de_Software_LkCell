@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   Loader2,
   Truck,
-  Package,
   Calendar,
   DollarSign,
   Lock,
@@ -28,10 +27,15 @@ export default function AtualizarCompra() {
     isSubmitting,
     modal,
     setModal,
+    modalCancelar,
+    setModalCancelar,
+    isCancelling,
+    modalSucessoCancelamento,
     form,
     setForm,
     handleChange,
     handleSubmit,
+    handleCancelarCompra,
     formatarPreco,
     formatarData,
   } = useAtualizarCompra(id);
@@ -82,7 +86,8 @@ export default function AtualizarCompra() {
 
             {/* Status da Compra */}
             <div className="mb-6 pb-6 border-b border-gray-100">
-              <div className="inline-flex items-center justify-center px-3 py-1.5 rounded-full border"
+              <div
+                className="inline-flex items-center justify-center px-3 py-1.5 rounded-full border"
                 style={
                   compra?.status_compra === "CANCELADA"
                     ? {
@@ -136,7 +141,9 @@ export default function AtualizarCompra() {
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
-                    value={compra ? formatarPreco(compra.valor_total || 0) : "-"}
+                    value={
+                      compra ? formatarPreco(compra.valor_total || 0) : "-"
+                    }
                     disabled
                     className={`pl-9 ${inputDisabledClass}`}
                   />
@@ -210,6 +217,50 @@ export default function AtualizarCompra() {
             </div>
           </div>
 
+          {/* Status da Compra */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-1">
+              Status da Compra
+            </h2>
+            <p className="text-xs text-gray-400 mb-6">
+              O cancelamento é irreversível e estornará o estoque
+              automaticamente.
+            </p>
+
+            <div className="flex items-center justify-between p-4 rounded-lg border border-gray-100 bg-gray-50">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">
+                  Situação atual:{" "}
+                  <span
+                    className={
+                      compra?.status_compra === "CANCELADA"
+                        ? "text-red-600"
+                        : "text-green-600"
+                    }
+                  >
+                    {compra?.status_compra === "CANCELADA"
+                      ? "Cancelada"
+                      : "Ativa"}
+                  </span>
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {compra?.status_compra === "CANCELADA"
+                    ? "Esta compra já foi cancelada e não pode ser modificada."
+                    : "Cancelar a compra estornará o estoque de todos os produtos."}
+                </p>
+              </div>
+
+              <button
+                onClick={() => setModalCancelar(true)}
+                disabled={compra?.status_compra === "CANCELADA" || isCancelling}
+                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg font-semibold transition-all text-sm"
+              >
+                {isCancelling && <Loader2 className="w-4 h-4 animate-spin" />}
+                Cancelar Compra
+              </button>
+            </div>
+          </div>
+
           {/* Seção 2: Produtos (Somente Leitura) */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <div className="flex items-center gap-2 mb-6">
@@ -239,7 +290,10 @@ export default function AtualizarCompra() {
                 <tbody className="divide-y divide-gray-100">
                   {compra?.itenscompra && compra.itenscompra.length > 0 ? (
                     compra.itenscompra.map((item) => (
-                      <tr key={item.id_itenscompra} className="text-sm text-gray-700 hover:bg-gray-75">
+                      <tr
+                        key={item.id_itenscompra}
+                        className="text-sm text-gray-700 hover:bg-gray-75"
+                      >
                         <td className="px-6 py-4">
                           <p className="font-medium text-gray-800">
                             {item.produto?.nome || item.produto?.codigo_produto}
@@ -261,7 +315,10 @@ export default function AtualizarCompra() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="px-6 py-8 text-center text-gray-400 text-sm">
+                      <td
+                        colSpan="4"
+                        className="px-6 py-8 text-center text-gray-400 text-sm"
+                      >
                         Nenhum produto adicionado.
                       </td>
                     </tr>
@@ -311,9 +368,7 @@ export default function AtualizarCompra() {
                 <CheckCircle className="w-9 h-9 text-green-500" />
               </div>
             </div>
-            <h2 className="text-lg font-bold text-gray-800 mb-2">
-              Sucesso!
-            </h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-2">Sucesso!</h2>
             <p className="text-sm text-gray-500 mb-6">
               A compra foi atualizada com sucesso!
             </p>
@@ -336,17 +391,75 @@ export default function AtualizarCompra() {
                 <AlertTriangle className="w-9 h-9 text-red-500" />
               </div>
             </div>
-            <h2 className="text-lg font-bold text-gray-800 mb-2">
-              Erro!
-            </h2>
-            <p className="text-sm text-gray-500 mb-6">
-              {erroMsg}
-            </p>
+            <h2 className="text-lg font-bold text-gray-800 mb-2">Erro!</h2>
+            <p className="text-sm text-gray-500 mb-6">{erroMsg}</p>
             <button
               onClick={() => setModal(null)}
               className="w-full py-2.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-all"
             >
               Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirmar Cancelamento */}
+      {modalCancelar && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-9 h-9 text-red-500" />
+              </div>
+            </div>
+            <h2 className="text-lg font-bold text-gray-800 mb-2">
+              Cancelar Compra?
+            </h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Esta ação é <strong>irreversível</strong>. O estoque de todos os
+              produtos será estornado automaticamente.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setModalCancelar(false)}
+                disabled={isCancelling}
+                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
+              >
+                Voltar
+              </button>
+              <button
+                onClick={handleCancelarCompra}
+                disabled={isCancelling}
+                className="flex-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white px-4 py-2.5 rounded-lg font-semibold transition-all text-sm"
+              >
+                {isCancelling && <Loader2 className="w-4 h-4 animate-spin" />}
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Sucesso Cancelamento */}
+      {modalSucessoCancelamento && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="w-9 h-9 text-green-500" />
+              </div>
+            </div>
+            <h2 className="text-lg font-bold text-gray-800 mb-2">
+              Compra Cancelada!
+            </h2>
+            <p className="text-sm text-gray-600 mb-6">
+              A compra foi cancelada e o estoque foi estornado com sucesso.
+            </p>
+            <button
+              onClick={() => router.push("/compra/gerenciar")}
+              className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-lg font-semibold transition-all"
+            >
+              Voltar para Compras
             </button>
           </div>
         </div>

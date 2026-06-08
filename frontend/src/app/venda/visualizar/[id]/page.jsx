@@ -18,8 +18,14 @@ export default function VisualizarVenda() {
   const router = useRouter();
   const { id } = useParams();
 
-  const { loading, venda, erro, formatarPreco, formatarData, formatarDataSimples } =
-    useVisualizarVenda(parseInt(id));
+  const {
+    loading,
+    venda,
+    erro,
+    formatarPreco,
+    formatarData,
+    formatarDataSimples,
+  } = useVisualizarVenda(parseInt(id));
 
   if (loading) {
     return (
@@ -40,7 +46,9 @@ export default function VisualizarVenda() {
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-lg font-bold text-gray-800 mb-2">Venda não encontrada</h2>
+              <h2 className="text-lg font-bold text-gray-800 mb-2">
+                Venda não encontrada
+              </h2>
               <p className="text-sm text-gray-600 mb-6">
                 A venda que você está procurando não existe.
               </p>
@@ -80,7 +88,7 @@ export default function VisualizarVenda() {
           <ArrowLeft className="w-4 h-4" /> Voltar para Vendas
         </button>
 
-        <div className="flex flex-col gap-6 max-w-3xl">
+        <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full">
           {/* Cabeçalho */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <div className="flex items-start justify-between mb-6">
@@ -136,10 +144,12 @@ export default function VisualizarVenda() {
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex gap-3">
                 <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-red-900">Venda Cancelada</p>
+                  <p className="text-sm font-semibold text-red-900">
+                    Venda Cancelada
+                  </p>
                   <p className="text-xs text-red-700 mt-1">
-                    Esta venda foi cancelada. O estoque dos produtos foi estornado
-                    automaticamente.
+                    Esta venda foi cancelada. O estoque dos produtos foi
+                    estornado automaticamente.
                   </p>
                 </div>
               </div>
@@ -257,7 +267,8 @@ export default function VisualizarVenda() {
                         </td>
                         <td className="px-6 py-4 text-right font-semibold text-green-600">
                           {formatarPreco(
-                            (item.preco_unitario || 0) * (item.quantidade_vendida || 0)
+                            (item.preco_unitario || 0) *
+                              (item.quantidade_vendida || 0),
                           )}
                         </td>
                       </tr>
@@ -268,7 +279,9 @@ export default function VisualizarVenda() {
                 {/* Rodapé com total */}
                 <div className="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-gray-600">Total:</span>
+                    <span className="text-sm font-semibold text-gray-600">
+                      Total:
+                    </span>
                     <span className="text-xl font-bold text-green-600">
                       {formatarPreco(venda.valor_total || 0)}
                     </span>

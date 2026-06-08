@@ -181,9 +181,24 @@ export default function CadastroCompra() {
                   name="fk_produto_id_produto"
                   options={opcoesProdutos}
                   value={itemForm.fk_produto_id_produto}
-                  onChange={(val) =>
-                    setItemForm({ ...itemForm, fk_produto_id_produto: val })
-                  }
+                  onChange={(val) => {
+                    const produtoSelecionado = produtos.find(
+                      (p) => p.id_produto === parseInt(val),
+                    );
+                    const precoCusto = produtoSelecionado?.preco_custo
+                      ? Number(produtoSelecionado.preco_custo).toLocaleString(
+                          "pt-BR",
+                          {
+                            minimumFractionDigits: 2,
+                          },
+                        )
+                      : "";
+                    setItemForm({
+                      ...itemForm,
+                      fk_produto_id_produto: val,
+                      preco_custo: precoCusto,
+                    });
+                  }}
                   placeholder="Selecione"
                   icon={<Package className="w-4 h-4" />}
                 />
@@ -232,8 +247,11 @@ export default function CadastroCompra() {
                   value={
                     itemForm.preco_custo && itemForm.quantidade
                       ? formatarPreco(
-                          Number(itemForm.preco_custo.replace(/\./g, "").replace(",", ".")) *
-                            parseInt(itemForm.quantidade),
+                          Number(
+                            itemForm.preco_custo
+                              .replace(/\./g, "")
+                              .replace(",", "."),
+                          ) * parseInt(itemForm.quantidade),
                         )
                       : "-"
                   }
