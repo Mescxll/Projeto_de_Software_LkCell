@@ -1,6 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -30,7 +29,7 @@ model compra {
   data_hora                   DateTime           @default(now()) @db.Timestamp(6)
   valor_total                 Decimal?           @db.Decimal(10, 2)
   prazo_entrega               DateTime?          @db.Date
-  status_compra               status_compra_enum @default(EFETUADA)  // <-- novo
+  status_compra               status_compra_enum @default(EFETUADA) // <-- novo
   fk_fornecedor_id_fornecedor Int
   fornecedor                  fornecedor?        @relation(fields: [fk_fornecedor_id_fornecedor], references: [id_fornecedor], onDelete: Cascade, onUpdate: NoAction, map: "fk_compra_2")
   itenscompra                 itenscompra[]
@@ -62,9 +61,9 @@ model itenscompra {
   fk_produto_id_produto Int
   fk_compra_id_compra   Int
   quantidade            Int?
-  preco_custo           Decimal @db.Decimal(10, 2)
-  produto               produto  @relation(fields: [fk_produto_id_produto], references: [id_produto], onUpdate: NoAction, map: "fk_itenscompra_1")
-  compra                compra   @relation(fields: [fk_compra_id_compra], references: [id_compra], onUpdate: NoAction, map: "fk_itenscompra_2")
+  preco_compra          Decimal @db.Decimal(10, 2)
+  produto               produto @relation(fields: [fk_produto_id_produto], references: [id_produto], onUpdate: NoAction, map: "fk_itenscompra_1")
+  compra                compra  @relation(fields: [fk_compra_id_compra], references: [id_compra], onUpdate: NoAction, map: "fk_itenscompra_2")
 
   @@id([fk_produto_id_produto, fk_compra_id_compra])
 }
@@ -107,11 +106,11 @@ model marca {
 }
 
 model modelo {
-  id_modelo  Int       @id @default(autoincrement())
-  nome       String
+  id_modelo   Int       @id @default(autoincrement())
+  nome        String
   fk_marca_id Int
-  marca      marca     @relation(fields: [fk_marca_id], references: [id_marca])
-  produtos   produto[]
+  marca       marca     @relation(fields: [fk_marca_id], references: [id_marca])
+  produtos    produto[]
 
   @@unique([nome, fk_marca_id])
 }
@@ -151,7 +150,7 @@ model estoque {
   produto       produto @relation(fields: [fk_produto_id], references: [id_produto], onDelete: Cascade, onUpdate: NoAction)
 
   fk_venda_id Int?
-  venda       venda?  @relation(fields: [fk_venda_id], references: [id_venda], onDelete: SetNull, onUpdate: NoAction)
+  venda       venda? @relation(fields: [fk_venda_id], references: [id_venda], onDelete: SetNull, onUpdate: NoAction)
 
   fk_compra_id Int?
   compra       compra? @relation(fields: [fk_compra_id], references: [id_compra], onDelete: SetNull, onUpdate: NoAction)
@@ -177,7 +176,7 @@ model venda {
   id_venda                      Int                   @id @default(autoincrement())
   valor_total                   Decimal?              @db.Decimal(10, 2)
   status_pagamento              status_pagamento_enum
-  status_venda                  status_venda_enum     
+  status_venda                  status_venda_enum
   data_vencimento               DateTime?             @db.Date
   data_hora                     DateTime              @db.Timestamp(6)
   fk_cliente_id_cliente         Int?
@@ -193,7 +192,7 @@ enum status_pagamento_enum {
   EM_ABERTO
 }
 
-enum status_venda_enum {  
+enum status_venda_enum {
   EFETUADA
   CANCELADA
 }

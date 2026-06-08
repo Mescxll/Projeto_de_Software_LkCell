@@ -18,7 +18,7 @@ export function useCadastrarCompra() {
   const [itemForm, setItemForm] = useState({
     fk_produto_id_produto: "",
     quantidade: "",
-    preco_custo: "",
+    preco_compra: "",
   });
 
   // Busca fornecedores e produtos ao abrir
@@ -52,8 +52,14 @@ export function useCadastrarCompra() {
   }, []);
 
   const handleAddItem = () => {
-    if (!itemForm.fk_produto_id_produto || !itemForm.quantidade || !itemForm.preco_custo) {
-      setErroMsg("Selecione um produto, informe a quantidade e o preço de custo.");
+    if (
+      !itemForm.fk_produto_id_produto ||
+      !itemForm.quantidade ||
+      !itemForm.preco_compra
+    ) {
+      setErroMsg(
+        "Selecione um produto, informe a quantidade e o preço de compra.",
+      );
       setModal("erro");
       return;
     }
@@ -67,15 +73,15 @@ export function useCadastrarCompra() {
 
     // Converte formato brasileiro (1.234,56 ou 1234,56 ou 1234.56) para float
     const parseBRL = (str) => Number(str.replace(/\./g, "").replace(",", "."));
-    const custo = parseBRL(itemForm.preco_custo);
-    if (isNaN(custo) || custo <= 0) {
-      setErroMsg("O preço de custo deve ser um número maior que zero.");
+    const precoCompra = parseBRL(itemForm.preco_compra);
+    if (isNaN(precoCompra) || precoCompra <= 0) {
+      setErroMsg("O preço de compra deve ser um número maior que zero.");
       setModal("erro");
       return;
     }
 
     const produtoSelecionado = produtos.find(
-      (p) => p.id_produto === parseInt(itemForm.fk_produto_id_produto)
+      (p) => p.id_produto === parseInt(itemForm.fk_produto_id_produto),
     );
 
     if (!produtoSelecionado) {
@@ -87,10 +93,13 @@ export function useCadastrarCompra() {
     // Verifica se o produto já foi adicionado
     if (
       form.itens.some(
-        (i) => i.fk_produto_id_produto === parseInt(itemForm.fk_produto_id_produto)
+        (i) =>
+          i.fk_produto_id_produto === parseInt(itemForm.fk_produto_id_produto),
       )
     ) {
-      setErroMsg("Este produto já foi adicionado. Ajuste a quantidade em vez de repetir o produto.");
+      setErroMsg(
+        "Este produto já foi adicionado. Ajuste a quantidade em vez de repetir o produto.",
+      );
       setModal("erro");
       return;
     }
@@ -98,7 +107,7 @@ export function useCadastrarCompra() {
     const novoItem = {
       fk_produto_id_produto: parseInt(itemForm.fk_produto_id_produto),
       quantidade: qty,
-      preco_custo: custo,
+      preco_compra: precoCompra,
       produtoNome: produtoSelecionado.nome || produtoSelecionado.codigo_produto,
     };
 
@@ -110,7 +119,7 @@ export function useCadastrarCompra() {
     setItemForm({
       fk_produto_id_produto: "",
       quantidade: "",
-      preco_custo: "",
+      preco_compra: "",
     });
   };
 
@@ -133,7 +142,7 @@ export function useCadastrarCompra() {
       // Permite apenas inteiros positivos
       const num = value.replace(/\D/g, "");
       setItemForm({ ...itemForm, [name]: num });
-    } else if (name === "preco_custo") {
+    } else if (name === "preco_compra") {
       // Permite dígitos, vírgula e ponto (formato brasileiro: 1.234,56)
       const num = value.replace(/[^0-9.,]/g, "");
       setItemForm({ ...itemForm, [name]: num });
@@ -157,7 +166,7 @@ export function useCadastrarCompra() {
       itens: form.itens.map((item) => ({
         fk_produto_id_produto: item.fk_produto_id_produto,
         quantidade: item.quantidade,
-        preco_custo: item.preco_custo,
+        preco_compra: item.preco_compra,
       })),
     };
 
@@ -178,7 +187,7 @@ export function useCadastrarCompra() {
         setItemForm({
           fk_produto_id_produto: "",
           quantidade: "",
-          preco_custo: "",
+          preco_compra: "",
         });
       } else {
         const data = await res.json();
@@ -201,7 +210,7 @@ export function useCadastrarCompra() {
 
   const calcularTotal = () => {
     return form.itens.reduce((acc, item) => {
-      return acc + item.preco_custo * item.quantidade;
+      return acc + item.preco_compra * item.quantidade;
     }, 0);
   };
 

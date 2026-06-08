@@ -6,7 +6,7 @@ const cadastrarCompra = async (req, res) => {
     const {
       fk_fornecedor_id_fornecedor,
       prazo_entrega,
-      itens, // [{ fk_produto_id_produto, quantidade, preco_custo }]
+      itens, // [{ fk_produto_id_produto, quantidade, preco_compra }]
     } = req.body;
 
     // Busca todos os produtos e seus estoques atuais
@@ -35,10 +35,10 @@ const cadastrarCompra = async (req, res) => {
 
     // Executa tudo em transação
     const novaCompra = await prisma.$transaction(async (tx) => {
-      // Calcula valor total com base nos preços de custo informados
+      // Calcula valor total com base nos preços de compra informados
       let valorTotal = 0;
       for (const item of itens) {
-        valorTotal += Number(item.preco_custo) * item.quantidade;
+        valorTotal += Number(item.preco_compra) * item.quantidade;
       }
 
       // Cria o registro de compra
@@ -63,7 +63,7 @@ const cadastrarCompra = async (req, res) => {
             fk_compra_id_compra: compra.id_compra,
             fk_produto_id_produto: item.fk_produto_id_produto,
             quantidade: item.quantidade,
-            preco_custo: item.preco_custo,
+            preco_compra: item.preco_compra,
           },
         });
 
@@ -82,7 +82,7 @@ const cadastrarCompra = async (req, res) => {
         // Atualiza o preco_custo do produto com o valor mais recente
         await tx.produto.update({
           where: { id_produto: item.fk_produto_id_produto },
-          data: { preco_custo: item.preco_custo },
+          data: { preco_custo: item.preco_compra },
         });
       }
 
@@ -318,4 +318,3 @@ module.exports = {
   atualizarCompra,
   cancelarCompra,
 };
-

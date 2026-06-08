@@ -220,7 +220,7 @@ export default function VisualizarCompra() {
                     <tr className="text-xs font-semibold text-gray-500">
                       <th className="px-6 py-4">Produto</th>
                       <th className="px-6 py-4 text-right">Quantidade</th>
-                      <th className="px-6 py-4 text-right">Preço de Custo</th>
+                      <th className="px-6 py-4 text-right">Preço de Compra</th>
                       <th className="px-6 py-4 text-right">Subtotal</th>
                     </tr>
                   </thead>
@@ -244,11 +244,11 @@ export default function VisualizarCompra() {
                           {item.quantidade}
                         </td>
                         <td className="px-6 py-4 text-right text-gray-700">
-                          {formatarPreco(item.preco_custo || 0)}
+                          {formatarPreco(item.preco_compra || 0)}
                         </td>
                         <td className="px-6 py-4 text-right font-semibold text-blue-600">
                           {formatarPreco(
-                            (item.preco_custo || 0) * (item.quantidade || 0),
+                            (item.preco_compra || 0) * (item.quantidade || 0),
                           )}
                         </td>
                       </tr>

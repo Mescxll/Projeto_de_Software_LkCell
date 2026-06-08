@@ -188,8 +188,8 @@ export default function CadastroCompra() {
                     const produtoSelecionado = produtos.find(
                       (p) => p.id_produto === parseInt(val),
                     );
-                    const precoCusto = produtoSelecionado?.preco_custo
-                      ? Number(produtoSelecionado.preco_custo).toLocaleString(
+                    const precoCompra = produtoSelecionado?.preco_compra
+                      ? Number(produtoSelecionado.preco_compra).toLocaleString(
                           "pt-BR",
                           {
                             minimumFractionDigits: 2,
@@ -199,7 +199,7 @@ export default function CadastroCompra() {
                     setItemForm({
                       ...itemForm,
                       fk_produto_id_produto: val,
-                      preco_custo: precoCusto,
+                      preco_compra: precoCompra,
                     });
                   }}
                   placeholder="Selecione"
@@ -222,18 +222,18 @@ export default function CadastroCompra() {
                 />
               </div>
 
-              {/* Preço de Custo */}
+              {/* Preço de Compra */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                  Preço Custo <span className="text-red-400">*</span>
+                  Preço de Compra <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
-                    name="preco_custo"
+                    name="preco_compra"
                     placeholder="0.00"
-                    value={itemForm.preco_custo}
+                    value={itemForm.preco_compra}
                     disabled
                     className={`pl-9 ${inputDisabledClass}`}
                   />
@@ -248,10 +248,10 @@ export default function CadastroCompra() {
                 <input
                   type="text"
                   value={
-                    itemForm.preco_custo && itemForm.quantidade
+                    itemForm.preco_compra && itemForm.quantidade
                       ? formatarPreco(
                           Number(
-                            itemForm.preco_custo
+                            itemForm.preco_compra
                               .replace(/\./g, "")
                               .replace(",", "."),
                           ) * parseInt(itemForm.quantidade),
@@ -282,7 +282,7 @@ export default function CadastroCompra() {
                     <tr className="text-xs font-semibold text-gray-500">
                       <th className="px-4 py-3">Produto</th>
                       <th className="px-4 py-3 text-right">Quantidade</th>
-                      <th className="px-4 py-3 text-right">Preço de Custo</th>
+                      <th className="px-4 py-3 text-right">Preço de Compra</th>
                       <th className="px-4 py-3 text-right">Subtotal</th>
                       <th className="px-4 py-3 text-center">Ação</th>
                     </tr>
@@ -302,10 +302,10 @@ export default function CadastroCompra() {
                           {item.quantidade}
                         </td>
                         <td className="px-4 py-3 text-right text-gray-700">
-                          {formatarPreco(item.preco_custo)}
+                          {formatarPreco(item.preco_compra)}
                         </td>
                         <td className="px-4 py-3 text-right font-semibold text-blue-600">
-                          {formatarPreco(item.preco_custo * item.quantidade)}
+                          {formatarPreco(item.preco_compra * item.quantidade)}
                         </td>
                         <td className="px-4 py-3 text-center">
                           <button

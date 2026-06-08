@@ -285,7 +285,7 @@ export default function AtualizarCompra() {
                   <tr className="text-xs font-semibold text-gray-600">
                     <th className="px-6 py-4">Produto</th>
                     <th className="px-6 py-4">Quantidade</th>
-                    <th className="px-6 py-4">Preço de Custo</th>
+                    <th className="px-6 py-4">Preço de Compra</th>
                     <th className="px-6 py-4 text-right">Subtotal</th>
                   </tr>
                 </thead>
@@ -308,10 +308,10 @@ export default function AtualizarCompra() {
                           {item.quantidade}
                         </td>
                         <td className="px-6 py-4 text-gray-600">
-                          {formatarPreco(item.preco_custo)}
+                          {formatarPreco(item.preco_compra)}
                         </td>
                         <td className="px-6 py-4 text-right font-semibold text-green-600">
-                          {formatarPreco(item.preco_custo * item.quantidade)}
+                          {formatarPreco(item.preco_compra * item.quantidade)}
                         </td>
                       </tr>
                     ))

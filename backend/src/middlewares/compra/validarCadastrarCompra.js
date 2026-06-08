@@ -30,7 +30,10 @@ const validarCadastrarCompra = (req, res, next) => {
       });
     }
 
-    if (!Number.isInteger(Number(item.fk_produto_id_produto)) || Number(item.fk_produto_id_produto) <= 0) {
+    if (
+      !Number.isInteger(Number(item.fk_produto_id_produto)) ||
+      Number(item.fk_produto_id_produto) <= 0
+    ) {
       return res.status(400).json({
         erro: `Item ${i + 1}: ID do produto inválido.`,
       });
@@ -48,15 +51,15 @@ const validarCadastrarCompra = (req, res, next) => {
       });
     }
 
-    if (item.preco_custo === undefined || item.preco_custo === null) {
+    if (item.preco_compra === undefined || item.preco_compra === null) {
       return res.status(400).json({
-        erro: `Item ${i + 1}: o preço de custo é obrigatório.`,
+        erro: `Item ${i + 1}: o preço de compra é obrigatório.`,
       });
     }
 
-    if (isNaN(Number(item.preco_custo)) || Number(item.preco_custo) <= 0) {
+    if (isNaN(Number(item.preco_compra)) || Number(item.preco_compra) <= 0) {
       return res.status(400).json({
-        erro: `Item ${i + 1}: o preço de custo deve ser um número maior que zero.`,
+        erro: `Item ${i + 1}: o preço de compra deve ser um número maior que zero.`,
       });
     }
   }
