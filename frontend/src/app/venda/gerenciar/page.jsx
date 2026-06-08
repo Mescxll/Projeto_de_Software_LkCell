@@ -65,10 +65,11 @@ export default function GerenciarVendas() {
               </p>
             </div>
           </div>
-          <Link href="/vendas/cadastrar">
-            <button className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all text-sm">
-              <Plus className="w-4 h-4" /> Cadastrar Venda
-            </button>
+          <Link
+            href="/venda/cadastrar"
+            className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all text-sm"
+          >
+            <Plus className="w-4 h-4" /> Cadastrar Venda
           </Link>
         </div>
 
@@ -169,7 +170,7 @@ export default function GerenciarVendas() {
                     }`}
                   >
                     <td className="px-6 py-4 font-mono font-semibold text-gray-800">
-                      #{v.id_venda}
+                      {v.id_venda}
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-medium text-gray-800">
@@ -243,7 +244,7 @@ export default function GerenciarVendas() {
                     <td className="px-6 py-4">
                       <div className="flex justify-center gap-2">
                         <Link
-                          href={`/vendas/${v.id_venda}`}
+                          href={`/venda/visualizar/${v.id_venda}`}
                           className="inline-flex items-center justify-center p-1.5 rounded-md transition-colors text-green-500 icon-btn-green"
                           title="Ver detalhes"
                         >
@@ -252,7 +253,7 @@ export default function GerenciarVendas() {
 
                         {v.status_venda !== "CANCELADA" && (
                           <Link
-                            href={`/vendas/atualizar/${v.id_venda}`}
+                            href={`/venda/atualizar/${v.id_venda}`}
                             className="inline-flex items-center justify-center p-1.5 rounded-md transition-colors text-blue-500 icon-btn-blue"
                             title="Atualizar venda"
                           >
@@ -302,7 +303,7 @@ export default function GerenciarVendas() {
             <p className="text-sm text-gray-500 mb-1">
               Tem certeza de que deseja cancelar a venda{" "}
               <span className="font-semibold text-gray-800">
-                #{vendaSelecionada?.id_venda}
+                {vendaSelecionada?.id_venda}
               </span>
               ?
             </p>

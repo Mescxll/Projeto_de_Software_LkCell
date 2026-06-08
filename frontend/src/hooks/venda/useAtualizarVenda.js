@@ -1,4 +1,3 @@
-// Lógica da Tela de Atualizar Venda
 import { useState, useEffect } from "react";
 
 export function useAtualizarVenda(id) {
@@ -11,6 +10,12 @@ export function useAtualizarVenda(id) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalErro, setModalErro] = useState(false);
   const [modalSucesso, setModalSucesso] = useState(false);
+
+  // Novos estados para cancelamento
+  const [modalCancelar, setModalCancelar] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [modalSucessoCancelamento, setModalSucessoCancelamento] =
+    useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -58,10 +63,8 @@ export function useAtualizarVenda(id) {
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            status_pagamento: statusPagamentoNovo,
-          }),
-        }
+          body: JSON.stringify({ status_pagamento: statusPagamentoNovo }),
+        },
       );
 
       if (res.ok) {
@@ -78,6 +81,33 @@ export function useAtualizarVenda(id) {
       setModalErro(true);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Nova função de cancelamento
+  const handleCancelarVenda = async () => {
+    setModalCancelar(false);
+    setIsCancelling(true);
+
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/vendas/${id}`,
+        { method: "DELETE" }, // era PATCH e /cancelar
+      );
+
+      if (res.ok) {
+        setVenda((prev) => ({ ...prev, status_venda: "CANCELADA" }));
+        setModalSucessoCancelamento(true);
+      } else {
+        const data = await res.json();
+        setErroMsg(data.erro || "Erro ao cancelar venda.");
+        setModalErro(true);
+      }
+    } catch {
+      setErroMsg("Não foi possível conectar ao servidor.");
+      setModalErro(true);
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -126,8 +156,14 @@ export function useAtualizarVenda(id) {
     setModalErro,
     modalSucesso,
     setModalSucesso,
+    modalCancelar,
+    setModalCancelar,
+    isCancelling,
+    modalSucessoCancelamento,
+    setModalSucessoCancelamento,
     handleSalvar,
     handleConfirmar,
+    handleCancelarVenda,
     formatarPreco,
     formatarData,
     formatarDataSimples,

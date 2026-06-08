@@ -11,7 +11,6 @@ import {
   Loader2,
   Save,
   User,
-  Calendar,
 } from "lucide-react";
 
 export default function AtualizarVenda() {
@@ -31,9 +30,15 @@ export default function AtualizarVenda() {
     modalErro,
     setModalErro,
     modalSucesso,
-    setModalSucesso,
+    // novos:
+    modalCancelar,
+    setModalCancelar,
+    isCancelling,
+    modalSucessoCancelamento,
+    setModalSucessoCancelamento,
     handleSalvar,
     handleConfirmar,
+    handleCancelarVenda,
     formatarPreco,
     formatarData,
   } = useAtualizarVenda(parseInt(id));
@@ -95,10 +100,10 @@ export default function AtualizarVenda() {
       <main className="min-h-screen bg-[#f4f6fb] p-8 px-55">
         {/* Voltar */}
         <button
-          onClick={() => router.push(`/vendas/${id}`)}
+          onClick={() => router.push("/venda/gerenciar")}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Voltar para Venda
+          <ArrowLeft className="w-4 h-4" /> Voltar para Vendas
         </button>
 
         <div className="flex flex-col gap-6 max-w-3xl">
@@ -107,7 +112,7 @@ export default function AtualizarVenda() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">
-                  Atualizar Venda #{venda.id_venda}
+                  Atualizar Venda {venda.id_venda}
                 </h1>
                 <p className="text-sm text-gray-400 mt-1">
                   {formatarData(venda.data_hora)}
@@ -122,7 +127,9 @@ export default function AtualizarVenda() {
                     borderColor: statusVendaColor.border,
                   }}
                 >
-                  {venda.status_venda === "CANCELADA" ? "Cancelada" : "Efetuada"}
+                  {venda.status_venda === "CANCELADA"
+                    ? "Cancelada"
+                    : "Efetuada"}
                 </span>
               </div>
             </div>
@@ -136,8 +143,8 @@ export default function AtualizarVenda() {
                     Venda Cancelada
                   </p>
                   <p className="text-xs text-red-700 mt-1">
-                    Esta venda foi cancelada e não pode ser modificada. Qualquer alteração
-                    requer o cadastro de uma nova venda.
+                    Esta venda foi cancelada e não pode ser modificada. Qualquer
+                    alteração requer o cadastro de uma nova venda.
                   </p>
                 </div>
               </div>
@@ -175,7 +182,9 @@ export default function AtualizarVenda() {
                       {venda.funcionario?.nome || "-"}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {venda.funcionario ? `ID: ${venda.funcionario.id_funcionario}` : "-"}
+                      {venda.funcionario
+                        ? `ID: ${venda.funcionario.id_funcionario}`
+                        : "-"}
                     </p>
                   </div>
                 </div>
@@ -226,10 +235,11 @@ export default function AtualizarVenda() {
                   onChange={(e) => setStatusPagamentoNovo(e.target.value)}
                   disabled={venda.status_venda === "CANCELADA"}
                   className={`pl-9 ${selectClass} ${
-                    venda.status_venda === "CANCELADA" ? "bg-gray-50 cursor-not-allowed" : ""
+                    venda.status_venda === "CANCELADA"
+                      ? "bg-gray-50 cursor-not-allowed"
+                      : ""
                   }`}
                 >
-                  <option value="">Selecione um status</option>
                   <option value="EM_ABERTO">Em Aberto</option>
                   <option value="PAGO">Pago</option>
                 </select>
@@ -239,6 +249,49 @@ export default function AtualizarVenda() {
                   Não é possível atualizar uma venda cancelada.
                 </p>
               )}
+            </div>
+          </div>
+          {/* Status da Venda */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-1">
+              Status da Venda
+            </h2>
+            <p className="text-xs text-gray-400 mb-6">
+              O cancelamento é irreversível e estornará o estoque
+              automaticamente.
+            </p>
+
+            <div className="flex items-center justify-between p-4 rounded-lg border border-gray-100 bg-gray-50">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">
+                  Situação atual:{" "}
+                  <span
+                    className={
+                      venda.status_venda === "CANCELADA"
+                        ? "text-red-600"
+                        : "text-green-600"
+                    }
+                  >
+                    {venda.status_venda === "CANCELADA"
+                      ? "Cancelada"
+                      : "Efetuada"}
+                  </span>
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {venda.status_venda === "CANCELADA"
+                    ? "Esta venda já foi cancelada e não pode ser modificada."
+                    : "Cancelar a venda estornará o estoque de todos os produtos."}
+                </p>
+              </div>
+
+              <button
+                onClick={() => setModalCancelar(true)}
+                disabled={venda.status_venda === "CANCELADA" || isCancelling}
+                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg font-semibold transition-all text-sm"
+              >
+                {isCancelling && <Loader2 className="w-4 h-4 animate-spin" />}
+                Cancelar Venda
+              </button>
             </div>
           </div>
 
@@ -261,7 +314,10 @@ export default function AtualizarVenda() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {venda.itensvenda.map((item) => (
-                      <tr key={item.fk_produto_id_produto} className="hover:bg-gray-50">
+                      <tr
+                        key={item.fk_produto_id_produto}
+                        className="hover:bg-gray-50"
+                      >
                         <td className="px-6 py-4">
                           <p className="font-semibold text-gray-800">
                             {item.produto?.nome || "Produto não disponível"}
@@ -278,7 +334,8 @@ export default function AtualizarVenda() {
                         </td>
                         <td className="px-6 py-4 text-right font-semibold text-green-600">
                           {formatarPreco(
-                            (item.preco_unitario || 0) * (item.quantidade_vendida || 0)
+                            (item.preco_unitario || 0) *
+                              (item.quantidade_vendida || 0),
                           )}
                         </td>
                       </tr>
@@ -296,7 +353,7 @@ export default function AtualizarVenda() {
           {/* Botões de Ação */}
           <div className="flex gap-3 justify-end mb-8">
             <button
-              onClick={() => router.push(`/vendas/${id}`)}
+              onClick={() => router.push(`/venda/gerenciar`)}
               className="px-6 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"
             >
               Cancelar
@@ -377,7 +434,7 @@ export default function AtualizarVenda() {
               O status de pagamento da venda foi atualizado com sucesso.
             </p>
             <button
-              onClick={() => router.push(`/vendas/${id}`)}
+              onClick={() => router.push(`/venda/gerenciar`)}
               className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-lg font-semibold transition-all"
             >
               Fechar
@@ -402,6 +459,67 @@ export default function AtualizarVenda() {
               className="w-full bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg font-semibold transition-all"
             >
               Fechar
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Modal Confirmar Cancelamento */}
+      {modalCancelar && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-9 h-9 text-red-500" />
+              </div>
+            </div>
+            <h2 className="text-lg font-bold text-gray-800 mb-2">
+              Cancelar Venda?
+            </h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Esta ação é <strong>irreversível</strong>. O estoque de todos os
+              produtos será estornado automaticamente.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setModalCancelar(false)}
+                disabled={isCancelling}
+                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
+              >
+                Voltar
+              </button>
+              <button
+                onClick={handleCancelarVenda}
+                disabled={isCancelling}
+                className="flex-1 flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white px-4 py-2.5 rounded-lg font-semibold transition-all text-sm"
+              >
+                {isCancelling && <Loader2 className="w-4 h-4 animate-spin" />}
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Sucesso Cancelamento */}
+      {modalSucessoCancelamento && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="w-9 h-9 text-green-500" />
+              </div>
+            </div>
+            <h2 className="text-lg font-bold text-gray-800 mb-2">
+              Venda Cancelada!
+            </h2>
+            <p className="text-sm text-gray-600 mb-6">
+              A venda foi cancelada e o estoque foi estornado com sucesso.
+            </p>
+            <button
+              onClick={() => router.push("/venda/gerenciar")}
+              className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-lg font-semibold transition-all"
+            >
+              Voltar para Vendas
             </button>
           </div>
         </div>
