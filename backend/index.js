@@ -19,11 +19,12 @@ app.use(cors());
 app.use(express.json());
 
 // Lista das rotas configuradas
-app.use("/api/clientes", clienteRoutes);
+app.use("/api/clientes",     clienteRoutes);
 app.use("/api/funcionarios", funcionarioRoutes);
-app.use("/api/produtos", produtoRoutes);
-app.use("/api/catalogo", catalogoRoutes);
+app.use("/api/produtos",     produtoRoutes);
+app.use("/api/catalogo",     catalogoRoutes);
 app.use("/api/fornecedores", fornecedorRoutes);
-app.use("/api/vendas", vendaRoutes);
+app.use("/api/vendas",       vendaRoutes);
+app.use("/api/compras",      compraRoutes);
 
 module.exports = app;
