@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 export function useCadastrarCompra() {
   const [fornecedores, setFornecedores] = useState([]);
   const [produtos, setProdutos] = useState([]);
+  const [localizacoes, setLocalizacoes] = useState([]);
   const [modal, setModal] = useState(null);
   const [erroMsg, setErroMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,16 +20,19 @@ export function useCadastrarCompra() {
     fk_produto_id_produto: "",
     quantidade: "",
     preco_compra: "",
+    fk_localizacao_id: "",
   });
 
-  // Busca fornecedores e produtos ao abrir
+  // Busca fornecedores, produtos e localizações ao abrir
   useEffect(() => {
     const buscarDados = async () => {
       try {
-        const [resFornecedores, resProdutos] = await Promise.all([
-          fetch("http://localhost:3000/api/fornecedores"),
-          fetch("http://localhost:3000/api/produtos"),
-        ]);
+        const [resFornecedores, resProdutos, resLocalizacoes] =
+          await Promise.all([
+            fetch("http://localhost:3000/api/fornecedores"),
+            fetch("http://localhost:3000/api/produtos"),
+            fetch("http://localhost:3000/api/localizacoes"),
+          ]);
 
         if (resFornecedores.ok) {
           const data = await resFornecedores.json();
@@ -38,6 +42,11 @@ export function useCadastrarCompra() {
         if (resProdutos.ok) {
           const data = await resProdutos.json();
           setProdutos(Array.isArray(data) ? data : []);
+        }
+
+        if (resLocalizacoes.ok) {
+          const data = await resLocalizacoes.json();
+          setLocalizacoes(Array.isArray(data) ? data : []);
         }
       } catch (err) {
         console.error("Erro ao buscar dados:", err);
@@ -104,11 +113,19 @@ export function useCadastrarCompra() {
       return;
     }
 
+    const localizacaoSelecionada = localizacoes.find(
+      (l) => l.id_localizacao === parseInt(itemForm.fk_localizacao_id),
+    );
+
     const novoItem = {
       fk_produto_id_produto: parseInt(itemForm.fk_produto_id_produto),
       quantidade: qty,
       preco_compra: precoCompra,
+      fk_localizacao_id: itemForm.fk_localizacao_id
+        ? parseInt(itemForm.fk_localizacao_id)
+        : null,
       produtoNome: produtoSelecionado.nome || produtoSelecionado.codigo_produto,
+      localizacaoNome: localizacaoSelecionada?.localizacao ?? "—",
     };
 
     setForm({
@@ -120,6 +137,7 @@ export function useCadastrarCompra() {
       fk_produto_id_produto: "",
       quantidade: "",
       preco_compra: "",
+      fk_localizacao_id: "",
     });
   };
 
@@ -139,12 +157,7 @@ export function useCadastrarCompra() {
     const { name, value } = e.target;
 
     if (name === "quantidade") {
-      // Permite apenas inteiros positivos
       const num = value.replace(/\D/g, "");
-      setItemForm({ ...itemForm, [name]: num });
-    } else if (name === "preco_compra") {
-      // Permite dígitos, vírgula e ponto (formato brasileiro: 1.234,56)
-      const num = value.replace(/[^0-9.,]/g, "");
       setItemForm({ ...itemForm, [name]: num });
     } else {
       setItemForm({ ...itemForm, [name]: value });
@@ -163,10 +176,12 @@ export function useCadastrarCompra() {
     const body = {
       fk_fornecedor_id_fornecedor: parseInt(form.fk_fornecedor_id_fornecedor),
       prazo_entrega: form.prazo_entrega || null,
+      // fk_localizacao_id agora vai dentro de cada item
       itens: form.itens.map((item) => ({
         fk_produto_id_produto: item.fk_produto_id_produto,
         quantidade: item.quantidade,
         preco_compra: item.preco_compra,
+        fk_localizacao_id: item.fk_localizacao_id ?? null,
       })),
     };
 
@@ -188,6 +203,7 @@ export function useCadastrarCompra() {
           fk_produto_id_produto: "",
           quantidade: "",
           preco_compra: "",
+          fk_localizacao_id: "",
         });
       } else {
         const data = await res.json();
@@ -217,6 +233,7 @@ export function useCadastrarCompra() {
   return {
     fornecedores,
     produtos,
+    localizacoes,
     modal,
     setModal,
     erroMsg,

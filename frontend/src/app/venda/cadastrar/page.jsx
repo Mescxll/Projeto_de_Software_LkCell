@@ -417,7 +417,7 @@ export default function CadastroVenda() {
               onClick={() => router.push("/venda/gerenciar")}
               className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-lg font-semibold transition-all"
             >
-              Voltar para Vendas
+              Voltar 
             </button>
           </div>
         </div>

@@ -15,6 +15,7 @@ import {
   Package,
   Calendar,
   DollarSign,
+  MapPin,
 } from "lucide-react";
 
 export default function CadastroCompra() {
@@ -23,6 +24,7 @@ export default function CadastroCompra() {
   const {
     fornecedores,
     produtos,
+    localizacoes,
     modal,
     setModal,
     erroMsg,
@@ -67,9 +69,6 @@ export default function CadastroCompra() {
 
   const inputClass =
     "w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
-
-  const inputDisabledClass =
-    "w-full px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed";
 
   return (
     <>
@@ -174,9 +173,10 @@ export default function CadastroCompra() {
               Adicione os produtos que serão comprados
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4">
+            {/* Linha 1: Produto e Localização */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
               {/* Produto — SearchableSelect */}
-              <div className="md:col-span-2">
+              <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                   Produto <span className="text-red-400">*</span>
                 </label>
@@ -185,28 +185,44 @@ export default function CadastroCompra() {
                   options={opcoesProdutos}
                   value={itemForm.fk_produto_id_produto}
                   onChange={(val) => {
-                    const produtoSelecionado = produtos.find(
+                    const produto = produtos.find(
                       (p) => p.id_produto === parseInt(val),
                     );
-                    const precoCompra = produtoSelecionado?.preco_compra
-                      ? Number(produtoSelecionado.preco_compra).toLocaleString(
-                          "pt-BR",
-                          {
-                            minimumFractionDigits: 2,
-                          },
-                        )
-                      : "";
+
                     setItemForm({
                       ...itemForm,
                       fk_produto_id_produto: val,
-                      preco_compra: precoCompra,
+                      preco_compra: produto?.preco_compra?.toString() || "",
                     });
                   }}
-                  placeholder="Selecione"
+                  placeholder="Selecione um produto"
                   icon={<Package className="w-4 h-4" />}
                 />
               </div>
 
+              {/* Localização — SearchableSelect */}
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                  Localização
+                </label>
+                <SearchableSelect
+                  name="fk_localizacao_id"
+                  options={localizacoes.map((l) => ({
+                    value: l.id_localizacao,
+                    label: l.localizacao,
+                  }))}
+                  value={itemForm.fk_localizacao_id}
+                  onChange={(val) =>
+                    setItemForm({ ...itemForm, fk_localizacao_id: val })
+                  }
+                  placeholder="Sem local"
+                  icon={<MapPin className="w-4 h-4" />}
+                />
+              </div>
+            </div>
+
+            {/* Linha 2: Quantidade, Preço, Subtotal e Botão */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
               {/* Quantidade */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
@@ -231,11 +247,13 @@ export default function CadastroCompra() {
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
-                    name="preco_compra"
-                    placeholder="0.00"
-                    value={itemForm.preco_compra}
-                    disabled
-                    className={`pl-9 ${inputDisabledClass}`}
+                    value={
+                      itemForm.preco_compra
+                        ? formatarPreco(itemForm.preco_compra)
+                        : ""
+                    }
+                    readOnly
+                    className="w-full pl-9 pr-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-500 bg-gray-50 outline-none cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -256,7 +274,7 @@ export default function CadastroCompra() {
                               .replace(",", "."),
                           ) * parseInt(itemForm.quantidade),
                         )
-                      : "-"
+                      : "—"
                   }
                   disabled
                   className="w-full px-3 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed"
@@ -280,11 +298,12 @@ export default function CadastroCompra() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr className="text-xs font-semibold text-gray-500">
-                      <th className="px-4 py-3">Produto</th>
-                      <th className="px-4 py-3 text-right">Quantidade</th>
-                      <th className="px-4 py-3 text-right">Preço de Compra</th>
-                      <th className="px-4 py-3 text-right">Subtotal</th>
-                      <th className="px-4 py-3 text-center">Ação</th>
+                      <th className="px-4 py-3 w-64">Produto</th>
+                      <th className="px-4 py-3 text-right w-24">Quantidade</th>
+                      <th className="px-4 py-3 w-40">Localização</th>
+                      <th className="px-4 py-3 text-right w-32">Preço</th>
+                      <th className="px-4 py-3 text-right w-32">Subtotal</th>
+                      <th className="px-4 py-3 text-center w-20">Ação</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -298,9 +317,13 @@ export default function CadastroCompra() {
                             {item.produtoNome}
                           </p>
                         </td>
-                        <td className="px-4 py-3 text-right font-medium text-gray-700">
+                        <td className="px-4 py-3 text-center font-medium text-gray-700">
                           {item.quantidade}
                         </td>
+                        <td className="px-4 py-3 text-gray-700">
+                          {item.localizacaoNome || "—"}
+                        </td>
+
                         <td className="px-4 py-3 text-right text-gray-700">
                           {formatarPreco(item.preco_compra)}
                         </td>
@@ -352,7 +375,7 @@ export default function CadastroCompra() {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting || form.itens.length === 0}
-              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white px-6 py-2.5 rounded-lg font-semibold transition-all text-sm"
+              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-6 py-2.5 rounded-lg font-semibold transition-all text-sm"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
               Cadastrar Compra
@@ -366,8 +389,8 @@ export default function CadastroCompra() {
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                <CheckCircle className="w-9 h-9 text-blue-500" />
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="w-9 h-9 text-green-500" />
               </div>
             </div>
             <h2 className="text-lg font-bold text-gray-800 mb-2">
@@ -380,7 +403,7 @@ export default function CadastroCompra() {
               onClick={() => router.push("/compra/gerenciar")}
               className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-lg font-semibold transition-all"
             >
-              Voltar para Compras
+              Voltar 
             </button>
           </div>
         </div>
