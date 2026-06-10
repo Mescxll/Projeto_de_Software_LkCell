@@ -1,6 +1,20 @@
 // Controller Compra
 const prisma = require("../lib/prisma");
 
+const normalizarData = (valor) => {
+  if (!valor) return null;
+
+  const data = new Date(valor);
+
+  if (Number.isNaN(data.getTime())) {
+    return null;
+  }
+
+  return new Date(
+    Date.UTC(data.getUTCFullYear(), data.getUTCMonth(), data.getUTCDate(), 12),
+  );
+};
+
 const cadastrarCompra = async (req, res) => {
   try {
     const {
@@ -46,7 +60,7 @@ const cadastrarCompra = async (req, res) => {
         data: {
           data_hora: new Date(),
           valor_total: valorTotal,
-          prazo_entrega: prazo_entrega ? new Date(prazo_entrega) : null,
+          prazo_entrega: normalizarData(prazo_entrega),
           fk_fornecedor_id_fornecedor,
         },
       });
@@ -221,7 +235,7 @@ const atualizarCompra = async (req, res) => {
       where: { id_compra: parseInt(id) },
       data: {
         ...(prazo_entrega !== undefined && {
-          prazo_entrega: prazo_entrega ? new Date(prazo_entrega) : null,
+          prazo_entrega: normalizarData(prazo_entrega),
         }),
         ...(fk_fornecedor_id_fornecedor !== undefined && {
           fk_fornecedor_id_fornecedor,

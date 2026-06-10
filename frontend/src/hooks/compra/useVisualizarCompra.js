@@ -68,7 +68,14 @@ export function useVisualizarCompra(id) {
   const formatarDataSimples = (data) => {
     if (!data) return "-";
     try {
-      return new Date(data).toLocaleDateString("pt-BR");
+      const dataUTC = new Date(data);
+      if (Number.isNaN(dataUTC.getTime())) return "-";
+
+      const dia = String(dataUTC.getUTCDate()).padStart(2, "0");
+      const mes = String(dataUTC.getUTCMonth() + 1).padStart(2, "0");
+      const ano = dataUTC.getUTCFullYear();
+
+      return `${dia}/${mes}/${ano}`;
     } catch {
       return "-";
     }

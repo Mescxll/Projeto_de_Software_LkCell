@@ -57,7 +57,16 @@ export function useAtualizarCompra(id) {
           fk_fornecedor_id_fornecedor:
             dataCompra.fk_fornecedor_id_fornecedor || "",
           prazo_entrega: dataCompra.prazo_entrega
-            ? new Date(dataCompra.prazo_entrega).toISOString().split("T")[0]
+            ? (() => {
+                const dataUTC = new Date(dataCompra.prazo_entrega);
+                if (Number.isNaN(dataUTC.getTime())) return "";
+
+                const ano = dataUTC.getUTCFullYear();
+                const mes = String(dataUTC.getUTCMonth() + 1).padStart(2, "0");
+                const dia = String(dataUTC.getUTCDate()).padStart(2, "0");
+
+                return `${ano}-${mes}-${dia}`;
+              })()
             : "",
         });
 

@@ -35,6 +35,34 @@ export function useGerenciarCompra() {
     return () => document.removeEventListener("mousedown", handleClickFora);
   }, []);
 
+  const formatarDataPura = (data) => {
+    if (!data) return "-";
+
+    const dataUTC = new Date(data);
+    if (Number.isNaN(dataUTC.getTime())) return "-";
+
+    const dia = String(dataUTC.getUTCDate()).padStart(2, "0");
+    const mes = String(dataUTC.getUTCMonth() + 1).padStart(2, "0");
+    const ano = dataUTC.getUTCFullYear();
+
+    return `${dia}/${mes}/${ano}`;
+  };
+
+  const compararDataPura = (data, filtro) => {
+    if (!data || !filtro) return false;
+
+    const dataUTC = new Date(data);
+    if (Number.isNaN(dataUTC.getTime())) return false;
+
+    const valorData = [
+      dataUTC.getUTCFullYear(),
+      String(dataUTC.getUTCMonth() + 1).padStart(2, "0"),
+      String(dataUTC.getUTCDate()).padStart(2, "0"),
+    ].join("-");
+
+    return valorData === filtro;
+  };
+
   const handleCancelar = async () => {
     if (!compraSelecionada) return;
     setIsCanceling(true);
@@ -80,17 +108,11 @@ export function useGerenciarCompra() {
 
     const matchDataCompra =
       !dataCompraFiltro ||
-      (c.data_hora &&
-        new Date(c.data_hora).toLocaleDateString("pt-BR") ===
-          new Date(dataCompraFiltro + "T12:00:00").toLocaleDateString("pt-BR"));
+      compararDataPura(c.data_hora, dataCompraFiltro);
 
     const matchDataEntrega =
       !dataEntregaFiltro ||
-      (c.prazo_entrega &&
-        new Date(c.prazo_entrega).toLocaleDateString("pt-BR") ===
-          new Date(dataEntregaFiltro + "T12:00:00").toLocaleDateString(
-            "pt-BR",
-          ));
+      compararDataPura(c.prazo_entrega, dataEntregaFiltro);
 
     return matchBusca && matchStatus && matchDataCompra && matchDataEntrega;
   });
@@ -141,6 +163,7 @@ export function useGerenciarCompra() {
     handleCancelar,
     formatarPreco,
     formatarData,
+    formatarDataPura,
     dataEntregaFiltro,
     setDataEntregaFiltro,
     dataCompraFiltro,

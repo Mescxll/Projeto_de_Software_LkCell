@@ -38,6 +38,7 @@ export default function GerenciarCompras() {
     comprasFiltradas,
     handleCancelar,
     formatarPreco,
+    formatarDataPura,
     formatarData,
     dataEntregaFiltro,
     setDataEntregaFiltro,
@@ -187,7 +188,7 @@ export default function GerenciarCompras() {
                       {formatarPreco(c.valor_total || 0)}
                     </td>
                     <td className="px-6 py-4 text-gray-500">
-                      {c.prazo_entrega ? formatarData(c.prazo_entrega) : "-"}
+                      {c.prazo_entrega ? formatarDataPura(c.prazo_entrega) : "-"}
                     </td>
 
                     {/* Status Compra */}
