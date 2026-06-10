@@ -6,6 +6,7 @@ const cadastrarCompra = async (req, res) => {
     const {
       fk_fornecedor_id_fornecedor,
       prazo_entrega,
+      fk_localizacao_id,
       itens, // [{ fk_produto_id_produto, quantidade, preco_compra }]
     } = req.body;
 
@@ -71,6 +72,7 @@ const cadastrarCompra = async (req, res) => {
           data: {
             fk_produto_id: item.fk_produto_id_produto,
             fk_compra_id: compra.id_compra,
+            fk_localizacao_id: fk_localizacao_id ?? null,
             tipo_movimento: "ENTRADA",
             quantidade: item.quantidade,
             estoque_atual: novoEstoqueAtual,
@@ -283,6 +285,7 @@ const cancelarCompra = async (req, res) => {
         await tx.estoque.create({
           data: {
             fk_produto_id: item.fk_produto_id_produto,
+            fk_localizacao_id: ultimoEstoque?.fk_localizacao_id ?? null,
             tipo_movimento: "AJUSTE",
             quantidade: item.quantidade,
             estoque_atual: estoqueRestaurado,

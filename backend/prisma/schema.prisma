@@ -136,6 +136,12 @@ model produto {
   estoque     estoque[]
 }
 
+model localizacao {
+  id_localizacao Int       @id @default(autoincrement())
+  localizacao    String    @db.VarChar(100)
+  estoque        estoque[]
+}
+
 model estoque {
   id_estoque     Int                 @id @default(autoincrement())
   tipo_movimento tipo_movimento_enum
@@ -154,6 +160,9 @@ model estoque {
 
   fk_compra_id Int?
   compra       compra? @relation(fields: [fk_compra_id], references: [id_compra], onDelete: SetNull, onUpdate: NoAction)
+
+  fk_localizacao_id Int?
+  localizacao       localizacao? @relation(fields: [fk_localizacao_id], references: [id_localizacao], onDelete: SetNull, onUpdate: NoAction)
 }
 
 model telefone_cliente {

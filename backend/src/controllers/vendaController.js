@@ -8,6 +8,7 @@ const cadastrarVenda = async (req, res) => {
       data_vencimento,
       fk_cliente_id_cliente,
       fk_funcionario_id_funcionario,
+      fk_localizacao_id,
       itens,
     } = req.body;
 
@@ -58,7 +59,7 @@ const cadastrarVenda = async (req, res) => {
           item.quantidade_vendida;
       }
 
-      // Cria a venda — status_venda começa sempre como Efetuada
+      // Cria a venda — status_venda começa sempre como EFETUADA
       const venda = await tx.venda.create({
         data: {
           data_hora: new Date(),
@@ -91,6 +92,7 @@ const cadastrarVenda = async (req, res) => {
           data: {
             fk_produto_id: item.fk_produto_id_produto,
             fk_venda_id: venda.id_venda,
+            fk_localizacao_id: fk_localizacao_id ?? null,
             tipo_movimento: "SAIDA",
             quantidade: item.quantidade_vendida,
             estoque_atual: novoEstoqueAtual,
@@ -314,6 +316,7 @@ const cancelarVenda = async (req, res) => {
         await tx.estoque.create({
           data: {
             fk_produto_id: item.fk_produto_id_produto,
+            fk_localizacao_id: ultimoEstoque?.fk_localizacao_id ?? null,
             tipo_movimento: "AJUSTE",
             quantidade: item.quantidade_vendida,
             estoque_atual: estoqueRestaurado,
