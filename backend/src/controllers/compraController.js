@@ -6,8 +6,7 @@ const cadastrarCompra = async (req, res) => {
     const {
       fk_fornecedor_id_fornecedor,
       prazo_entrega,
-      fk_localizacao_id,
-      itens, // [{ fk_produto_id_produto, quantidade, preco_compra }]
+      itens, // [{ fk_produto_id_produto, quantidade, preco_compra, fk_localizacao_id? }]
     } = req.body;
 
     // Busca todos os produtos e seus estoques atuais
@@ -72,7 +71,8 @@ const cadastrarCompra = async (req, res) => {
           data: {
             fk_produto_id: item.fk_produto_id_produto,
             fk_compra_id: compra.id_compra,
-            fk_localizacao_id: fk_localizacao_id ?? null,
+            // fk_localizacao_id agora vem por item — cada produto pode ter sua localização
+            fk_localizacao_id: item.fk_localizacao_id ?? null,
             tipo_movimento: "ENTRADA",
             quantidade: item.quantidade,
             estoque_atual: novoEstoqueAtual,
@@ -268,7 +268,6 @@ const cancelarCompra = async (req, res) => {
       return res.status(404).json({ erro: "Compra não encontrada." });
     }
 
-    // Trava — compra já cancelada não pode ser cancelada novamente
     if (compra.status_compra === "CANCELADA") {
       return res.status(409).json({
         erro: "Esta compra já está cancelada. Para registrar uma nova entrada, cadastre uma nova compra.",
@@ -276,7 +275,6 @@ const cancelarCompra = async (req, res) => {
     }
 
     await prisma.$transaction(async (tx) => {
-      // Estorna o estoque de cada item com AJUSTE
       for (const item of compra.itenscompra) {
         const ultimoEstoque = item.produto.estoque[0];
         const estoqueRestaurado =
@@ -296,7 +294,6 @@ const cancelarCompra = async (req, res) => {
         });
       }
 
-      // Marca a compra como CANCELADA — histórico preservado
       await tx.compra.update({
         where: { id_compra: idCompra },
         data: { status_compra: "CANCELADA" },
