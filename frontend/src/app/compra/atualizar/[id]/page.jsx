@@ -11,8 +11,8 @@ import {
   Loader2,
   Truck,
   Calendar,
-  DollarSign,
   Lock,
+  MapPin
 } from "lucide-react";
 
 export default function AtualizarCompra() {
@@ -283,6 +283,7 @@ export default function AtualizarCompra() {
                 <thead className="bg-gray-100 border-b border-gray-200">
                   <tr className="text-xs font-semibold text-gray-600">
                     <th className="px-6 py-4">Produto</th>
+                    <th className="px-6 py-4">Localização</th>
                     <th className="px-6 py-4">Quantidade</th>
                     <th className="px-6 py-4">Preço de Compra</th>
                     <th className="px-6 py-4 text-right">Subtotal</th>
@@ -302,6 +303,16 @@ export default function AtualizarCompra() {
                           <p className="text-xs text-gray-400">
                             ID: {item.fk_produto_id_produto}
                           </p>
+                        </td>
+                        <td className="px-6 py-4">
+                          {item.localizacao ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                              <MapPin className="w-3 h-3" />
+                              {item.localizacao}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-300">—</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-gray-600">
                           {item.quantidade}

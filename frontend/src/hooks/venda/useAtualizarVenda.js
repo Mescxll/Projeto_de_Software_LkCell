@@ -26,7 +26,19 @@ export function useAtualizarVenda(id) {
         return res.json();
       })
       .then((data) => {
-        setVenda(data);
+        const itensComLocalizacao = data.itensvenda.map((item) => {
+          const saida = data.estoque?.find(
+            (e) =>
+              e.fk_produto_id === item.fk_produto_id_produto &&
+              e.tipo_movimento === "SAIDA",
+          );
+          return {
+            ...item,
+            localizacao: saida?.localizacao?.localizacao ?? null,
+          };
+        });
+
+        setVenda({ ...data, itensvenda: itensComLocalizacao });
         setStatusPagamentoNovo(data.status_pagamento);
         setLoading(false);
       })

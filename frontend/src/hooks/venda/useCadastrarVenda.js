@@ -10,6 +10,11 @@ export function useCadastrarVenda() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingDados, setLoadingDados] = useState(true);
 
+  // Estoques por localização do produto atualmente selecionado no itemForm.
+  // Formato: [{ id_localizacao, localizacao, estoque_atual }]
+  const [estoquesPorLocalizacao, setEstoquesPorLocalizacao] = useState([]);
+  const [loadingEstoque, setLoadingEstoque] = useState(false);
+
   const [form, setForm] = useState({
     fk_cliente_id_cliente: "",
     fk_funcionario_id_funcionario: "",
@@ -20,6 +25,7 @@ export function useCadastrarVenda() {
 
   const [itemForm, setItemForm] = useState({
     fk_produto_id_produto: "",
+    fk_localizacao_id: "",
     quantidade_vendida: "",
     preco_unitario: "",
   });
@@ -60,9 +66,56 @@ export function useCadastrarVenda() {
     buscarDados();
   }, []);
 
+  // Sempre que o produto selecionado mudar, busca o estoque por localização
+  useEffect(() => {
+    const produtoId = itemForm.fk_produto_id_produto;
+
+    if (!produtoId) {
+      setEstoquesPorLocalizacao([]);
+      return;
+    }
+
+    const buscarEstoque = async () => {
+      setLoadingEstoque(true);
+      setEstoquesPorLocalizacao([]);
+      // Limpa a localização anterior ao trocar de produto
+      setItemForm((prev) => ({ ...prev, fk_localizacao_id: "" }));
+
+      try {
+        const res = await fetch(
+          `http://localhost:3000/api/produtos/${produtoId}/estoque-por-localizacao`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setEstoquesPorLocalizacao(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar estoque por localização:", err);
+      } finally {
+        setLoadingEstoque(false);
+      }
+    };
+
+    buscarEstoque();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemForm.fk_produto_id_produto]);
+
+  // Retorna o estoque disponível da localização atualmente selecionada (ou null)
+  const estoqueDisponivel = (() => {
+    if (!itemForm.fk_localizacao_id) return null;
+    const loc = estoquesPorLocalizacao.find(
+      (l) => String(l.id_localizacao) === String(itemForm.fk_localizacao_id)
+    );
+    return loc?.estoque_atual ?? null;
+  })();
+
   const handleAddItem = () => {
-    if (!itemForm.fk_produto_id_produto || !itemForm.quantidade_vendida) {
-      setErroMsg("Selecione um produto e informe a quantidade.");
+    if (
+      !itemForm.fk_produto_id_produto ||
+      !itemForm.quantidade_vendida ||
+      !itemForm.fk_localizacao_id
+    ) {
+      setErroMsg("Selecione um produto, uma localização e informe a quantidade.");
       setModal("erro");
       return;
     }
@@ -70,6 +123,15 @@ export function useCadastrarVenda() {
     const qty = parseInt(itemForm.quantidade_vendida);
     if (qty <= 0) {
       setErroMsg("A quantidade deve ser maior que zero.");
+      setModal("erro");
+      return;
+    }
+
+    // Valida contra o estoque da localização escolhida
+    if (estoqueDisponivel !== null && qty > estoqueDisponivel) {
+      setErroMsg(
+        `Quantidade solicitada (${qty}) excede o estoque disponível na localização selecionada (${estoqueDisponivel}).`
+      );
       setModal("erro");
       return;
     }
@@ -84,23 +146,32 @@ export function useCadastrarVenda() {
       return;
     }
 
-    // Verifica se o produto já foi adicionado
+    // Verifica se o produto + localização já foi adicionado
     if (
       form.itens.some(
         (i) =>
-          i.fk_produto_id_produto === parseInt(itemForm.fk_produto_id_produto)
+          i.fk_produto_id_produto === parseInt(itemForm.fk_produto_id_produto) &&
+          String(i.fk_localizacao_id) === String(itemForm.fk_localizacao_id)
       )
     ) {
-      setErroMsg("Este produto já foi adicionado. Remova-o para adicionar novamente.");
+      setErroMsg(
+        "Este produto já foi adicionado nesta localização. Remova-o para adicionar novamente."
+      );
       setModal("erro");
       return;
     }
 
+    const localizacaoSelecionada = estoquesPorLocalizacao.find(
+      (l) => String(l.id_localizacao) === String(itemForm.fk_localizacao_id)
+    );
+
     const novoItem = {
       fk_produto_id_produto: parseInt(itemForm.fk_produto_id_produto),
+      fk_localizacao_id: parseInt(itemForm.fk_localizacao_id),
       quantidade_vendida: qty,
       preco_unitario: produtoSelecionado.preco_venda,
       produtoNome: produtoSelecionado.nome || produtoSelecionado.codigo_produto,
+      localizacaoNome: localizacaoSelecionada?.localizacao ?? "—",
     };
 
     setForm({
@@ -110,53 +181,59 @@ export function useCadastrarVenda() {
 
     setItemForm({
       fk_produto_id_produto: "",
+      fk_localizacao_id: "",
       quantidade_vendida: "",
       preco_unitario: "",
     });
+    setEstoquesPorLocalizacao([]);
   };
 
-  const handleRemoveItem = (produtoId) => {
+  const handleRemoveItem = (produtoId, localizacaoId) => {
     setForm({
       ...form,
-      itens: form.itens.filter((i) => i.fk_produto_id_produto !== produtoId),
+      itens: form.itens.filter(
+        (i) =>
+          !(
+            i.fk_produto_id_produto === produtoId &&
+            i.fk_localizacao_id === localizacaoId
+          )
+      ),
     });
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    if (name === "data_vencimento") {
-      setForm({ ...form, [name]: value });
-    } else if (name === "quantidade_vendida") {
-      const num = value.replace(/\D/g, "");
-      setItemForm({ ...itemForm, [name]: num });
-    } else {
-      setForm({ ...form, [name]: value });
-    }
+    setForm({ ...form, [name]: value });
   };
 
   const handleChangeItem = (e) => {
     const { name, value } = e.target;
 
+    if (name === "quantidade_vendida") {
+      const num = value.replace(/\D/g, "");
+      setItemForm((prev) => ({ ...prev, [name]: num }));
+      return;
+    }
+
     if (name === "fk_produto_id_produto") {
       const produtoSelecionado = produtos.find(
         (p) => p.id_produto === parseInt(value)
       );
-      setItemForm({
-        ...itemForm,
-        [name]: value,
+      setItemForm((prev) => ({
+        ...prev,
+        fk_produto_id_produto: value,
         preco_unitario: produtoSelecionado?.preco_venda || "",
-      });
-    } else {
-      handleChange(e);
+        fk_localizacao_id: "",
+        quantidade_vendida: "",
+      }));
+      return;
     }
+
+    setItemForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async () => {
-    if (
-      !form.fk_funcionario_id_funcionario ||
-      form.itens.length === 0
-    ) {
+    if (!form.fk_funcionario_id_funcionario || form.itens.length === 0) {
       setErroMsg("Selecione um funcionário e pelo menos um item.");
       setModal("erro");
       return;
@@ -168,11 +245,15 @@ export function useCadastrarVenda() {
       fk_cliente_id_cliente: form.fk_cliente_id_cliente
         ? parseInt(form.fk_cliente_id_cliente)
         : null,
-      fk_funcionario_id_funcionario: parseInt(form.fk_funcionario_id_funcionario),
+      fk_funcionario_id_funcionario: parseInt(
+        form.fk_funcionario_id_funcionario
+      ),
       status_pagamento: form.status_pagamento,
       data_vencimento: form.data_vencimento || null,
+      // Cada item carrega sua própria localização
       itens: form.itens.map((item) => ({
         fk_produto_id_produto: item.fk_produto_id_produto,
+        fk_localizacao_id: item.fk_localizacao_id,
         quantidade_vendida: item.quantidade_vendida,
       })),
     };
@@ -231,6 +312,9 @@ export function useCadastrarVenda() {
     setForm,
     itemForm,
     setItemForm,
+    estoquesPorLocalizacao,
+    loadingEstoque,
+    estoqueDisponivel,
     handleChange,
     handleChangeItem,
     handleAddItem,

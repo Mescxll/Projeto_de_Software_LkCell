@@ -15,6 +15,7 @@ import {
   Users,
   Package,
   Calendar,
+  MapPin,
 } from "lucide-react";
 
 export default function CadastroVenda() {
@@ -33,6 +34,9 @@ export default function CadastroVenda() {
     setForm,
     itemForm,
     setItemForm,
+    estoquesPorLocalizacao,
+    loadingEstoque,
+    estoqueDisponivel,
     handleChange,
     handleChangeItem,
     handleAddItem,
@@ -70,6 +74,7 @@ export default function CadastroVenda() {
     value: p.id_produto,
     label: p.descricao,
   }));
+
   const selectClass =
     "w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none bg-white";
 
@@ -80,6 +85,12 @@ export default function CadastroVenda() {
   const vencimentoClass = vencimentoBloqueado
     ? "w-full pl-9 pr-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed"
     : `pl-9 ${inputClass}`;
+
+  // Limite de quantidade baseado no estoque da localização selecionada
+  const qtdExcedida =
+    estoqueDisponivel !== null &&
+    itemForm.quantidade_vendida !== "" &&
+    parseInt(itemForm.quantidade_vendida) > estoqueDisponivel;
 
   return (
     <>
@@ -175,7 +186,7 @@ export default function CadastroVenda() {
                 />
               </div>
 
-              {/* Status de Pagamento — select simples (só 2 opções) */}
+              {/* Status de Pagamento */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                   Status Pagamento <span className="text-red-400">*</span>
@@ -221,8 +232,9 @@ export default function CadastroVenda() {
               Adicione os produtos que serão vendidos
             </p>
 
+            {/* Grid de adição de item */}
             <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4">
-              {/* Produto — SearchableSelect */}
+              {/* Produto */}
               <div className="md:col-span-2">
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                   Produto <span className="text-red-400">*</span>
@@ -239,11 +251,80 @@ export default function CadastroVenda() {
                       ...itemForm,
                       fk_produto_id_produto: val,
                       preco_unitario: produtoSelecionado?.preco_venda || "",
+                      fk_localizacao_id: "",
+                      quantidade_vendida: "",
                     });
                   }}
                   placeholder="Selecione"
                   icon={<Package className="w-4 h-4" />}
                 />
+              </div>
+
+              {/* Localização — aparece após selecionar produto */}
+              <div className="md:col-span-2">
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                  Localização <span className="text-red-400">*</span>
+                </label>
+
+                {/* Estado: nenhum produto selecionado */}
+                {!itemForm.fk_produto_id_produto && (
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
+                    <select
+                      disabled
+                      className="w-full pl-9 px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-300 bg-gray-50 outline-none cursor-not-allowed"
+                    >
+                      <option>Selecione um produto primeiro</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Estado: carregando estoque */}
+                {itemForm.fk_produto_id_produto && loadingEstoque && (
+                  <div className="flex items-center gap-2 px-4 py-2.5 border border-gray-100 rounded-lg bg-gray-50">
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    <span className="text-sm text-gray-400">
+                      Consultando estoque...
+                    </span>
+                  </div>
+                )}
+
+                {/* Estado: sem estoque em nenhuma localização */}
+                {itemForm.fk_produto_id_produto &&
+                  !loadingEstoque &&
+                  estoquesPorLocalizacao.length === 0 && (
+                    <div className="flex items-center gap-2 px-4 py-2.5 border border-orange-200 rounded-lg bg-orange-50">
+                      <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
+                      <span className="text-sm text-orange-600">
+                        Sem estoque disponível
+                      </span>
+                    </div>
+                  )}
+
+                {/* Estado: localizações disponíveis */}
+                {itemForm.fk_produto_id_produto &&
+                  !loadingEstoque &&
+                  estoquesPorLocalizacao.length > 0 && (
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                      <select
+                        name="fk_localizacao_id"
+                        value={itemForm.fk_localizacao_id}
+                        onChange={handleChangeItem}
+                        className={`pl-9 ${selectClass}`}
+                      >
+                        <option value="">Selecione a localização</option>
+                        {estoquesPorLocalizacao.map((loc) => (
+                          <option
+                            key={loc.id_localizacao}
+                            value={loc.id_localizacao}
+                          >
+                            {loc.localizacao} ({loc.estoque_atual} disponíveis)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
               </div>
 
               {/* Quantidade */}
@@ -257,14 +338,33 @@ export default function CadastroVenda() {
                   placeholder="0"
                   value={itemForm.quantidade_vendida}
                   onChange={handleChangeItem}
-                  className={inputClass}
+                  disabled={!itemForm.fk_localizacao_id}
+                  className={
+                    !itemForm.fk_localizacao_id
+                      ? "w-full px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-300 bg-gray-50 outline-none cursor-not-allowed"
+                      : qtdExcedida
+                        ? "w-full px-4 py-2.5 border border-red-300 rounded-lg text-sm text-red-700 bg-red-50 focus:ring-2 focus:ring-red-400 outline-none"
+                        : inputClass
+                  }
                 />
+                {/* Indicador de estoque disponível / excedido */}
+                {itemForm.fk_localizacao_id && estoqueDisponivel !== null && (
+                  <p
+                    className={`text-xs mt-1 ${
+                      qtdExcedida ? "text-red-500" : "text-gray-400"
+                    }`}
+                  >
+                    {qtdExcedida
+                      ? `Excede o estoque (máx. ${estoqueDisponivel})`
+                      : `Disponível: ${estoqueDisponivel}`}
+                  </p>
+                )}
               </div>
 
               {/* Preço Unitário */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                  Preço Unit. <span className="text-red-400">*</span>
+                  Preço Unit.
                 </label>
                 <input
                   type="text"
@@ -278,8 +378,8 @@ export default function CadastroVenda() {
                 />
               </div>
 
-              {/* Subtotal */}
-              <div>
+              {/* Subtotal — ocupa a linha inteira em mobile, inline em md */}
+              <div className="md:col-span-3">
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                   Subtotal
                 </label>
@@ -299,10 +399,17 @@ export default function CadastroVenda() {
               </div>
 
               {/* Botão Adicionar */}
-              <div className="flex items-end">
+              <div className="md:col-span-3 flex items-end">
                 <button
                   onClick={handleAddItem}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white px-3 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm"
+                  disabled={
+                    !itemForm.fk_produto_id_produto ||
+                    !itemForm.fk_localizacao_id ||
+                    !itemForm.quantidade_vendida ||
+                    qtdExcedida ||
+                    estoquesPorLocalizacao.length === 0
+                  }
+                  className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-3 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm"
                 >
                   <Plus className="w-4 h-4" /> Adicionar
                 </button>
@@ -316,6 +423,7 @@ export default function CadastroVenda() {
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr className="text-xs font-semibold text-gray-500">
                       <th className="px-4 py-3">Produto</th>
+                      <th className="px-4 py-3">Localização</th>
                       <th className="px-4 py-3 text-right">Quantidade</th>
                       <th className="px-4 py-3 text-right">Preço Unitário</th>
                       <th className="px-4 py-3 text-right">Subtotal</th>
@@ -325,13 +433,19 @@ export default function CadastroVenda() {
                   <tbody className="divide-y divide-gray-100">
                     {form.itens.map((item) => (
                       <tr
-                        key={item.fk_produto_id_produto}
+                        key={`${item.fk_produto_id_produto}-${item.fk_localizacao_id}`}
                         className="hover:bg-gray-50"
                       >
                         <td className="px-4 py-3">
                           <p className="font-medium text-gray-800">
                             {item.produtoNome}
                           </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                            <MapPin className="w-3 h-3" />
+                            {item.localizacaoNome}
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-right font-medium text-gray-700">
                           {item.quantidade_vendida}
@@ -347,7 +461,10 @@ export default function CadastroVenda() {
                         <td className="px-4 py-3 text-center">
                           <button
                             onClick={() =>
-                              handleRemoveItem(item.fk_produto_id_produto)
+                              handleRemoveItem(
+                                item.fk_produto_id_produto,
+                                item.fk_localizacao_id,
+                              )
                             }
                             className="inline-flex items-center justify-center p-1.5 rounded-md transition-colors text-red-500 hover:bg-red-50"
                             title="Remover item"
@@ -417,7 +534,7 @@ export default function CadastroVenda() {
               onClick={() => router.push("/venda/gerenciar")}
               className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-lg font-semibold transition-all"
             >
-              Voltar 
+              Voltar
             </button>
           </div>
         </div>

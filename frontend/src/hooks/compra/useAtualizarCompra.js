@@ -37,7 +37,20 @@ export function useAtualizarCompra(id) {
         }
 
         const dataCompra = await resCompra.json();
-        setCompra(dataCompra);
+
+        const itensComLocalizacao = dataCompra.itenscompra.map((item) => {
+          const entrada = dataCompra.estoque?.find(
+            (e) =>
+              e.fk_produto_id === item.fk_produto_id_produto &&
+              e.tipo_movimento === "ENTRADA",
+          );
+          return {
+            ...item,
+            localizacao: entrada?.localizacao?.localizacao ?? null,
+          };
+        });
+
+        setCompra({ ...dataCompra, itenscompra: itensComLocalizacao });
 
         // Preenche o formulário com os dados atuais
         setForm({
@@ -162,6 +175,7 @@ export function useAtualizarCompra(id) {
     }
   };
 
+  
   return {
     compra,
     fornecedores,

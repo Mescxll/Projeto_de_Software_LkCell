@@ -190,6 +190,41 @@ const atualizarProduto = async (req, res) => {
   }
 };
 
+const buscarEstoquePorLocalizacao = async (req, res) => {
+  try {
+    const produtoId = parseInt(req.params.id);
+
+    const registros = await prisma.estoque.findMany({
+      where: { fk_produto_id: produtoId },
+      orderBy: { data_hora: "desc" },
+      include: { localizacao: true },
+    });
+
+    const mapaLocalizacoes = new Map();
+    for (const reg of registros) {
+      const chave = reg.fk_localizacao_id ?? "sem_localizacao";
+      if (!mapaLocalizacoes.has(chave)) {
+        mapaLocalizacoes.set(chave, {
+          id_localizacao: reg.fk_localizacao_id,
+          localizacao: reg.localizacao?.localizacao ?? "Sem localização",
+          estoque_atual: reg.estoque_atual,
+        });
+      }
+    }
+
+    const resultado = Array.from(mapaLocalizacoes.values())
+      .filter((l) => l.estoque_atual > 0)
+      .sort((a, b) =>
+        (a.localizacao ?? "").localeCompare(b.localizacao ?? "", "pt-BR")
+      );
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    console.error("Erro ao buscar estoque por localização:", error);
+    return res.status(500).json({ erro: "Erro interno ao buscar estoque por localização." });
+  }
+};
+
 const buscarProduto = async (req, res) => {
   try {
     const { uuid } = req.params;
@@ -291,6 +326,7 @@ const deletarProduto = async (req, res) => {
 
 module.exports = {
   buscarTodosProdutos,
+  buscarEstoquePorLocalizacao,
   cadastrarProduto,
   atualizarProduto,
   buscarProduto,

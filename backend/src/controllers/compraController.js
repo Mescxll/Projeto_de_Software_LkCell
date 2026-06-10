@@ -176,6 +176,12 @@ const buscarCompra = async (req, res) => {
             },
           },
         },
+        estoque: {
+          // 👈 adicione
+          include: {
+            localizacao: true,
+          },
+        },
       },
     });
 

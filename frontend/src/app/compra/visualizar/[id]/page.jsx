@@ -7,12 +7,12 @@ import { useVisualizarCompra } from "@/hooks/compra/useVisualizarCompra";
 import {
   ArrowLeft,
   Pencil,
-  DollarSign,
   Truck,
   Package,
   Calendar,
   AlertTriangle,
   Receipt,
+  MapPin,
 } from "lucide-react";
 
 export default function VisualizarCompra() {
@@ -218,6 +218,7 @@ export default function VisualizarCompra() {
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr className="text-xs font-semibold text-gray-500">
                       <th className="px-6 py-4">Produto</th>
+                      <th className="px-6 py-4">Localização</th>
                       <th className="px-6 py-4 text-right">Quantidade</th>
                       <th className="px-6 py-4 text-right">Preço de Compra</th>
                       <th className="px-6 py-4 text-right">Subtotal</th>
@@ -238,6 +239,16 @@ export default function VisualizarCompra() {
                           <p className="text-xs text-gray-400 mt-1">
                             Código: {item.produto?.codigo_produto || "-"}
                           </p>
+                        </td>
+                        <td className="px-6 py-4">
+                          {item.localizacao ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                              <MapPin className="w-3 h-3" />
+                              {item.localizacao}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-300">—</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-gray-800">
                           {item.quantidade}

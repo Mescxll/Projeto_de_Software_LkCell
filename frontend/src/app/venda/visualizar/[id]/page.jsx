@@ -7,7 +7,7 @@ import { useVisualizarVenda } from "@/hooks/venda/useVisualizarVenda";
 import {
   ArrowLeft,
   Pencil,
-  DollarSign,
+  MapPin,
   User,
   Package,
   Calendar,
@@ -240,6 +240,7 @@ export default function VisualizarVenda() {
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr className="text-xs font-semibold text-gray-500">
                       <th className="px-6 py-4">Produto</th>
+                      <th className="px-6 py-4">Localização</th>
                       <th className="px-6 py-4 text-right">Quantidade</th>
                       <th className="px-6 py-4 text-right">Preço Unitário</th>
                       <th className="px-6 py-4 text-right">Subtotal</th>
@@ -260,6 +261,16 @@ export default function VisualizarVenda() {
                           <p className="text-xs text-gray-400 mt-1">
                             Código: {item.produto?.codigo_produto || "-"}
                           </p>
+                        </td>
+                        <td className="px-6 py-4">
+                          {item.localizacao ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                              <MapPin className="w-3 h-3" />
+                              {item.localizacao}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-300">—</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-gray-800">
                           {item.quantidade_vendida}

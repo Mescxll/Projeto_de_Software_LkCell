@@ -7,6 +7,8 @@ const validarCadastrarProduto = require("../middlewares/produto/validarCadastrar
 const validarAtualizarProduto = require("../middlewares/produto/validarAtualizarProduto");
 const validarDeletarProduto = require("../middlewares/produto/validarDeletarProduto");
 const validarBuscarProduto = require("../middlewares/produto/validarBuscarProduto");
+const buscarEstoquePorLocalizacao = require("../controllers/produtoController");
+
 
 
 // Listar produtos (GET)
@@ -21,5 +23,8 @@ router.delete('/:uuid', validarDeletarProduto, produtoController.deletarProduto)
 router.get("/", produtoController.buscarTodosProdutos);
 // Buscar por id (GET)
 router.get('/:uuid', validarBuscarProduto, produtoController.buscarProduto);
+// Buscar estoque por localizacao
+router.get("/:id/estoque-por-localizacao", produtoController.buscarEstoquePorLocalizacao);
+
 
 module.exports = router;
