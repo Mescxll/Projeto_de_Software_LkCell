@@ -123,7 +123,7 @@ export default function AtualizarFornecedor() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                      Política de Preço
+                      Política de Preço <span className="text-red-400">*</span>
                     </label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -159,7 +159,7 @@ export default function AtualizarFornecedor() {
 
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    Telefone
+                    Telefone <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />

@@ -94,6 +94,9 @@ export default function CadastroFornecedor() {
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                     Email
+                    <span className="text-gray-400 font-normal">
+                      (opcional)
+                    </span>
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
