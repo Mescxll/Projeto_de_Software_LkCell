@@ -152,10 +152,10 @@ export default function CadastroVenda() {
 
             {/* Linha 2: Cliente, Funcionário, Status Pagamento */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 pb-6 border-b border-gray-100">
-              {/* Cliente (Opcional) — SearchableSelect */}
+              {/* Cliente — SearchableSelect */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                  Cliente
+                  Cliente <span className="text-red-400">*</span>
                 </label>
                 <SearchableSelect
                   name="fk_cliente_id_cliente"
