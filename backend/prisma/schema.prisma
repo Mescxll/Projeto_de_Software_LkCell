@@ -60,23 +60,27 @@ model funcionario {
 model itenscompra {
   fk_produto_id_produto Int
   fk_compra_id_compra   Int
+  fk_localizacao_id     Int
   quantidade            Int?
-  preco_compra          Decimal @db.Decimal(10, 2)
-  produto               produto @relation(fields: [fk_produto_id_produto], references: [id_produto], onUpdate: NoAction, map: "fk_itenscompra_1")
-  compra                compra  @relation(fields: [fk_compra_id_compra], references: [id_compra], onUpdate: NoAction, map: "fk_itenscompra_2")
+  preco_compra          Decimal     @db.Decimal(10, 2)
+  produto               produto     @relation(fields: [fk_produto_id_produto], references: [id_produto], onUpdate: NoAction, map: "fk_itenscompra_1")
+  compra                compra      @relation(fields: [fk_compra_id_compra], references: [id_compra], onUpdate: NoAction, map: "fk_itenscompra_2")
+  localizacao           localizacao @relation(fields: [fk_localizacao_id], references: [id_localizacao], onUpdate: NoAction)
 
-  @@id([fk_produto_id_produto, fk_compra_id_compra])
+  @@id([fk_produto_id_produto, fk_compra_id_compra, fk_localizacao_id])
 }
 
 model itensvenda {
-  fk_produto_id_produto Int
-  fk_venda_id_venda     Int
-  preco_unitario        Decimal? @db.Decimal(10, 2)
-  quantidade_vendida    Int?
-  produto               produto  @relation(fields: [fk_produto_id_produto], references: [id_produto], onUpdate: NoAction, map: "fk_itensvenda_1")
-  venda                 venda    @relation(fields: [fk_venda_id_venda], references: [id_venda], onUpdate: NoAction, map: "fk_itensvenda_2")
+  fk_produto_id_produto     Int
+  fk_venda_id_venda         Int
+  fk_localizacao_id         Int
+  preco_unitario            Decimal?     @db.Decimal(10, 2)
+  quantidade_vendida        Int?
+  produto                   produto      @relation(fields: [fk_produto_id_produto], references: [id_produto], onUpdate: NoAction, map: "fk_itensvenda_1")
+  venda                     venda        @relation(fields: [fk_venda_id_venda], references: [id_venda], onUpdate: NoAction, map: "fk_itensvenda_2")
+  localizacao               localizacao? @relation(fields: [fk_localizacao_id], references: [id_localizacao])
 
-  @@id([fk_produto_id_produto, fk_venda_id_venda])
+  @@id([fk_produto_id_produto, fk_venda_id_venda, fk_localizacao_id])
 }
 
 model pessoafisica {
@@ -137,9 +141,11 @@ model produto {
 }
 
 model localizacao {
-  id_localizacao Int       @id @default(autoincrement())
-  localizacao    String    @db.VarChar(100)
+  id_localizacao Int           @id @default(autoincrement())
+  localizacao    String        @db.VarChar(100)
   estoque        estoque[]
+  itenscompra    itenscompra[]
+  itensvenda     itensvenda[]
 }
 
 model estoque {

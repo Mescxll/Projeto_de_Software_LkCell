@@ -8,11 +8,19 @@ const cadastrarVenda = async (req, res) => {
       data_vencimento,
       fk_cliente_id_cliente,
       fk_funcionario_id_funcionario,
-      itens, // cada item agora pode ter fk_localizacao_id próprio
+      itens,
     } = req.body;
 
-    // Busca todos os produtos e seus estoques atuais
-    const ids = itens.map((i) => i.fk_produto_id_produto);
+    // fk_localizacao_id é não nulo e parte da PK composta de itensvenda
+    for (const item of itens) {
+      if (!item.fk_localizacao_id) {
+        return res
+          .status(400)
+          .json({ erro: "Cada item deve informar fk_localizacao_id." });
+      }
+    }
+
+    const ids = [...new Set(itens.map((i) => i.fk_produto_id_produto))];
 
     const produtos = await prisma.produto.findMany({
       where: { id_produto: { in: ids } },
@@ -35,48 +43,29 @@ const cadastrarVenda = async (req, res) => {
       mapaProdutos[p.id_produto] = p;
     }
 
-    // Para cada item que tem fk_localizacao_id, valida o estoque
-    // especificamente naquela localização (registro mais recente).
-    // Se não tiver localização, cai na verificação geral do produto.
+    // Valida estoque por localização (sempre obrigatório)
     for (const item of itens) {
-      if (item.fk_localizacao_id) {
-        const ultimoEstoqueLocalizacao = await prisma.estoque.findFirst({
-          where: {
-            fk_produto_id: item.fk_produto_id_produto,
-            fk_localizacao_id: item.fk_localizacao_id,
-          },
-          orderBy: { data_hora: "desc" },
-        });
+      const ultimoEstoqueLocalizacao = await prisma.estoque.findFirst({
+        where: {
+          fk_produto_id: item.fk_produto_id_produto,
+          fk_localizacao_id: item.fk_localizacao_id,
+        },
+        orderBy: { data_hora: "desc" },
+      });
 
-        const estoqueDisponivel = ultimoEstoqueLocalizacao?.estoque_atual ?? 0;
+      const estoqueDisponivel = ultimoEstoqueLocalizacao?.estoque_atual ?? 0;
 
-        if (item.quantidade_vendida > estoqueDisponivel) {
-          const produto = mapaProdutos[item.fk_produto_id_produto];
-          return res.status(409).json({
-            erro: `Estoque insuficiente para o produto "${
-              produto.nome || produto.codigo_produto
-            }" na localização selecionada. Disponível: ${estoqueDisponivel}, solicitado: ${item.quantidade_vendida}.`,
-          });
-        }
-      } else {
-        // Fallback: valida pelo estoque geral (registro mais recente do produto)
+      if (item.quantidade_vendida > estoqueDisponivel) {
         const produto = mapaProdutos[item.fk_produto_id_produto];
-        const ultimoEstoque = produto.estoque[0];
-        const estoqueDisponivel = ultimoEstoque?.estoque_atual ?? 0;
-
-        if (item.quantidade_vendida > estoqueDisponivel) {
-          return res.status(409).json({
-            erro: `Estoque insuficiente para o produto "${
-              produto.nome || produto.codigo_produto
-            }". Disponível: ${estoqueDisponivel}, solicitado: ${item.quantidade_vendida}.`,
-          });
-        }
+        return res.status(409).json({
+          erro: `Estoque insuficiente para o produto "${
+            produto.nome || produto.codigo_produto
+          }" na localização selecionada. Disponível: ${estoqueDisponivel}, solicitado: ${item.quantidade_vendida}.`,
+        });
       }
     }
 
-    // Tudo válido — executa em transação
     const novaVenda = await prisma.$transaction(async (tx) => {
-      // Calcula valor total
       let valorTotal = 0;
       for (const item of itens) {
         valorTotal +=
@@ -84,7 +73,6 @@ const cadastrarVenda = async (req, res) => {
           item.quantidade_vendida;
       }
 
-      // Cria a venda — status_venda começa sempre como EFETUADA
       const venda = await tx.venda.create({
         data: {
           data_hora: new Date(),
@@ -97,29 +85,26 @@ const cadastrarVenda = async (req, res) => {
         },
       });
 
-      // Cria itens + registro SAIDA no estoque (por localização se informado)
       for (const item of itens) {
         const produto = mapaProdutos[item.fk_produto_id_produto];
-        const localizacaoId = item.fk_localizacao_id ?? null;
 
-        // Busca o último estoque da localização específica (ou geral)
-        const ultimoEstoque = localizacaoId
-          ? await tx.estoque.findFirst({
-              where: {
-                fk_produto_id: item.fk_produto_id_produto,
-                fk_localizacao_id: localizacaoId,
-              },
-              orderBy: { data_hora: "desc" },
-            })
-          : produto.estoque[0];
+        const ultimoEstoque = await tx.estoque.findFirst({
+          where: {
+            fk_produto_id: item.fk_produto_id_produto,
+            fk_localizacao_id: item.fk_localizacao_id,
+          },
+          orderBy: { data_hora: "desc" },
+        });
 
         const novoEstoqueAtual =
           (ultimoEstoque?.estoque_atual ?? 0) - item.quantidade_vendida;
 
+        // fk_localizacao_id agora é incluído (Int não nulo na PK composta)
         await tx.itensvenda.create({
           data: {
             fk_venda_id_venda: venda.id_venda,
             fk_produto_id_produto: item.fk_produto_id_produto,
+            fk_localizacao_id: item.fk_localizacao_id,
             quantidade_vendida: item.quantidade_vendida,
             preco_unitario: produto.preco_venda,
           },
@@ -129,7 +114,7 @@ const cadastrarVenda = async (req, res) => {
           data: {
             fk_produto_id: item.fk_produto_id_produto,
             fk_venda_id: venda.id_venda,
-            fk_localizacao_id: localizacaoId,
+            fk_localizacao_id: item.fk_localizacao_id,
             tipo_movimento: "SAIDA",
             quantidade: item.quantidade_vendida,
             estoque_atual: novoEstoqueAtual,
@@ -144,7 +129,12 @@ const cadastrarVenda = async (req, res) => {
         include: {
           cliente: true,
           funcionario: true,
-          itensvenda: { include: { produto: true } },
+          itensvenda: {
+            include: {
+              produto: true,
+              localizacao: true,
+            },
+          },
         },
       });
     });
@@ -211,6 +201,7 @@ const buscarTodasVendas = async (req, res) => {
                 modelo: { include: { marca: true } },
               },
             },
+            localizacao: true,
           },
         },
       },
@@ -242,6 +233,7 @@ const buscarVenda = async (req, res) => {
                 modelo: { include: { marca: true } },
               },
             },
+            localizacao: true,
           },
         },
         estoque: {
@@ -271,6 +263,15 @@ const atualizarVenda = async (req, res) => {
     const idVenda = parseInt(id);
     const { status_pagamento, data_vencimento, itens } = req.body;
 
+    // fk_localizacao_id é não nulo e parte da PK composta de itensvenda
+    for (const item of itens) {
+      if (!item.fk_localizacao_id) {
+        return res
+          .status(400)
+          .json({ erro: "Cada item deve informar fk_localizacao_id." });
+      }
+    }
+
     const vendaExistente = await prisma.venda.findUnique({
       where: { id_venda: idVenda },
       include: {
@@ -283,71 +284,78 @@ const atualizarVenda = async (req, res) => {
       return res.status(404).json({ erro: "Venda não encontrada." });
     }
     if (vendaExistente.status_venda === "CANCELADA") {
-      return res.status(409).json({ erro: "Não é possível atualizar uma venda cancelada." });
+      return res
+        .status(409)
+        .json({ erro: "Não é possível atualizar uma venda cancelada." });
     }
-    if (vendaExistente.status_pagamento === "PAGO" && status_pagamento === "EM_ABERTO") {
+    if (
+      vendaExistente.status_pagamento === "PAGO" &&
+      status_pagamento === "EM_ABERTO"
+    ) {
       return res.status(409).json({
         erro: "Não é permitido alterar o status de pagamento de 'PAGO' para 'EM_ABERTO'.",
       });
     }
     if (!itens || itens.length === 0) {
-      return res.status(400).json({ erro: "A venda deve ter pelo menos um produto." });
+      return res
+        .status(400)
+        .json({ erro: "A venda deve ter pelo menos um produto." });
     }
 
-    // Busca produtos novos/atuais para validar estoque e pegar preço
-    const ids = itens.map((i) => i.fk_produto_id_produto);
+    const ids = [...new Set(itens.map((i) => i.fk_produto_id_produto))];
     const produtos = await prisma.produto.findMany({
       where: { id_produto: { in: ids } },
     });
     if (produtos.length !== ids.length) {
-      return res.status(404).json({ erro: "Um ou mais produtos não foram encontrados." });
+      return res
+        .status(404)
+        .json({ erro: "Um ou mais produtos não foram encontrados." });
     }
     const mapaProdutos = {};
     for (const p of produtos) mapaProdutos[p.id_produto] = p;
 
-    // Valida estoque para cada item (considera a localização se informada)
+    // Valida estoque considerando produto E localização na chave composta
     for (const item of itens) {
       const itemAntigo = vendaExistente.itensvenda.find(
-        (i) => i.fk_produto_id_produto === item.fk_produto_id_produto,
+        (i) =>
+          i.fk_produto_id_produto === item.fk_produto_id_produto &&
+          i.fk_localizacao_id === item.fk_localizacao_id,
       );
       const qtdAntiga = itemAntigo?.quantidade_vendida ?? 0;
-      const qtdNova = item.quantidade_vendida;
-      const diferenca = qtdNova - qtdAntiga; // positivo = precisa de mais estoque
+      const diferenca = item.quantidade_vendida - qtdAntiga;
 
       if (diferenca > 0) {
-        const ultimoEstoque = item.fk_localizacao_id
-          ? await prisma.estoque.findFirst({
-              where: {
-                fk_produto_id: item.fk_produto_id_produto,
-                fk_localizacao_id: item.fk_localizacao_id,
-              },
-              orderBy: { data_hora: "desc" },
-            })
-          : await prisma.estoque.findFirst({
-              where: { fk_produto_id: item.fk_produto_id_produto },
-              orderBy: { data_hora: "desc" },
-            });
+        const ultimoEstoque = await prisma.estoque.findFirst({
+          where: {
+            fk_produto_id: item.fk_produto_id_produto,
+            fk_localizacao_id: item.fk_localizacao_id,
+          },
+          orderBy: { data_hora: "desc" },
+        });
 
         const disponivel = ultimoEstoque?.estoque_atual ?? 0;
         if (diferenca > disponivel) {
           const produto = mapaProdutos[item.fk_produto_id_produto];
           return res.status(409).json({
-            erro: `Estoque insuficiente para "${produto.nome || produto.codigo_produto}". Disponível: ${disponivel}, necessário adicional: ${diferenca}.`,
+            erro: `Estoque insuficiente para "${
+              produto.nome || produto.codigo_produto
+            }". Disponível: ${disponivel}, necessário adicional: ${diferenca}.`,
           });
         }
       }
     }
 
     const vendaAtualizada = await prisma.$transaction(async (tx) => {
-      // Estorna saídas anteriores (AJUSTE para cada item antigo)
+      // Estorna saídas anteriores usando fk_localizacao_id direto do item
+      // (não precisa mais buscar saidaOriginal no estoque)
       for (const itemAntigo of vendaExistente.itensvenda) {
-        const saidaOriginal = vendaExistente.estoque.find(
-          (e) => e.fk_produto_id === itemAntigo.fk_produto_id_produto && e.tipo_movimento === "SAIDA",
-        );
-        const localizacaoId = saidaOriginal?.fk_localizacao_id ?? null;
+        const localizacaoId = itemAntigo.fk_localizacao_id;
 
         const ultimoEstoque = await tx.estoque.findFirst({
-          where: { fk_produto_id: itemAntigo.fk_produto_id_produto, fk_localizacao_id: localizacaoId },
+          where: {
+            fk_produto_id: itemAntigo.fk_produto_id_produto,
+            fk_localizacao_id: localizacaoId,
+          },
           orderBy: { data_hora: "desc" },
         });
 
@@ -357,7 +365,9 @@ const atualizarVenda = async (req, res) => {
             fk_localizacao_id: localizacaoId,
             tipo_movimento: "AJUSTE",
             quantidade: itemAntigo.quantidade_vendida,
-            estoque_atual: (ultimoEstoque?.estoque_atual ?? 0) + itemAntigo.quantidade_vendida,
+            estoque_atual:
+              (ultimoEstoque?.estoque_atual ?? 0) +
+              itemAntigo.quantidade_vendida,
             estoque_minimo: ultimoEstoque?.estoque_minimo ?? null,
             estoque_ideal: ultimoEstoque?.estoque_ideal ?? null,
             observacao: `Estorno por atualização da venda #${idVenda}`,
@@ -365,31 +375,31 @@ const atualizarVenda = async (req, res) => {
         });
       }
 
-      // Remove itens e saídas antigas da venda
       await tx.itensvenda.deleteMany({ where: { fk_venda_id_venda: idVenda } });
       await tx.estoque.deleteMany({
         where: { fk_venda_id: idVenda, tipo_movimento: "SAIDA" },
       });
 
-      // Recalcula valor total
       let valorTotal = 0;
       for (const item of itens) {
         valorTotal += Number(item.preco_unitario) * item.quantidade_vendida;
       }
 
-      // Cria novos itens e registra novas SAÍDAs
       for (const item of itens) {
-        const localizacaoId = item.fk_localizacao_id ?? null;
-
         const ultimoEstoque = await tx.estoque.findFirst({
-          where: { fk_produto_id: item.fk_produto_id_produto, fk_localizacao_id: localizacaoId },
+          where: {
+            fk_produto_id: item.fk_produto_id_produto,
+            fk_localizacao_id: item.fk_localizacao_id,
+          },
           orderBy: { data_hora: "desc" },
         });
 
+        // fk_localizacao_id agora é incluído (Int não nulo na PK composta)
         await tx.itensvenda.create({
           data: {
             fk_venda_id_venda: idVenda,
             fk_produto_id_produto: item.fk_produto_id_produto,
+            fk_localizacao_id: item.fk_localizacao_id,
             quantidade_vendida: item.quantidade_vendida,
             preco_unitario: item.preco_unitario,
           },
@@ -399,17 +409,17 @@ const atualizarVenda = async (req, res) => {
           data: {
             fk_produto_id: item.fk_produto_id_produto,
             fk_venda_id: idVenda,
-            fk_localizacao_id: localizacaoId,
+            fk_localizacao_id: item.fk_localizacao_id,
             tipo_movimento: "SAIDA",
             quantidade: item.quantidade_vendida,
-            estoque_atual: (ultimoEstoque?.estoque_atual ?? 0) - item.quantidade_vendida,
+            estoque_atual:
+              (ultimoEstoque?.estoque_atual ?? 0) - item.quantidade_vendida,
             estoque_minimo: ultimoEstoque?.estoque_minimo ?? null,
             estoque_ideal: ultimoEstoque?.estoque_ideal ?? null,
           },
         });
       }
 
-      // Atualiza a venda
       return tx.venda.update({
         where: { id_venda: idVenda },
         data: {
@@ -420,7 +430,12 @@ const atualizarVenda = async (req, res) => {
         include: {
           cliente: true,
           funcionario: true,
-          itensvenda: { include: { produto: true } },
+          itensvenda: {
+            include: {
+              produto: true,
+              localizacao: true,
+            },
+          },
         },
       });
     });
@@ -431,7 +446,9 @@ const atualizarVenda = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao atualizar venda:", error);
-    return res.status(500).json({ erro: "Erro interno no servidor ao atualizar venda." });
+    return res
+      .status(500)
+      .json({ erro: "Erro interno no servidor ao atualizar venda." });
   }
 };
 
@@ -493,19 +510,9 @@ const cancelarVenda = async (req, res) => {
       include: {
         itensvenda: {
           include: {
-            produto: {
-              include: {
-                estoque: {
-                  orderBy: { data_hora: "desc" },
-                  take: 1,
-                },
-              },
-            },
+            produto: true,
           },
         },
-        // Inclui os registros de estoque da venda para saber a localização
-        // de cada SAIDA que foi registrada
-        estoque: true,
       },
     });
 
@@ -521,16 +528,10 @@ const cancelarVenda = async (req, res) => {
 
     await prisma.$transaction(async (tx) => {
       for (const item of venda.itensvenda) {
-        // Localiza o registro de SAIDA desta venda para este produto,
-        // para estornar na localização correta
-        const saidaOriginal = venda.estoque.find(
-          (e) => e.fk_produto_id === item.fk_produto_id_produto,
-        );
+        // fk_localizacao_id vem direto do item (parte da PK composta),
+        // eliminando a necessidade de buscar o registro de SAIDA no estoque
+        const localizacaoId = item.fk_localizacao_id;
 
-        const localizacaoId = saidaOriginal?.fk_localizacao_id ?? null;
-
-        // Busca o estoque mais recente da mesma localização para calcular
-        // o novo estoque após estorno
         const ultimoEstoque = await tx.estoque.findFirst({
           where: {
             fk_produto_id: item.fk_produto_id_produto,

@@ -56,12 +56,13 @@ const cadastrarCompra = async (req, res) => {
       }
 
       // Cria o registro de compra
-      const compra = await tx.compra.create({
+      await tx.itenscompra.create({
         data: {
-          data_hora: new Date(),
-          valor_total: valorTotal,
-          prazo_entrega: normalizarData(prazo_entrega),
-          fk_fornecedor_id_fornecedor,
+          fk_compra_id_compra: compra.id_compra,
+          fk_produto_id_produto: item.fk_produto_id_produto,
+          quantidade: item.quantidade,
+          preco_compra: item.preco_compra,
+          fk_localizacao_id: item.fk_localizacao_id, // ← adicionar
         },
       });
 
@@ -215,10 +216,13 @@ const buscarCompra = async (req, res) => {
 const atualizarCompra = async (req, res) => {
   try {
     const { id } = req.params;
-    const { prazo_entrega, fk_fornecedor_id_fornecedor } = req.body;
+    const { prazo_entrega, fk_fornecedor_id_fornecedor, itens } = req.body;
+
+    console.log("itens recebidos:", JSON.stringify(itens, null, 2));
 
     const compraExistente = await prisma.compra.findUnique({
       where: { id_compra: parseInt(id) },
+      include: { itenscompra: true },
     });
 
     if (!compraExistente) {
@@ -231,20 +235,106 @@ const atualizarCompra = async (req, res) => {
       });
     }
 
-    const compraAtualizada = await prisma.compra.update({
-      where: { id_compra: parseInt(id) },
-      data: {
-        ...(prazo_entrega !== undefined && {
-          prazo_entrega: normalizarData(prazo_entrega),
-        }),
-        ...(fk_fornecedor_id_fornecedor !== undefined && {
-          fk_fornecedor_id_fornecedor,
-        }),
-      },
-      include: {
-        fornecedor: true,
-        itenscompra: { include: { produto: true } },
-      },
+    const compraAtualizada = await prisma.$transaction(async (tx) => {
+      // Atualiza cabeçalho
+      await tx.compra.update({
+        where: { id_compra: parseInt(id) },
+        data: {
+          ...(prazo_entrega !== undefined && {
+            prazo_entrega: normalizarData(prazo_entrega),
+          }),
+          ...(fk_fornecedor_id_fornecedor !== undefined && {
+            fk_fornecedor_id_fornecedor,
+          }),
+        },
+      });
+
+      // Se vieram itens, recalcula tudo
+      if (itens && Array.isArray(itens) && itens.length > 0) {
+        const ids = [...new Set(itens.map((i) => i.fk_produto_id_produto))];
+
+        const produtos = await tx.produto.findMany({
+          where: { id_produto: { in: ids } },
+          include: {
+            estoque: { orderBy: { data_hora: "desc" }, take: 1 },
+          },
+        });
+
+        if (produtos.length !== ids.length) {
+          throw new Error("Um ou mais produtos não foram encontrados.");
+        }
+
+        const mapaProdutos = {};
+        for (const p of produtos) {
+          mapaProdutos[p.id_produto] = p;
+        }
+
+        // Remove entradas de estoque antigas desta compra
+        await tx.estoque.deleteMany({
+          where: { fk_compra_id: parseInt(id) },
+        });
+
+        // Remove itens antigos
+        await tx.itenscompra.deleteMany({
+          where: { fk_compra_id_compra: parseInt(id) },
+        });
+
+        let valorTotal = 0;
+        for (const item of itens) {
+          valorTotal += Number(item.preco_compra) * item.quantidade;
+        }
+
+        // Recria itens e entradas de estoque
+        for (const item of itens) {
+          const produto = mapaProdutos[item.fk_produto_id_produto];
+          const ultimoEstoque = produto.estoque[0];
+          const novoEstoqueAtual =
+            (ultimoEstoque?.estoque_atual ?? 0) + item.quantidade;
+
+          await tx.itenscompra.create({
+            data: {
+              fk_compra_id_compra: parseInt(id),
+              fk_produto_id_produto: item.fk_produto_id_produto,
+              fk_localizacao_id: item.fk_localizacao_id, // ← adicionar
+              quantidade: item.quantidade,
+              preco_compra: item.preco_compra,
+            },
+          });
+
+          await tx.estoque.create({
+            data: {
+              fk_produto_id: item.fk_produto_id_produto,
+              fk_compra_id: parseInt(id),
+              fk_localizacao_id: item.fk_localizacao_id ?? null,
+              tipo_movimento: "ENTRADA",
+              quantidade: item.quantidade,
+              estoque_atual: novoEstoqueAtual,
+              estoque_minimo: ultimoEstoque?.estoque_minimo ?? null,
+              estoque_ideal: ultimoEstoque?.estoque_ideal ?? null,
+            },
+          });
+
+          await tx.produto.update({
+            where: { id_produto: item.fk_produto_id_produto },
+            data: { preco_custo: item.preco_compra },
+          });
+        }
+
+        // Atualiza valor total
+        await tx.compra.update({
+          where: { id_compra: parseInt(id) },
+          data: { valor_total: valorTotal },
+        });
+      }
+
+      return tx.compra.findUnique({
+        where: { id_compra: parseInt(id) },
+        include: {
+          fornecedor: true,
+          itenscompra: { include: { produto: true } },
+          estoque: { include: { localizacao: true } },
+        },
+      });
     });
 
     return res.status(200).json({
@@ -253,6 +343,11 @@ const atualizarCompra = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao atualizar compra:", error);
+
+    if (error.message === "Um ou mais produtos não foram encontrados.") {
+      return res.status(404).json({ erro: error.message });
+    }
+
     return res
       .status(500)
       .json({ erro: "Erro interno no servidor ao atualizar compra." });
