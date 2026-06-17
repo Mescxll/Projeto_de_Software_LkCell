@@ -265,6 +265,176 @@ const buscarVenda = async (req, res) => {
   }
 };
 
+const atualizarVenda = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const idVenda = parseInt(id);
+    const { status_pagamento, data_vencimento, itens } = req.body;
+
+    const vendaExistente = await prisma.venda.findUnique({
+      where: { id_venda: idVenda },
+      include: {
+        itensvenda: true,
+        estoque: true,
+      },
+    });
+
+    if (!vendaExistente) {
+      return res.status(404).json({ erro: "Venda não encontrada." });
+    }
+    if (vendaExistente.status_venda === "CANCELADA") {
+      return res.status(409).json({ erro: "Não é possível atualizar uma venda cancelada." });
+    }
+    if (vendaExistente.status_pagamento === "PAGO" && status_pagamento === "EM_ABERTO") {
+      return res.status(409).json({
+        erro: "Não é permitido alterar o status de pagamento de 'PAGO' para 'EM_ABERTO'.",
+      });
+    }
+    if (!itens || itens.length === 0) {
+      return res.status(400).json({ erro: "A venda deve ter pelo menos um produto." });
+    }
+
+    // Busca produtos novos/atuais para validar estoque e pegar preço
+    const ids = itens.map((i) => i.fk_produto_id_produto);
+    const produtos = await prisma.produto.findMany({
+      where: { id_produto: { in: ids } },
+    });
+    if (produtos.length !== ids.length) {
+      return res.status(404).json({ erro: "Um ou mais produtos não foram encontrados." });
+    }
+    const mapaProdutos = {};
+    for (const p of produtos) mapaProdutos[p.id_produto] = p;
+
+    // Valida estoque para cada item (considera a localização se informada)
+    for (const item of itens) {
+      const itemAntigo = vendaExistente.itensvenda.find(
+        (i) => i.fk_produto_id_produto === item.fk_produto_id_produto,
+      );
+      const qtdAntiga = itemAntigo?.quantidade_vendida ?? 0;
+      const qtdNova = item.quantidade_vendida;
+      const diferenca = qtdNova - qtdAntiga; // positivo = precisa de mais estoque
+
+      if (diferenca > 0) {
+        const ultimoEstoque = item.fk_localizacao_id
+          ? await prisma.estoque.findFirst({
+              where: {
+                fk_produto_id: item.fk_produto_id_produto,
+                fk_localizacao_id: item.fk_localizacao_id,
+              },
+              orderBy: { data_hora: "desc" },
+            })
+          : await prisma.estoque.findFirst({
+              where: { fk_produto_id: item.fk_produto_id_produto },
+              orderBy: { data_hora: "desc" },
+            });
+
+        const disponivel = ultimoEstoque?.estoque_atual ?? 0;
+        if (diferenca > disponivel) {
+          const produto = mapaProdutos[item.fk_produto_id_produto];
+          return res.status(409).json({
+            erro: `Estoque insuficiente para "${produto.nome || produto.codigo_produto}". Disponível: ${disponivel}, necessário adicional: ${diferenca}.`,
+          });
+        }
+      }
+    }
+
+    const vendaAtualizada = await prisma.$transaction(async (tx) => {
+      // Estorna saídas anteriores (AJUSTE para cada item antigo)
+      for (const itemAntigo of vendaExistente.itensvenda) {
+        const saidaOriginal = vendaExistente.estoque.find(
+          (e) => e.fk_produto_id === itemAntigo.fk_produto_id_produto && e.tipo_movimento === "SAIDA",
+        );
+        const localizacaoId = saidaOriginal?.fk_localizacao_id ?? null;
+
+        const ultimoEstoque = await tx.estoque.findFirst({
+          where: { fk_produto_id: itemAntigo.fk_produto_id_produto, fk_localizacao_id: localizacaoId },
+          orderBy: { data_hora: "desc" },
+        });
+
+        await tx.estoque.create({
+          data: {
+            fk_produto_id: itemAntigo.fk_produto_id_produto,
+            fk_localizacao_id: localizacaoId,
+            tipo_movimento: "AJUSTE",
+            quantidade: itemAntigo.quantidade_vendida,
+            estoque_atual: (ultimoEstoque?.estoque_atual ?? 0) + itemAntigo.quantidade_vendida,
+            estoque_minimo: ultimoEstoque?.estoque_minimo ?? null,
+            estoque_ideal: ultimoEstoque?.estoque_ideal ?? null,
+            observacao: `Estorno por atualização da venda #${idVenda}`,
+          },
+        });
+      }
+
+      // Remove itens e saídas antigas da venda
+      await tx.itensvenda.deleteMany({ where: { fk_venda_id_venda: idVenda } });
+      await tx.estoque.deleteMany({
+        where: { fk_venda_id: idVenda, tipo_movimento: "SAIDA" },
+      });
+
+      // Recalcula valor total
+      let valorTotal = 0;
+      for (const item of itens) {
+        valorTotal += Number(item.preco_unitario) * item.quantidade_vendida;
+      }
+
+      // Cria novos itens e registra novas SAÍDAs
+      for (const item of itens) {
+        const localizacaoId = item.fk_localizacao_id ?? null;
+
+        const ultimoEstoque = await tx.estoque.findFirst({
+          where: { fk_produto_id: item.fk_produto_id_produto, fk_localizacao_id: localizacaoId },
+          orderBy: { data_hora: "desc" },
+        });
+
+        await tx.itensvenda.create({
+          data: {
+            fk_venda_id_venda: idVenda,
+            fk_produto_id_produto: item.fk_produto_id_produto,
+            quantidade_vendida: item.quantidade_vendida,
+            preco_unitario: item.preco_unitario,
+          },
+        });
+
+        await tx.estoque.create({
+          data: {
+            fk_produto_id: item.fk_produto_id_produto,
+            fk_venda_id: idVenda,
+            fk_localizacao_id: localizacaoId,
+            tipo_movimento: "SAIDA",
+            quantidade: item.quantidade_vendida,
+            estoque_atual: (ultimoEstoque?.estoque_atual ?? 0) - item.quantidade_vendida,
+            estoque_minimo: ultimoEstoque?.estoque_minimo ?? null,
+            estoque_ideal: ultimoEstoque?.estoque_ideal ?? null,
+          },
+        });
+      }
+
+      // Atualiza a venda
+      return tx.venda.update({
+        where: { id_venda: idVenda },
+        data: {
+          status_pagamento,
+          data_vencimento: data_vencimento ? new Date(data_vencimento) : null,
+          valor_total: valorTotal,
+        },
+        include: {
+          cliente: true,
+          funcionario: true,
+          itensvenda: { include: { produto: true } },
+        },
+      });
+    });
+
+    return res.status(200).json({
+      mensagem: "Venda atualizada com sucesso!",
+      venda: vendaAtualizada,
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar venda:", error);
+    return res.status(500).json({ erro: "Erro interno no servidor ao atualizar venda." });
+  }
+};
+
 // Bloqueado se a venda estiver CANCELADA
 const atualizarStatusPagamento = async (req, res) => {
   try {
@@ -407,6 +577,7 @@ module.exports = {
   cadastrarVenda,
   buscarTodasVendas,
   buscarVenda,
+  atualizarVenda,
   atualizarStatusPagamento,
   cancelarVenda,
 };

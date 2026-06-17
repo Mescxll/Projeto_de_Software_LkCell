@@ -104,7 +104,7 @@ export default function CadastroVenda() {
           <ArrowLeft className="w-4 h-4" /> Voltar para Vendas
         </button>
 
-        <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+        <div className="flex flex-col gap-6 max-w-5xl mx-auto">
           {/* Seção 1: Informações Básicas */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <h2 className="text-xl font-bold text-gray-800 mb-6">

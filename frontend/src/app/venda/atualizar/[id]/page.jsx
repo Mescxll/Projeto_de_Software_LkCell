@@ -3,6 +3,7 @@
 import { useRouter, useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { useAtualizarVenda } from "@/hooks/venda/useAtualizarVenda";
+import SearchableSelect from "@/components/SearchableSelect";
 import {
   ArrowLeft,
   DollarSign,
@@ -11,7 +12,9 @@ import {
   Loader2,
   Save,
   User,
-  Lock,
+  Trash2,
+  Plus,
+  Package,
   MapPin,
 } from "lucide-react";
 
@@ -23,20 +26,32 @@ export default function AtualizarVenda() {
     loading,
     venda,
     erro,
-    modalConfirmar,
-    setModalConfirmar,
     statusPagamentoNovo,
     setStatusPagamentoNovo,
-    erroMsg,
-    isSubmitting,
-    modalErro,
-    setModalErro,
-    modalSucesso,
-    // novos:
+    dataVencimento,
+    setDataVencimento,
+    itens,
+    produtos,
+    itemForm,
+    estoquesPorLocalizacao,
+    loadingEstoque,
+    estoqueDisponivel,
+    modalConfirmar,
+    setModalConfirmar,
     modalCancelar,
     setModalCancelar,
-    isCancelling,
+    modalSucesso,
     modalSucessoCancelamento,
+    modalErro,
+    setModalErro,
+    erroMsg,
+    isSubmitting,
+    isCancelling,
+    calcularTotal,
+    handleChangeItem,
+    handleChangeQuantidade,
+    handleRemoverItem,
+    handleAdicionarItem,
     handleSalvar,
     handleConfirmar,
     handleCancelarVenda,
@@ -84,6 +99,8 @@ export default function AtualizarVenda() {
 
   const selectClass =
     "w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none bg-white";
+  const inputClass =
+    "w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none bg-white";
 
   const statusPagamentoColor =
     venda.status_pagamento === "PAGO"
@@ -95,11 +112,21 @@ export default function AtualizarVenda() {
       ? { bg: "#fef2f2", text: "#dc2626", border: "#fca5a5" }
       : { bg: "#f0fdf4", text: "#16a34a", border: "#bbf7d0" };
 
+  // Limite de quantidade baseado no estoque da localização selecionada para o form de adição
+  const qtdExcedida =
+    estoqueDisponivel !== null &&
+    itemForm.quantidade_vendida !== "" &&
+    parseInt(itemForm.quantidade_vendida) > estoqueDisponivel;
+
+  const opcoesProdutos = produtos.map((p) => ({
+    value: p.id_produto,
+    label: p.descricao || p.codigo_produto, // Boa prática: deixar um fallback robusto
+  }));
+
   return (
     <>
       <Navbar />
       <main className="min-h-screen bg-[#f4f6fb] p-8 px-55">
-        {/* Voltar */}
         <button
           onClick={() => router.push("/venda/gerenciar")}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
@@ -107,7 +134,7 @@ export default function AtualizarVenda() {
           <ArrowLeft className="w-4 h-4" /> Voltar para Vendas
         </button>
 
-        <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full">
+        <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full">
           {/* Cabeçalho */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <div className="flex items-center justify-between mb-6">
@@ -135,7 +162,6 @@ export default function AtualizarVenda() {
               </div>
             </div>
 
-            {/* Aviso se venda está cancelada */}
             {venda.status_venda === "CANCELADA" && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex gap-3">
                 <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
@@ -151,9 +177,7 @@ export default function AtualizarVenda() {
               </div>
             )}
 
-            {/* Informações Básicas (somente leitura) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 pb-6 border-b border-gray-100">
-              {/* Cliente */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-2 block">
                   Cliente
@@ -171,7 +195,6 @@ export default function AtualizarVenda() {
                 </div>
               </div>
 
-              {/* Funcionário */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-2 block">
                   Funcionário
@@ -191,19 +214,39 @@ export default function AtualizarVenda() {
                 </div>
               </div>
 
-              {/* Valor Total */}
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-2 block">
+                  Data de Vencimento
+                </label>
+                {venda.status_pagamento === "PAGO" ? (
+                  /* Se estiver PAGO, mostra a caixinha de aviso simulando um input bloqueado */
+                  <div className="w-full px-4 py-2.5 border border-gray-100 rounded-lg text-sm font-medium text-green-700 bg-green-50 flex items-center gap-2 cursor-not-allowed">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    Venda já paga
+                  </div>
+                ) : (
+                  /* Se estiver EM_ABERTO, mostra o input de data normal */
+                  <input
+                    type="date"
+                    value={dataVencimento}
+                    onChange={(e) => setDataVencimento(e.target.value)}
+                    disabled={venda.status_venda === "CANCELADA"}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                  />
+                )}
+              </div>
+
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-2 block">
                   Valor Total
                 </label>
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
                   <p className="text-lg font-bold text-green-600">
-                    {formatarPreco(venda.valor_total || 0)}
+                    {formatarPreco(calcularTotal())}
                   </p>
                 </div>
               </div>
 
-              {/* Status Pagamento Atual */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-2 block">
                   Status Pagamento Atual
@@ -223,7 +266,6 @@ export default function AtualizarVenda() {
               </div>
             </div>
 
-            {/* Atualizar Status de Pagamento */}
             <div>
               <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                 Novo Status de Pagamento <span className="text-red-400">*</span>
@@ -252,14 +294,9 @@ export default function AtualizarVenda() {
                   )}
                 </select>
               </div>
-              {venda.status_venda === "CANCELADA" && (
-                <p className="text-xs text-gray-400 mt-2">
-                  Não é possível atualizar uma venda cancelada.
-                </p>
-              )}
             </div>
           </div>
-          {/* Status da Venda */}
+
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <h2 className="text-xl font-bold text-gray-800 mb-1">
               Status da Venda
@@ -285,11 +322,6 @@ export default function AtualizarVenda() {
                       : "Efetuada"}
                   </span>
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {venda.status_venda === "CANCELADA"
-                    ? "Esta venda já foi cancelada e não pode ser modificada."
-                    : "Cancelar a venda estornará o estoque de todos os produtos."}
-                </p>
               </div>
 
               <button
@@ -305,24 +337,156 @@ export default function AtualizarVenda() {
 
           {/* Produtos */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <div className="flex items-center gap-2 mb-6">
-              <h2 className="text-xl font-bold text-gray-800">
-                Produtos ({venda.itensvenda?.length || 0})
-              </h2>
-              <div className="flex items-center gap-1 px-2 py-1 rounded bg-gray-100">
-                <Lock className="w-3 h-3 text-gray-500" />
-                <span className="text-xs text-gray-500 font-semibold">
-                  Somente leitura
-                </span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-gray-400" />
+                <h2 className="text-xl font-bold text-gray-800">
+                  Produtos ({itens.length})
+                </h2>
               </div>
             </div>
-
             <p className="text-xs text-gray-400 mb-6">
-              Os itens desta venda não podem ser alterados após o cadastro. Para
-              modificar os produtos, cancele esta venda e crie uma nova.
+              Adicione, remova ou ajuste as quantidades dos produtos desta
+              venda.
             </p>
 
-            {venda.itensvenda && venda.itensvenda.length > 0 ? (
+            {/* Adicionar produto (Igual ao Cadastro) */}
+            {venda.status_venda !== "CANCELADA" && (
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-6">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                    Produto <span className="text-red-400">*</span>
+                  </label>
+                  <SearchableSelect
+                    name="fk_produto_id_produto"
+                    options={opcoesProdutos}
+                    value={itemForm.fk_produto_id_produto}
+                    placeholder="Selecione um produto..."
+                    icon={<Package className="w-4 h-4" />}
+                    onChange={(val) =>
+                      handleChangeItem({
+                        target: {
+                          name: "fk_produto_id_produto",
+                          value: val,
+                        },
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                    Localização <span className="text-red-400">*</span>
+                  </label>
+
+                  {!itemForm.fk_produto_id_produto && (
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
+                      <select
+                        disabled
+                        className="w-full pl-9 px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-300 bg-gray-50 outline-none cursor-not-allowed"
+                      >
+                        <option>Selecione um produto</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {itemForm.fk_produto_id_produto && loadingEstoque && (
+                    <div className="flex items-center gap-2 px-4 py-2.5 border border-gray-100 rounded-lg bg-gray-50">
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      <span className="text-sm text-gray-400">
+                        Consultando...
+                      </span>
+                    </div>
+                  )}
+
+                  {itemForm.fk_produto_id_produto &&
+                    !loadingEstoque &&
+                    estoquesPorLocalizacao.length === 0 && (
+                      <div className="flex items-center gap-2 px-4 py-2.5 border border-orange-200 rounded-lg bg-orange-50">
+                        <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
+                        <span className="text-sm text-orange-600">
+                          Sem estoque
+                        </span>
+                      </div>
+                    )}
+
+                  {itemForm.fk_produto_id_produto &&
+                    !loadingEstoque &&
+                    estoquesPorLocalizacao.length > 0 && (
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                        <select
+                          name="fk_localizacao_id"
+                          value={itemForm.fk_localizacao_id}
+                          onChange={handleChangeItem}
+                          className={`pl-9 ${selectClass}`}
+                        >
+                          <option value="">Selecione...</option>
+                          {estoquesPorLocalizacao.map((loc) => (
+                            <option
+                              key={loc.id_localizacao}
+                              value={loc.id_localizacao}
+                            >
+                              {loc.localizacao} ({loc.estoque_atual} disp.)
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                    Qtd. <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="quantidade_vendida"
+                    placeholder="0"
+                    value={itemForm.quantidade_vendida}
+                    onChange={handleChangeItem}
+                    disabled={!itemForm.fk_localizacao_id}
+                    className={
+                      !itemForm.fk_localizacao_id
+                        ? "w-full px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-300 bg-gray-50 outline-none cursor-not-allowed"
+                        : qtdExcedida
+                          ? "w-full px-4 py-2.5 border border-red-300 rounded-lg text-sm text-red-700 bg-red-50 focus:ring-2 focus:ring-red-400 outline-none"
+                          : inputClass
+                    }
+                  />
+                  {itemForm.fk_localizacao_id && estoqueDisponivel !== null && (
+                    <p
+                      className={`text-xs mt-1 ${
+                        qtdExcedida ? "text-red-500" : "text-gray-400"
+                      }`}
+                    >
+                      {qtdExcedida
+                        ? `Excede o estoque (máx. ${estoqueDisponivel})`
+                        : `Disponível: ${estoqueDisponivel}`}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-end">
+                  <button
+                    onClick={handleAdicionarItem}
+                    disabled={
+                      !itemForm.fk_produto_id_produto ||
+                      !itemForm.fk_localizacao_id ||
+                      !itemForm.quantidade_vendida ||
+                      qtdExcedida ||
+                      estoquesPorLocalizacao.length === 0
+                    }
+                    className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-3 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Plus className="w-4 h-4" /> Add
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {itens.length > 0 ? (
               <div className="border border-gray-100 rounded-lg overflow-hidden">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-gray-50 border-b border-gray-100">
@@ -332,34 +496,50 @@ export default function AtualizarVenda() {
                       <th className="px-6 py-4 text-right">Quantidade</th>
                       <th className="px-6 py-4 text-right">Preço Unitário</th>
                       <th className="px-6 py-4 text-right">Subtotal</th>
+                      {venda.status_venda !== "CANCELADA" && (
+                        <th className="px-6 py-4 text-center">Ação</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {venda.itensvenda.map((item) => (
+                    {itens.map((item) => (
                       <tr
-                        key={item.fk_produto_id_produto}
+                        key={`${item.fk_produto_id_produto}-${item.fk_localizacao_id}`}
                         className="hover:bg-gray-50"
                       >
                         <td className="px-6 py-4">
                           <p className="font-semibold text-gray-800">
-                            {item.produto?.descricao}{" "}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Código: {item.produto?.codigo_produto || "-"}
+                            {item.produto?.descricao ||
+                              item.produto?.nome ||
+                              "—"}
                           </p>
                         </td>
                         <td className="px-6 py-4">
-                          {item.localizacao ? (
-                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                              <MapPin className="w-3 h-3" />
-                              {item.localizacao}
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                            <MapPin className="w-3 h-3" />
+                            {item.localizacao}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          {venda.status_venda === "CANCELADA" ? (
+                            <span className="font-medium text-gray-800">
+                              {item.quantidade_vendida}
                             </span>
                           ) : (
-                            <span className="text-xs text-gray-300">—</span>
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantidade_vendida}
+                              onChange={(e) =>
+                                handleChangeQuantidade(
+                                  item.fk_produto_id_produto,
+                                  item.fk_localizacao_id,
+                                  e.target.value,
+                                )
+                              }
+                              className="w-20 px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-right text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
+                            />
                           )}
-                        </td>
-                        <td className="px-6 py-4 text-right font-medium text-gray-800">
-                          {item.quantidade_vendida}
                         </td>
                         <td className="px-6 py-4 text-right text-gray-700">
                           {formatarPreco(item.preco_unitario || 0)}
@@ -370,20 +550,46 @@ export default function AtualizarVenda() {
                               (item.quantidade_vendida || 0),
                           )}
                         </td>
+                        {venda.status_venda !== "CANCELADA" && (
+                          <td className="px-6 py-4 text-center">
+                            <button
+                              onClick={() =>
+                                handleRemoverItem(
+                                  item.fk_produto_id_produto,
+                                  item.fk_localizacao_id,
+                                )
+                              }
+                              className="inline-flex items-center justify-center p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors"
+                              title="Remover item"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
                 </table>
+
+                <div className="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-gray-600">
+                      Total:
+                    </span>
+                    <span className="text-xl font-bold text-green-600">
+                      {formatarPreco(calcularTotal())}
+                    </span>
+                  </div>
+                </div>
               </div>
             ) : (
               <p className="text-sm text-gray-400 text-center py-8">
-                Esta venda não possui itens.
+                Nenhum produto adicionado.
               </p>
             )}
           </div>
 
-          {/* Botões de Ação */}
-          <div className="flex gap-3 justify-end mb-8 max-w-3xl mx-auto w-full">
+          <div className="flex gap-3 justify-end mb-8 max-w-5xl mx-auto w-full">
             <button
               onClick={() => router.push(`/venda/gerenciar`)}
               className="px-6 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"
@@ -419,15 +625,7 @@ export default function AtualizarVenda() {
               Confirmar Atualização
             </h2>
             <p className="text-sm text-gray-600 mb-6">
-              Tem certeza que deseja alterar o status de pagamento de{" "}
-              <strong>
-                {venda.status_pagamento === "PAGO" ? "Pago" : "Em Aberto"}
-              </strong>{" "}
-              para{" "}
-              <strong>
-                {statusPagamentoNovo === "PAGO" ? "Pago" : "Em Aberto"}
-              </strong>
-              ?
+              Tem certeza que deseja atualizar essa venda?
             </p>
             <div className="flex gap-3">
               <button
@@ -463,7 +661,7 @@ export default function AtualizarVenda() {
               Atualizado com Sucesso!
             </h2>
             <p className="text-sm text-gray-600 mb-6">
-              O status de pagamento da venda foi atualizado com sucesso.
+              Os dados da venda foram atualizados.
             </p>
             <button
               onClick={() => router.push(`/venda/gerenciar`)}
@@ -495,6 +693,7 @@ export default function AtualizarVenda() {
           </div>
         </div>
       )}
+
       {/* Modal Confirmar Cancelamento */}
       {modalCancelar && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">

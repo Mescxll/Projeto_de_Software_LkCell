@@ -83,7 +83,7 @@ export function useCadastrarVenda() {
 
       try {
         const res = await fetch(
-          `http://localhost:3000/api/produtos/${produtoId}/estoque-por-localizacao`
+          `http://localhost:3000/api/produtos/${produtoId}/estoque-por-localizacao`,
         );
         if (res.ok) {
           const data = await res.json();
@@ -104,7 +104,7 @@ export function useCadastrarVenda() {
   const estoqueDisponivel = (() => {
     if (!itemForm.fk_localizacao_id) return null;
     const loc = estoquesPorLocalizacao.find(
-      (l) => String(l.id_localizacao) === String(itemForm.fk_localizacao_id)
+      (l) => String(l.id_localizacao) === String(itemForm.fk_localizacao_id),
     );
     return loc?.estoque_atual ?? null;
   })();
@@ -115,7 +115,9 @@ export function useCadastrarVenda() {
       !itemForm.quantidade_vendida ||
       !itemForm.fk_localizacao_id
     ) {
-      setErroMsg("Selecione um produto, uma localização e informe a quantidade.");
+      setErroMsg(
+        "Selecione um produto, uma localização e informe a quantidade.",
+      );
       setModal("erro");
       return;
     }
@@ -130,14 +132,14 @@ export function useCadastrarVenda() {
     // Valida contra o estoque da localização escolhida
     if (estoqueDisponivel !== null && qty > estoqueDisponivel) {
       setErroMsg(
-        `Quantidade solicitada (${qty}) excede o estoque disponível na localização selecionada (${estoqueDisponivel}).`
+        `Quantidade solicitada (${qty}) excede o estoque disponível na localização selecionada (${estoqueDisponivel}).`,
       );
       setModal("erro");
       return;
     }
 
     const produtoSelecionado = produtos.find(
-      (p) => p.id_produto === parseInt(itemForm.fk_produto_id_produto)
+      (p) => p.id_produto === parseInt(itemForm.fk_produto_id_produto),
     );
 
     if (!produtoSelecionado) {
@@ -150,19 +152,20 @@ export function useCadastrarVenda() {
     if (
       form.itens.some(
         (i) =>
-          i.fk_produto_id_produto === parseInt(itemForm.fk_produto_id_produto) &&
-          String(i.fk_localizacao_id) === String(itemForm.fk_localizacao_id)
+          i.fk_produto_id_produto ===
+            parseInt(itemForm.fk_produto_id_produto) &&
+          String(i.fk_localizacao_id) === String(itemForm.fk_localizacao_id),
       )
     ) {
       setErroMsg(
-        "Este produto já foi adicionado nesta localização. Remova-o para adicionar novamente."
+        "Este produto já foi adicionado nesta localização. Remova-o para adicionar novamente.",
       );
       setModal("erro");
       return;
     }
 
     const localizacaoSelecionada = estoquesPorLocalizacao.find(
-      (l) => String(l.id_localizacao) === String(itemForm.fk_localizacao_id)
+      (l) => String(l.id_localizacao) === String(itemForm.fk_localizacao_id),
     );
 
     const novoItem = {
@@ -196,7 +199,7 @@ export function useCadastrarVenda() {
           !(
             i.fk_produto_id_produto === produtoId &&
             i.fk_localizacao_id === localizacaoId
-          )
+          ),
       ),
     });
   };
@@ -217,7 +220,7 @@ export function useCadastrarVenda() {
 
     if (name === "fk_produto_id_produto") {
       const produtoSelecionado = produtos.find(
-        (p) => p.id_produto === parseInt(value)
+        (p) => p.id_produto === parseInt(value),
       );
       setItemForm((prev) => ({
         ...prev,
@@ -230,6 +233,20 @@ export function useCadastrarVenda() {
     }
 
     setItemForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelecionarProduto = (produtoId) => {
+    const produtoSelecionado = produtos.find(
+      (p) => p.id_produto === parseInt(produtoId),
+    );
+
+    setItemForm((prev) => ({
+      ...prev,
+      fk_produto_id_produto: produtoId,
+      preco_unitario: produtoSelecionado?.preco_venda || "",
+      fk_localizacao_id: "",
+      quantidade_vendida: "",
+    }));
   };
 
   const handleSubmit = async () => {
@@ -246,7 +263,7 @@ export function useCadastrarVenda() {
         ? parseInt(form.fk_cliente_id_cliente)
         : null,
       fk_funcionario_id_funcionario: parseInt(
-        form.fk_funcionario_id_funcionario
+        form.fk_funcionario_id_funcionario,
       ),
       status_pagamento: form.status_pagamento,
       data_vencimento: form.data_vencimento || null,
@@ -316,6 +333,7 @@ export function useCadastrarVenda() {
     loadingEstoque,
     estoqueDisponivel,
     handleChange,
+    handleSelecionarProduto,
     handleChangeItem,
     handleAddItem,
     handleRemoveItem,

@@ -4,50 +4,241 @@ export function useAtualizarVenda(id) {
   const [loading, setLoading] = useState(true);
   const [venda, setVenda] = useState(null);
   const [erro, setErro] = useState(false);
-  const [modalConfirmar, setModalConfirmar] = useState(false);
+
+  // Campos editáveis da venda
   const [statusPagamentoNovo, setStatusPagamentoNovo] = useState("");
-  const [erroMsg, setErroMsg] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [modalErro, setModalErro] = useState(false);
-  const [modalSucesso, setModalSucesso] = useState(false);
+  const [dataVencimento, setDataVencimento] = useState("");
+  const [itens, setItens] = useState([]);
+  const [produtos, setProdutos] = useState([]);
 
-  // Novos estados para cancelamento
+  // --- CONTROLE DO NOVO ITEM (Igual ao Cadastro) ---
+  const [itemForm, setItemForm] = useState({
+    fk_produto_id_produto: "",
+    fk_localizacao_id: "",
+    quantidade_vendida: "",
+    preco_unitario: "",
+  });
+  const [estoquesPorLocalizacao, setEstoquesPorLocalizacao] = useState([]);
+  const [loadingEstoque, setLoadingEstoque] = useState(false);
+
+  // Modais
+  const [modalConfirmar, setModalConfirmar] = useState(false);
   const [modalCancelar, setModalCancelar] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
-  const [modalSucessoCancelamento, setModalSucessoCancelamento] =
-    useState(false);
+  const [modalSucesso, setModalSucesso] = useState(false);
+  const [modalSucessoCancelamento, setModalSucessoCancelamento] = useState(false);
+  const [modalErro, setModalErro] = useState(false);
+  const [erroMsg, setErroMsg] = useState("");
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // Busca a venda e os produtos disponíveis
   useEffect(() => {
     if (!id) return;
 
-    fetch(`http://localhost:3000/api/vendas/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Venda não encontrada");
-        return res.json();
-      })
-      .then((data) => {
-        const itensComLocalizacao = data.itensvenda.map((item) => {
-          const saida = data.estoque?.find(
+    Promise.all([
+      fetch(`http://localhost:3000/api/vendas/${id}`).then((r) => {
+        if (!r.ok) throw new Error("Venda não encontrada");
+        return r.json();
+      }),
+      fetch("http://localhost:3000/api/produtos").then((r) => r.json()),
+    ])
+      .then(([vendaData, produtosData]) => {
+        const itensComLocalizacao = vendaData.itensvenda.map((item) => {
+          const saida = vendaData.estoque?.find(
             (e) =>
               e.fk_produto_id === item.fk_produto_id_produto &&
               e.tipo_movimento === "SAIDA",
           );
           return {
             ...item,
-            localizacao: saida?.localizacao?.localizacao ?? null,
+            localizacao: saida?.localizacao?.localizacao ?? "—",
+            fk_localizacao_id: saida?.fk_localizacao_id ?? null,
           };
         });
 
-        setVenda({ ...data, itensvenda: itensComLocalizacao });
-        setStatusPagamentoNovo(data.status_pagamento);
+        setVenda(vendaData);
+        setStatusPagamentoNovo(vendaData.status_pagamento);
+        setDataVencimento(
+          vendaData.data_vencimento
+            ? vendaData.data_vencimento.split("T")[0]
+            : "",
+        );
+        setItens(itensComLocalizacao);
+        setProdutos(Array.isArray(produtosData) ? produtosData : []);
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Erro ao buscar venda:", err);
+        console.error(err);
         setErro(true);
         setLoading(false);
       });
   }, [id]);
+
+  // Busca o estoque por localização sempre que o produto selecionado no formulário mudar
+  useEffect(() => {
+    const produtoId = itemForm.fk_produto_id_produto;
+
+    if (!produtoId) {
+      setEstoquesPorLocalizacao([]);
+      return;
+    }
+
+    const buscarEstoque = async () => {
+      setLoadingEstoque(true);
+      setEstoquesPorLocalizacao([]);
+      setItemForm((prev) => ({ ...prev, fk_localizacao_id: "" }));
+
+      try {
+        const res = await fetch(
+          `http://localhost:3000/api/produtos/${produtoId}/estoque-por-localizacao`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setEstoquesPorLocalizacao(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar estoque por localização:", err);
+      } finally {
+        setLoadingEstoque(false);
+      }
+    };
+
+    buscarEstoque();
+  }, [itemForm.fk_produto_id_produto]);
+
+  // Retorna o estoque disponível da localização atualmente selecionada (ou null)
+  const estoqueDisponivel = (() => {
+    if (!itemForm.fk_localizacao_id) return null;
+    const loc = estoquesPorLocalizacao.find(
+      (l) => String(l.id_localizacao) === String(itemForm.fk_localizacao_id)
+    );
+    return loc?.estoque_atual ?? null;
+  })();
+
+  const calcularTotal = () =>
+    itens.reduce(
+      (acc, item) =>
+        acc + (Number(item.preco_unitario) || 0) * (Number(item.quantidade_vendida) || 0),
+      0,
+    );
+
+  // Lida com as mudanças no formulário de NOVO item
+  const handleChangeItem = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "quantidade_vendida") {
+      const num = value.replace(/\D/g, "");
+      setItemForm((prev) => ({ ...prev, [name]: num }));
+      return;
+    }
+
+    if (name === "fk_produto_id_produto") {
+      const produtoSelecionado = produtos.find(
+        (p) => p.id_produto === parseInt(value)
+      );
+      setItemForm((prev) => ({
+        ...prev,
+        fk_produto_id_produto: value,
+        preco_unitario: produtoSelecionado?.preco_venda || "",
+        fk_localizacao_id: "",
+        quantidade_vendida: "",
+      }));
+      return;
+    }
+
+    setItemForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Adiciona novo produto à lista
+  const handleAdicionarItem = () => {
+    if (
+      !itemForm.fk_produto_id_produto ||
+      !itemForm.quantidade_vendida ||
+      !itemForm.fk_localizacao_id
+    ) {
+      setErroMsg("Selecione um produto, uma localização e informe a quantidade.");
+      setModalErro(true);
+      return;
+    }
+
+    const qty = parseInt(itemForm.quantidade_vendida);
+    if (qty <= 0) {
+      setErroMsg("A quantidade deve ser maior que zero.");
+      setModalErro(true);
+      return;
+    }
+
+    if (estoqueDisponivel !== null && qty > estoqueDisponivel) {
+      setErroMsg(
+        `Quantidade solicitada (${qty}) excede o estoque disponível na localização selecionada (${estoqueDisponivel}).`
+      );
+      setModalErro(true);
+      return;
+    }
+
+    const produtoSelecionado = produtos.find(
+      (p) => p.id_produto === parseInt(itemForm.fk_produto_id_produto)
+    );
+
+    // Evita duplicar o MESMO produto na MESMA localização
+    const jaExiste = itens.find(
+      (i) =>
+        i.fk_produto_id_produto === parseInt(itemForm.fk_produto_id_produto) &&
+        String(i.fk_localizacao_id) === String(itemForm.fk_localizacao_id)
+    );
+
+    if (jaExiste) {
+      setErroMsg("Este produto já foi adicionado nesta localização. Altere a quantidade na tabela abaixo.");
+      setModalErro(true);
+      return;
+    }
+
+    const localizacaoSelecionada = estoquesPorLocalizacao.find(
+      (l) => String(l.id_localizacao) === String(itemForm.fk_localizacao_id)
+    );
+
+    setItens((prev) => [
+      ...prev,
+      {
+        fk_produto_id_produto: parseInt(itemForm.fk_produto_id_produto),
+        produto: produtoSelecionado,
+        fk_localizacao_id: parseInt(itemForm.fk_localizacao_id),
+        localizacao: localizacaoSelecionada?.localizacao ?? "—",
+        quantidade_vendida: qty,
+        preco_unitario: produtoSelecionado.preco_venda,
+      },
+    ]);
+
+    setItemForm({
+      fk_produto_id_produto: "",
+      fk_localizacao_id: "",
+      quantidade_vendida: "",
+      preco_unitario: "",
+    });
+    setEstoquesPorLocalizacao([]);
+  };
+
+  // Altera quantidade de um item existente na tabela
+  const handleChangeQuantidade = (produtoId, localizacaoId, valor) => {
+    setItens((prev) =>
+      prev.map((item) =>
+        item.fk_produto_id_produto === produtoId && item.fk_localizacao_id === localizacaoId
+          ? { ...item, quantidade_vendida: valor === "" ? "" : Number(valor) }
+          : item,
+      ),
+    );
+  };
+
+  // Remove item da lista
+  const handleRemoverItem = (produtoId, localizacaoId) => {
+    setItens((prev) =>
+      prev.filter(
+        (item) =>
+          !(item.fk_produto_id_produto === produtoId && item.fk_localizacao_id === localizacaoId)
+      ),
+    );
+  };
 
   const handleSalvar = () => {
     if (!statusPagamentoNovo) {
@@ -55,25 +246,29 @@ export function useAtualizarVenda(id) {
       setModalErro(true);
       return;
     }
-
-    if (statusPagamentoNovo === venda.status_pagamento) {
-      setErroMsg("Nenhuma mudança foi feita no status de pagamento.");
+    if (itens.length === 0) {
+      setErroMsg("A venda deve ter pelo menos um produto.");
       setModalErro(true);
       return;
     }
-
-    // Impede alterar de PAGO para EM_ABERTO no frontend também
-    if (
-      venda.status_pagamento === "PAGO" &&
-      statusPagamentoNovo === "EM_ABERTO"
-    ) {
+    const itemInvalido = itens.find(
+      (i) => !i.quantidade_vendida || Number(i.quantidade_vendida) <= 0,
+    );
+    if (itemInvalido) {
       setErroMsg(
-        "Não é permitido alterar o status de pagamento de 'PAGO' para 'EM_ABERTO'.",
+        `Quantidade inválida para o produto "${itemInvalido.produto?.nome || itemInvalido.produto?.codigo_produto}".`,
       );
       setModalErro(true);
       return;
     }
-
+    if (
+      venda.status_pagamento === "PAGO" &&
+      statusPagamentoNovo === "EM_ABERTO"
+    ) {
+      setErroMsg("Não é permitido alterar o status de 'PAGO' para 'EM_ABERTO'.");
+      setModalErro(true);
+      return;
+    }
     setModalConfirmar(true);
   };
 
@@ -82,14 +277,20 @@ export function useAtualizarVenda(id) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(
-        `http://localhost:3000/api/vendas/${id}/status-pagamento`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status_pagamento: statusPagamentoNovo }),
-        },
-      );
+      const res = await fetch(`http://localhost:3000/api/vendas/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status_pagamento: statusPagamentoNovo,
+          data_vencimento: dataVencimento || null,
+          itens: itens.map((i) => ({
+            fk_produto_id_produto: i.fk_produto_id_produto,
+            quantidade_vendida: Number(i.quantidade_vendida),
+            preco_unitario: Number(i.preco_unitario),
+            fk_localizacao_id: i.fk_localizacao_id ?? null,
+          })),
+        }),
+      });
 
       if (res.ok) {
         const data = await res.json();
@@ -108,17 +309,13 @@ export function useAtualizarVenda(id) {
     }
   };
 
-  // Nova função de cancelamento
   const handleCancelarVenda = async () => {
     setModalCancelar(false);
     setIsCancelling(true);
-
     try {
-      const res = await fetch(
-        `http://localhost:3000/api/vendas/${id}`,
-        { method: "DELETE" }, // era PATCH e /cancelar
-      );
-
+      const res = await fetch(`http://localhost:3000/api/vendas/${id}`, {
+        method: "DELETE",
+      });
       if (res.ok) {
         setVenda((prev) => ({ ...prev, status_venda: "CANCELADA" }));
         setModalSucessoCancelamento(true);
@@ -136,60 +333,43 @@ export function useAtualizarVenda(id) {
   };
 
   const formatarPreco = (valor) =>
-    Number(valor).toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
+    Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const formatarData = (data) => {
     if (!data) return "-";
     try {
       return new Date(data).toLocaleString("pt-BR", {
         timeZone: "America/Sao_Paulo",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+        day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
       });
-    } catch {
-      return "-";
-    }
-  };
-
-  const formatarDataSimples = (data) => {
-    if (!data) return "-";
-    try {
-      return new Date(data).toLocaleDateString("pt-BR");
-    } catch {
-      return "-";
-    }
+    } catch { return "-"; }
   };
 
   return {
-    loading,
-    venda,
-    erro,
-    modalConfirmar,
-    setModalConfirmar,
-    statusPagamentoNovo,
-    setStatusPagamentoNovo,
-    erroMsg,
-    isSubmitting,
-    modalErro,
-    setModalErro,
-    modalSucesso,
-    setModalSucesso,
-    modalCancelar,
-    setModalCancelar,
-    isCancelling,
-    modalSucessoCancelamento,
-    setModalSucessoCancelamento,
+    loading, venda, erro,
+    statusPagamentoNovo, setStatusPagamentoNovo,
+    dataVencimento, setDataVencimento,
+    itens, produtos,
+    itemForm,
+    estoquesPorLocalizacao,
+    loadingEstoque,
+    estoqueDisponivel,
+    modalConfirmar, setModalConfirmar,
+    modalCancelar, setModalCancelar,
+    modalSucesso, setModalSucesso,
+    modalSucessoCancelamento, setModalSucessoCancelamento,
+    modalErro, setModalErro,
+    erroMsg, isSubmitting, isCancelling,
+    calcularTotal,
+    handleChangeItem,
+    handleChangeQuantidade,
+    handleRemoverItem,
+    handleAdicionarItem,
     handleSalvar,
     handleConfirmar,
     handleCancelarVenda,
     formatarPreco,
     formatarData,
-    formatarDataSimples,
   };
 }

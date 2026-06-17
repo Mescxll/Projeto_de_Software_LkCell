@@ -7,6 +7,8 @@ const validarCadastrarVenda           = require("../middlewares/venda/validarCad
 const validarBuscarVenda              = require("../middlewares/venda/validarBuscarVenda");
 const validarAtualizarStatusPagamento = require("../middlewares/venda/validarAtualizarStatusPagamento");
 const validarCancelarVenda            = require("../middlewares/venda/validarCancelarVenda");
+const validarAtualizarVenda = require("../middlewares/venda/validarAtualizarVenda");
+
 
 
 router.post("/",                          validarCadastrarVenda,            vendaController.cadastrarVenda);
@@ -14,5 +16,7 @@ router.get("/",                                                             vend
 router.get("/:id",                        validarBuscarVenda,               vendaController.buscarVenda);
 router.patch("/:id/status-pagamento",     validarAtualizarStatusPagamento,  vendaController.atualizarStatusPagamento);
 router.delete("/:id",                     validarCancelarVenda,             vendaController.cancelarVenda);
+router.put("/:id",                        validarAtualizarVenda,            vendaController.atualizarVenda);
+
 
 module.exports = router;
