@@ -165,7 +165,7 @@ export function useCadastrarCompra() {
       preco_compra: precoCompra,
       fk_localizacao_id: parseInt(itemForm.fk_localizacao_id),
       produtoNome:
-        produtoSelecionado.nome || produtoSelecionado.codigo_produto,
+        produtoSelecionado.descricao || produtoSelecionado.codigo_produto,
       localizacaoNome: localizacaoSelecionada?.localizacao ?? "—",
     };
 

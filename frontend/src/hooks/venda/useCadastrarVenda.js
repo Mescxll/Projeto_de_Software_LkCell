@@ -173,7 +173,7 @@ export function useCadastrarVenda() {
       fk_localizacao_id: parseInt(itemForm.fk_localizacao_id),
       quantidade_vendida: qty,
       preco_unitario: produtoSelecionado.preco_venda,
-      produtoNome: produtoSelecionado.nome || produtoSelecionado.codigo_produto,
+      produtoNome: produtoSelecionado.descricao || produtoSelecionado.codigo_produto,
       localizacaoNome: localizacaoSelecionada?.localizacao ?? "—",
     };
 
