@@ -49,24 +49,22 @@ const cadastrarCompra = async (req, res) => {
 
     // Executa tudo em transação
     const novaCompra = await prisma.$transaction(async (tx) => {
-      // Calcula valor total com base nos preços de compra informados
       let valorTotal = 0;
       for (const item of itens) {
         valorTotal += Number(item.preco_compra) * item.quantidade;
       }
 
-      // Cria o registro de compra
-      await tx.itenscompra.create({
+      // ✅ Cria a compra primeiro
+      const compra = await tx.compra.create({
         data: {
-          fk_compra_id_compra: compra.id_compra,
-          fk_produto_id_produto: item.fk_produto_id_produto,
-          quantidade: item.quantidade,
-          preco_compra: item.preco_compra,
-          fk_localizacao_id: item.fk_localizacao_id, // ← adicionar
+          data_hora: new Date(),
+          valor_total: valorTotal,
+          prazo_entrega: normalizarData(prazo_entrega),
+          fk_fornecedor_id_fornecedor,
         },
       });
 
-      // Cria itens + registro ENTRADA no estoque para cada produto
+      // Cria itens + estoque para cada produto
       for (const item of itens) {
         const produto = mapaProdutos[item.fk_produto_id_produto];
         const ultimoEstoque = produto.estoque[0];
@@ -77,6 +75,7 @@ const cadastrarCompra = async (req, res) => {
           data: {
             fk_compra_id_compra: compra.id_compra,
             fk_produto_id_produto: item.fk_produto_id_produto,
+            fk_localizacao_id: item.fk_localizacao_id, // ✅ agora obrigatório no schema
             quantidade: item.quantidade,
             preco_compra: item.preco_compra,
           },
@@ -86,7 +85,6 @@ const cadastrarCompra = async (req, res) => {
           data: {
             fk_produto_id: item.fk_produto_id_produto,
             fk_compra_id: compra.id_compra,
-            // fk_localizacao_id agora vem por item — cada produto pode ter sua localização
             fk_localizacao_id: item.fk_localizacao_id ?? null,
             tipo_movimento: "ENTRADA",
             quantidade: item.quantidade,
@@ -96,7 +94,6 @@ const cadastrarCompra = async (req, res) => {
           },
         });
 
-        // Atualiza o preco_custo do produto com o valor mais recente
         await tx.produto.update({
           where: { id_produto: item.fk_produto_id_produto },
           data: { preco_custo: item.preco_compra },
@@ -107,7 +104,7 @@ const cadastrarCompra = async (req, res) => {
         where: { id_compra: compra.id_compra },
         include: {
           fornecedor: true,
-          itenscompra: { include: { produto: true } },
+          itenscompra: { include: { produto: true, localizacao: true } },
         },
       });
     });
