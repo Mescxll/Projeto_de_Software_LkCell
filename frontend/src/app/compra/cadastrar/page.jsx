@@ -203,7 +203,7 @@ export default function CadastroCompra() {
               {/* Localização — SearchableSelect */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                  Localização
+                  Localização <span className="text-red-400">*</span>
                 </label>
                 <SearchableSelect
                   name="fk_localizacao_id"
