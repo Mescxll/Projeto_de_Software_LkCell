@@ -296,7 +296,6 @@ export default function AtualizarVenda() {
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <h2 className="text-xl font-bold text-gray-800 mb-1">
               Status da Venda
@@ -334,7 +333,6 @@ export default function AtualizarVenda() {
               </button>
             </div>
           </div>
-
           {/* Produtos */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <div className="flex items-center justify-between mb-2">
@@ -350,125 +348,145 @@ export default function AtualizarVenda() {
               venda.
             </p>
 
-            {/* Adicionar produto (Igual ao Cadastro) */}
+            {/* Adicionar produto */}
             {venda.status_venda !== "CANCELADA" && (
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-6">
-                <div className="md:col-span-2">
-                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    Produto <span className="text-red-400">*</span>
-                  </label>
-                  <SearchableSelect
-                    name="fk_produto_id_produto"
-                    options={opcoesProdutos}
-                    value={itemForm.fk_produto_id_produto}
-                    placeholder="Selecione um produto..."
-                    icon={<Package className="w-4 h-4" />}
-                    onChange={(val) =>
-                      handleChangeItem({
-                        target: {
-                          name: "fk_produto_id_produto",
-                          value: val,
-                        },
-                      })
-                    }
-                  />
-                </div>
+              <div className="mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-3">
+                  {/* Produto */}
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                      Produto <span className="text-red-400">*</span>
+                    </label>
+                    <SearchableSelect
+                      name="fk_produto_id_produto"
+                      options={opcoesProdutos}
+                      value={itemForm.fk_produto_id_produto}
+                      placeholder="Selecione um produto..."
+                      icon={<Package className="w-4 h-4" />}
+                      onChange={(val) =>
+                        handleChangeItem({
+                          target: { name: "fk_produto_id_produto", value: val },
+                        })
+                      }
+                    />
+                  </div>
 
-                <div className="md:col-span-2">
-                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    Localização <span className="text-red-400">*</span>
-                  </label>
+                  {/* Localização */}
+                  <div className="md:col-span-2">
+                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                      Localização <span className="text-red-400">*</span>
+                    </label>
 
-                  {!itemForm.fk_produto_id_produto && (
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
-                      <select
-                        disabled
-                        className="w-full pl-9 px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-300 bg-gray-50 outline-none cursor-not-allowed"
-                      >
-                        <option>Selecione um produto</option>
-                      </select>
-                    </div>
-                  )}
+                    {!itemForm.fk_produto_id_produto && (
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
+                        <select
+                          disabled
+                          className="w-full pl-9 px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-300 bg-gray-50 outline-none cursor-not-allowed"
+                        >
+                          <option>Selecione um produto</option>
+                        </select>
+                      </div>
+                    )}
 
-                  {itemForm.fk_produto_id_produto && loadingEstoque && (
-                    <div className="flex items-center gap-2 px-4 py-2.5 border border-gray-100 rounded-lg bg-gray-50">
-                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                      <span className="text-sm text-gray-400">
-                        Consultando...
-                      </span>
-                    </div>
-                  )}
-
-                  {itemForm.fk_produto_id_produto &&
-                    !loadingEstoque &&
-                    estoquesPorLocalizacao.length === 0 && (
-                      <div className="flex items-center gap-2 px-4 py-2.5 border border-orange-200 rounded-lg bg-orange-50">
-                        <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
-                        <span className="text-sm text-orange-600">
-                          Sem estoque
+                    {itemForm.fk_produto_id_produto && loadingEstoque && (
+                      <div className="flex items-center gap-2 px-4 py-2.5 border border-gray-100 rounded-lg bg-gray-50">
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                        <span className="text-sm text-gray-400">
+                          Consultando...
                         </span>
                       </div>
                     )}
 
-                  {itemForm.fk_produto_id_produto &&
-                    !loadingEstoque &&
-                    estoquesPorLocalizacao.length > 0 && (
-                      <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                        <select
-                          name="fk_localizacao_id"
-                          value={itemForm.fk_localizacao_id}
-                          onChange={handleChangeItem}
-                          className={`pl-9 ${selectClass}`}
+                    {itemForm.fk_produto_id_produto &&
+                      !loadingEstoque &&
+                      estoquesPorLocalizacao.length === 0 && (
+                        <div className="flex items-center gap-2 px-4 py-2.5 border border-orange-200 rounded-lg bg-orange-50">
+                          <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
+                          <span className="text-sm text-orange-600">
+                            Sem estoque
+                          </span>
+                        </div>
+                      )}
+
+                    {itemForm.fk_produto_id_produto &&
+                      !loadingEstoque &&
+                      estoquesPorLocalizacao.length > 0 && (
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                          <select
+                            name="fk_localizacao_id"
+                            value={itemForm.fk_localizacao_id}
+                            onChange={handleChangeItem}
+                            className={`pl-9 ${selectClass}`}
+                          >
+                            <option value="">Selecione...</option>
+                            {estoquesPorLocalizacao.map((loc) => (
+                              <option
+                                key={loc.id_localizacao}
+                                value={loc.id_localizacao}
+                              >
+                                {loc.localizacao} ({loc.estoque_atual} disp.)
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                  </div>
+
+                  {/* Preço Unitário — read-only, preenchido ao selecionar produto */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                      Preço Unit. <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={
+                        itemForm.preco_unitario
+                          ? formatarPreco(itemForm.preco_unitario)
+                          : ""
+                      }
+                      placeholder="R$ 0,00"
+                      className="w-full px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-500 bg-gray-50 outline-none cursor-default"
+                    />
+                  </div>
+
+                  {/* Quantidade */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                      Qtd. <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="quantidade_vendida"
+                      placeholder="0"
+                      value={itemForm.quantidade_vendida}
+                      onChange={handleChangeItem}
+                      disabled={!itemForm.fk_localizacao_id}
+                      className={
+                        !itemForm.fk_localizacao_id
+                          ? "w-full px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-300 bg-gray-50 outline-none cursor-not-allowed"
+                          : qtdExcedida
+                            ? "w-full px-4 py-2.5 border border-red-300 rounded-lg text-sm text-red-700 bg-red-50 focus:ring-2 focus:ring-red-400 outline-none"
+                            : inputClass
+                      }
+                    />
+                    {itemForm.fk_localizacao_id &&
+                      estoqueDisponivel !== null && (
+                        <p
+                          className={`text-xs mt-1 ${qtdExcedida ? "text-red-500" : "text-gray-400"}`}
                         >
-                          <option value="">Selecione...</option>
-                          {estoquesPorLocalizacao.map((loc) => (
-                            <option
-                              key={loc.id_localizacao}
-                              value={loc.id_localizacao}
-                            >
-                              {loc.localizacao} ({loc.estoque_atual} disp.)
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
+                          {qtdExcedida
+                            ? `Excede o estoque (máx. ${estoqueDisponivel})`
+                            : `Disponível: ${estoqueDisponivel}`}
+                        </p>
+                      )}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    Qtd. <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="quantidade_vendida"
-                    placeholder="0"
-                    value={itemForm.quantidade_vendida}
-                    onChange={handleChangeItem}
-                    disabled={!itemForm.fk_localizacao_id}
-                    className={
-                      !itemForm.fk_localizacao_id
-                        ? "w-full px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-300 bg-gray-50 outline-none cursor-not-allowed"
-                        : qtdExcedida
-                          ? "w-full px-4 py-2.5 border border-red-300 rounded-lg text-sm text-red-700 bg-red-50 focus:ring-2 focus:ring-red-400 outline-none"
-                          : inputClass
-                    }
-                  />
-                  {itemForm.fk_localizacao_id && estoqueDisponivel !== null && (
-                    <p
-                      className={`text-xs mt-1 ${
-                        qtdExcedida ? "text-red-500" : "text-gray-400"
-                      }`}
-                    >
-                      {qtdExcedida
-                        ? `Excede o estoque (máx. ${estoqueDisponivel})`
-                        : `Disponível: ${estoqueDisponivel}`}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex items-end">
+                {/* Botão abaixo à esquerda */}
+                <div className="flex justify-start">
                   <button
                     onClick={handleAdicionarItem}
                     disabled={
@@ -478,9 +496,9 @@ export default function AtualizarVenda() {
                       qtdExcedida ||
                       estoquesPorLocalizacao.length === 0
                     }
-                    className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-3 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm"
+                    className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg font-semibold transition-all text-sm"
                   >
-                    <Plus className="w-4 h-4" /> Add
+                    <Plus className="w-4 h-4" /> Adicionar
                   </button>
                 </div>
               </div>
@@ -515,7 +533,7 @@ export default function AtualizarVenda() {
                           </p>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">
                             <MapPin className="w-3 h-3" />
                             {item.localizacao}
                           </span>
@@ -588,11 +606,10 @@ export default function AtualizarVenda() {
               </p>
             )}
           </div>
-
-          <div className="flex gap-3 justify-end mb-8 max-w-5xl mx-auto w-full">
+          <div className="flex gap-3 justify-end mb-8 w-full">
             <button
               onClick={() => router.push(`/venda/gerenciar`)}
-              className="px-6 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"
+              className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"
             >
               Cancelar
             </button>
@@ -603,10 +620,10 @@ export default function AtualizarVenda() {
                 !statusPagamentoNovo ||
                 venda.status_venda === "CANCELADA"
               }
-              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-6 py-2.5 rounded-lg font-semibold transition-all text-sm"
+              className="flex-1 flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white py-2.5 rounded-lg font-semibold transition-all text-sm"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              <Save className="w-4 h-4" /> Salvar
+              <Save className="w-4 h-4" /> Atualizar Venda
             </button>
           </div>
         </div>

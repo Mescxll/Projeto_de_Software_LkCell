@@ -11,8 +11,12 @@ import {
   Loader2,
   Truck,
   Calendar,
-  Lock,
-  MapPin
+  Trash2,
+  Plus,
+  Save,
+  Package,
+  DollarSign,
+  MapPin,
 } from "lucide-react";
 
 export default function AtualizarCompra() {
@@ -22,6 +26,7 @@ export default function AtualizarCompra() {
   const {
     compra,
     fornecedores,
+    produtos,
     loading,
     erroMsg,
     isSubmitting,
@@ -38,6 +43,13 @@ export default function AtualizarCompra() {
     handleCancelarCompra,
     formatarPreco,
     formatarData,
+    itens,
+    localizacoes,
+    itemForm,
+    handleChangeItem,
+    handleAdicionarItem,
+    handleRemoverItem,
+    handleChangeQuantidade,
   } = useAtualizarCompra(id);
 
   if (loading) {
@@ -77,7 +89,7 @@ export default function AtualizarCompra() {
           <ArrowLeft className="w-4 h-4" /> Voltar para Compras
         </button>
 
-        <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+        <div className="flex flex-col gap-6 max-w-5xl mx-auto">
           {/* Seção 1: Informações Básicas */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <h2 className="text-xl font-bold text-gray-800 mb-6">
@@ -262,87 +274,243 @@ export default function AtualizarCompra() {
 
           {/* Seção 2: Produtos (Somente Leitura) */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <div className="flex items-center gap-2 mb-6">
+            <div className="flex items-center gap-2 mb-1">
+              <Package className="w-5 h-5 text-gray-400" />
               <h2 className="text-xl font-bold text-gray-800">
-                Produtos ({compra.itenscompra?.length || 0})
+                Produtos ({itens.length})
               </h2>
-              <div className="flex items-center gap-1 px-2 py-1 rounded bg-gray-100">
-                <Lock className="w-3 h-3 text-gray-500" />
-                <span className="text-xs text-gray-500 font-semibold">
-                  Somente leitura
-                </span>
-              </div>
             </div>
             <p className="text-xs text-gray-400 mb-6">
-              Os itens desta compra não podem ser alterados após o cadastro.
-              Para modificar os produtos, cancele esta compra e crie uma nova.
+              Adicione, remova ou ajuste as quantidades dos produtos desta
+              compra.
             </p>
 
-            <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
-              <table className="w-full text-left">
-                <thead className="bg-gray-100 border-b border-gray-200">
-                  <tr className="text-xs font-semibold text-gray-600">
-                    <th className="px-6 py-4">Produto</th>
-                    <th className="px-6 py-4">Localização</th>
-                    <th className="px-6 py-4">Quantidade</th>
-                    <th className="px-6 py-4">Preço de Compra</th>
-                    <th className="px-6 py-4 text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {compra?.itenscompra && compra.itenscompra.length > 0 ? (
-                    compra.itenscompra.map((item) => (
+            {/* Formulário de adição — só aparece se não estiver cancelada */}
+            {compra?.status_compra !== "CANCELADA" && (
+              <>
+                {/* Linha 1: Produto e Localização */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                      Produto <span className="text-red-400">*</span>
+                    </label>
+                    <SearchableSelect
+                      name="fk_produto_id_produto"
+                      options={produtos.map((p) => ({
+                        value: p.id_produto,
+                        label: p.descricao || p.codigo_produto,
+                      }))}
+                      value={itemForm.fk_produto_id_produto}
+                      onChange={(val) =>
+                        handleChangeItem({
+                          target: { name: "fk_produto_id_produto", value: val },
+                        })
+                      }
+                      placeholder="Selecione um produto"
+                      icon={<Package className="w-4 h-4" />}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                      Localização <span className="text-red-400">*</span>
+                    </label>
+                    <SearchableSelect
+                      name="fk_localizacao_id"
+                      options={localizacoes.map((l) => ({
+                        value: l.id_localizacao,
+                        label: l.localizacao,
+                      }))}
+                      value={itemForm.fk_localizacao_id}
+                      onChange={(val) =>
+                        handleChangeItem({
+                          target: { name: "fk_localizacao_id", value: val },
+                        })
+                      }
+                      icon={<MapPin className="w-4 h-4" />}
+                    />
+                  </div>
+                </div>
+
+                {/* Linha 2: Quantidade, Preço, Subtotal e Botão */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                      Qtd. <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="quantidade"
+                      placeholder="0"
+                      value={itemForm.quantidade}
+                      onChange={handleChangeItem}
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                      Preço de Compra <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        name="preco_compra"
+                        placeholder="0,00"
+                        value={itemForm.preco_compra}
+                        disabled
+                        className={`pl-9 ${inputDisabledClass}`}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                      Subtotal
+                    </label>
+                    <input
+                      type="text"
+                      value={
+                        itemForm.preco_compra && itemForm.quantidade
+                          ? formatarPreco(
+                              Number(
+                                itemForm.preco_compra
+                                  .replace(/\./g, "")
+                                  .replace(",", "."),
+                              ) * parseInt(itemForm.quantidade),
+                            )
+                          : "—"
+                      }
+                      disabled
+                      className={inputDisabledClass}
+                    />
+                  </div>
+
+                  <div className="flex items-end">
+                    <button
+                      onClick={handleAdicionarItem}
+                      className="w-full bg-blue-500 hover:bg-blue-600 text-white px-3 py-2.5 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm"
+                    >
+                      <Plus className="w-4 h-4" /> Adicionar
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Tabela de itens */}
+            {itens.length > 0 ? (
+              <div className="border border-gray-100 rounded-lg overflow-hidden">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr className="text-xs font-semibold text-gray-500">
+                      <th className="px-4 py-3">Produto</th>
+                      <th className="px-4 py-3">Localização</th>
+                      <th className="px-4 py-3 text-right">Quantidade</th>
+                      <th className="px-4 py-3 text-right">Preço de Compra</th>
+                      <th className="px-4 py-3 text-right">Subtotal</th>
+                      {compra?.status_compra !== "CANCELADA" && (
+                        <th className="px-4 py-3 text-center">Ação</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {itens.map((item) => (
                       <tr
-                        key={item.fk_produto_id_produto}
-                        className="text-sm text-gray-700 hover:bg-gray-75"
+                        key={`${item.fk_produto_id_produto}-${item.fk_localizacao_id}`}
+                        className="hover:bg-gray-50"
                       >
-                        <td className="px-6 py-4">
-                          <p className="font-medium text-gray-800">
-                            {item.produto?.descricao}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            ID: {item.fk_produto_id_produto}
-                          </p>
+                        <td className="px-4 py-3 font-medium text-gray-800">
+                          {item.produto?.descricao || "—"}
                         </td>
-                        <td className="px-6 py-4">
-                          {item.localizacao ? (
-                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                        <td className="px-4 py-3">
+                          {item.localizacaoNome &&
+                          item.localizacaoNome !== "—" ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">
                               <MapPin className="w-3 h-3" />
-                              {item.localizacao}
+                              {item.localizacaoNome}
                             </span>
                           ) : (
-                            <span className="text-xs text-gray-300">—</span>
+                            <span className="text-gray-400 text-xs">—</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {item.quantidade}
+                        <td className="px-4 py-3 text-right">
+                          {compra?.status_compra === "CANCELADA" ? (
+                            <span className="font-medium text-gray-700">
+                              {item.quantidade}
+                            </span>
+                          ) : (
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantidade}
+                              onChange={(e) =>
+                                handleChangeQuantidade(
+                                  item.fk_produto_id_produto,
+                                  item.fk_localizacao_id,
+                                  e.target.value,
+                                )
+                              }
+                              className="w-20 px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-right text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
+                            />
+                          )}
                         </td>
-                        <td className="px-6 py-4 text-gray-600">
+                        <td className="px-4 py-3 text-right text-gray-700">
                           {formatarPreco(item.preco_compra)}
                         </td>
-                        <td className="px-6 py-4 text-right font-semibold text-green-600">
-                          {formatarPreco(item.preco_compra * item.quantidade)}
+                        <td className="px-4 py-3 text-right font-semibold text-blue-600">
+                          {formatarPreco(
+                            item.preco_compra * (item.quantidade || 0),
+                          )}
                         </td>
+                        {compra?.status_compra !== "CANCELADA" && (
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() =>
+                                handleRemoverItem(
+                                  item.fk_produto_id_produto,
+                                  item.fk_localizacao_id,
+                                )
+                              }
+                              className="inline-flex items-center justify-center p-1.5 rounded-md text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        )}
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="4"
-                        className="px-6 py-8 text-center text-gray-400 text-sm"
-                      >
-                        Nenhum produto adicionado.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div className="bg-gray-50 border-t border-gray-100 px-4 py-4 flex justify-end">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-gray-600">
+                      Total:
+                    </span>
+                    <span className="text-xl font-bold text-blue-600">
+                      {formatarPreco(
+                        itens.reduce(
+                          (acc, i) =>
+                            acc + i.preco_compra * (i.quantidade || 0),
+                          0,
+                        ),
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400 text-center py-8">
+                Nenhum produto adicionado.
+              </p>
+            )}
           </div>
 
           {/* Botões de Ação */}
           {compra?.status_compra !== "CANCELADA" && (
-            <div className="flex gap-4 max-w-4xl">
+            <div className="flex gap-4 justify-end w-full">
               <button
                 onClick={() => router.push("/compra/gerenciar")}
                 className="flex-1 py-3 rounded-lg border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-all"
@@ -358,13 +526,8 @@ export default function AtualizarCompra() {
                     : "bg-blue-500 hover:bg-blue-600"
                 }`}
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Atualizando...
-                  </>
-                ) : (
-                  "Atualizar Compra"
-                )}
+                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                <Save className="w-4 h-4" /> Atualizar Compra
               </button>
             </div>
           )}

@@ -60,14 +60,56 @@ export function useCadastrarCompra() {
     buscarDados();
   }, []);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Única declaração — auto-preenche preco_compra ao selecionar produto
+  const handleChangeItem = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "quantidade") {
+      setItemForm((prev) => ({ ...prev, [name]: value.replace(/\D/g, "") }));
+      return;
+    }
+
+    if (name === "preco_compra") {
+      setItemForm((prev) => ({
+        ...prev,
+        [name]: value.replace(/[^0-9.,]/g, ""),
+      }));
+      return;
+    }
+
+    if (name === "fk_produto_id_produto") {
+      const produtoSelecionado = produtos.find(
+        (p) => p.id_produto === parseInt(value),
+      );
+      setItemForm((prev) => ({
+        ...prev,
+        fk_produto_id_produto: value,
+        preco_compra: produtoSelecionado?.preco_compra
+          ? Number(produtoSelecionado.preco_compra).toLocaleString("pt-BR", {
+              minimumFractionDigits: 2,
+            })
+          : "",
+      }));
+      return;
+    }
+
+    setItemForm((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleAddItem = () => {
     if (
       !itemForm.fk_produto_id_produto ||
       !itemForm.quantidade ||
-      !itemForm.preco_compra
+      !itemForm.preco_compra ||
+      !itemForm.fk_localizacao_id
     ) {
       setErroMsg(
-        "Selecione um produto, informe a quantidade e o preço de compra.",
+        "Selecione um produto, informe a quantidade, o preço de compra e a localização.",
       );
       setModal("erro");
       return;
@@ -80,7 +122,6 @@ export function useCadastrarCompra() {
       return;
     }
 
-    // Converte formato brasileiro (1.234,56 ou 1234,56 ou 1234.56) para float
     const parseBRL = (str) => Number(str.replace(/\./g, "").replace(",", "."));
     const precoCompra = parseBRL(itemForm.preco_compra);
     if (isNaN(precoCompra) || precoCompra <= 0) {
@@ -92,22 +133,23 @@ export function useCadastrarCompra() {
     const produtoSelecionado = produtos.find(
       (p) => p.id_produto === parseInt(itemForm.fk_produto_id_produto),
     );
-
     if (!produtoSelecionado) {
       setErroMsg("Produto não encontrado.");
       setModal("erro");
       return;
     }
 
-    // Verifica se o produto já foi adicionado
+    // Duplicata por produto + localização (PK composta)
     if (
       form.itens.some(
         (i) =>
-          i.fk_produto_id_produto === parseInt(itemForm.fk_produto_id_produto),
+          i.fk_produto_id_produto ===
+            parseInt(itemForm.fk_produto_id_produto) &&
+          String(i.fk_localizacao_id) === String(itemForm.fk_localizacao_id),
       )
     ) {
       setErroMsg(
-        "Este produto já foi adicionado. Ajuste a quantidade em vez de repetir o produto.",
+        "Este produto já foi adicionado nesta localização. Ajuste a quantidade na tabela.",
       );
       setModal("erro");
       return;
@@ -121,17 +163,13 @@ export function useCadastrarCompra() {
       fk_produto_id_produto: parseInt(itemForm.fk_produto_id_produto),
       quantidade: qty,
       preco_compra: precoCompra,
-      fk_localizacao_id: itemForm.fk_localizacao_id
-        ? parseInt(itemForm.fk_localizacao_id)
-        : null,
-      produtoNome: produtoSelecionado.nome || produtoSelecionado.codigo_produto,
+      fk_localizacao_id: parseInt(itemForm.fk_localizacao_id),
+      produtoNome:
+        produtoSelecionado.nome || produtoSelecionado.codigo_produto,
       localizacaoNome: localizacaoSelecionada?.localizacao ?? "—",
     };
 
-    setForm({
-      ...form,
-      itens: [...form.itens, novoItem],
-    });
+    setForm((prev) => ({ ...prev, itens: [...prev.itens, novoItem] }));
 
     setItemForm({
       fk_produto_id_produto: "",
@@ -141,27 +179,18 @@ export function useCadastrarCompra() {
     });
   };
 
-  const handleRemoveItem = (produtoId) => {
-    setForm({
-      ...form,
-      itens: form.itens.filter((i) => i.fk_produto_id_produto !== produtoId),
-    });
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
-
-  const handleChangeItem = (e) => {
-    const { name, value } = e.target;
-
-    if (name === "quantidade") {
-      const num = value.replace(/\D/g, "");
-      setItemForm({ ...itemForm, [name]: num });
-    } else {
-      setItemForm({ ...itemForm, [name]: value });
-    }
+  // Remove por produto + localização (PK composta)
+  const handleRemoveItem = (produtoId, localizacaoId) => {
+    setForm((prev) => ({
+      ...prev,
+      itens: prev.itens.filter(
+        (i) =>
+          !(
+            i.fk_produto_id_produto === produtoId &&
+            String(i.fk_localizacao_id) === String(localizacaoId)
+          ),
+      ),
+    }));
   };
 
   const handleSubmit = async () => {
@@ -176,12 +205,11 @@ export function useCadastrarCompra() {
     const body = {
       fk_fornecedor_id_fornecedor: parseInt(form.fk_fornecedor_id_fornecedor),
       prazo_entrega: form.prazo_entrega || null,
-      // fk_localizacao_id agora vai dentro de cada item
       itens: form.itens.map((item) => ({
         fk_produto_id_produto: item.fk_produto_id_produto,
         quantidade: item.quantidade,
         preco_compra: item.preco_compra,
-        fk_localizacao_id: item.fk_localizacao_id ?? null,
+        fk_localizacao_id: item.fk_localizacao_id,
       })),
     };
 
@@ -224,11 +252,8 @@ export function useCadastrarCompra() {
       currency: "BRL",
     });
 
-  const calcularTotal = () => {
-    return form.itens.reduce((acc, item) => {
-      return acc + item.preco_compra * item.quantidade;
-    }, 0);
-  };
+  const calcularTotal = () =>
+    form.itens.reduce((acc, item) => acc + item.preco_compra * item.quantidade, 0);
 
   return {
     fornecedores,

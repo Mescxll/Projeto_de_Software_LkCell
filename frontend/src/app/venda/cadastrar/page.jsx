@@ -364,7 +364,7 @@ export default function CadastroVenda() {
               {/* Preço Unitário */}
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                  Preço Unit.
+                  Preço Unit. <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
