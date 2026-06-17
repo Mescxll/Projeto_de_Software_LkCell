@@ -375,7 +375,7 @@ export default function CadastroCompra() {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting || form.itens.length === 0}
-              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-6 py-2.5 rounded-lg font-semibold transition-all text-sm"
+              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white px-6 py-2.5 rounded-lg font-semibold transition-all text-sm"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
               Cadastrar Compra
