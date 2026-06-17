@@ -89,7 +89,7 @@ export default function CadastrarFuncionario() {
               {/* Data de Nascimento */}
               <div className="mb-6">
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                  Data de Nascimento{" "}                  
+                  Data de Nascimento <span className="text-red-400">*</span>{" "}                  
                 </label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />

@@ -41,6 +41,12 @@ export function useAtualizarFuncionario(id) {
       setModal("erro");
       return;
     }
+    if (!form.data_nascimento) {
+      setErroMsg("A data de nascimento é obrigatória.");
+      setModal("erro");
+      return;
+  }
+
     setIsSubmitting(true);
 
   // Pega o Date do calendário e vira string pro Backend
