@@ -19,6 +19,11 @@ export function useCadastrarFuncionario() {
       setModal("erro");
       return;
     }
+    if (!form.data_nascimento) {
+    setErroMsg("A data de nascimento é obrigatória.");
+    setModal("erro");
+    return;
+  }
 
     setIsSubmitting(true);
     const dataFormatada = form.data_nascimento
