@@ -13,6 +13,7 @@ import {
   Loader2,
   DollarSign,
   Users,
+  Save,
   Package,
   Calendar,
   MapPin,
@@ -104,7 +105,7 @@ export default function CadastroVenda() {
           <ArrowLeft className="w-4 h-4" /> Voltar para Vendas
         </button>
 
-        <div className="flex flex-col gap-6 max-w-5xl mx-auto">
+        <div className="flex flex-col gap-6 max-w-4xl mx-auto">
           {/* Seção 1: Informações Básicas */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <h2 className="text-xl font-bold text-gray-800 mb-6">
@@ -499,17 +500,17 @@ export default function CadastroVenda() {
           <div className="flex gap-3 justify-end">
             <button
               onClick={() => router.push("/venda/gerenciar")}
-              className="px-6 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"
+              className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"
             >
               Cancelar
             </button>
             <button
               onClick={handleSubmit}
               disabled={isSubmitting || form.itens.length === 0}
-              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white px-6 py-2.5 rounded-lg font-semibold transition-all text-sm"
+              className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white py-2.5 rounded-lg font-semibold transition-all text-sm"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              Cadastrar Venda
+              <Save className="w-4 h-4" />Cadastrar Venda
             </button>
           </div>
         </div>

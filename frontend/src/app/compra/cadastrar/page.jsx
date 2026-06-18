@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Loader2,
   Truck,
+  Save,
   Package,
   Calendar,
   DollarSign,
@@ -365,20 +366,20 @@ export default function CadastroCompra() {
           </div>
 
           {/* Botões de Ação */}
-          <div className="flex gap-3 justify-end">
+          <div className="flex gap-3 justify-end mb-8 w-full">
             <button
               onClick={() => router.push("/compra/gerenciar")}
-              className="px-6 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"
+              className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"
             >
               Cancelar
             </button>
             <button
               onClick={handleSubmit}
               disabled={isSubmitting || form.itens.length === 0}
-              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white px-6 py-2.5 rounded-lg font-semibold transition-all text-sm"
+              className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white py-2.5 rounded-lg font-semibold transition-all text-sm"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              Cadastrar Compra
+                 <Save className="w-4 h-4" /> Cadastrar Compra
             </button>
           </div>
         </div>
@@ -403,7 +404,7 @@ export default function CadastroCompra() {
               onClick={() => router.push("/compra/gerenciar")}
               className="w-full bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-lg font-semibold transition-all"
             >
-              Voltar 
+              Voltar
             </button>
           </div>
         </div>

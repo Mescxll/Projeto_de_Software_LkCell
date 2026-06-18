@@ -147,7 +147,7 @@ export default function AtualizarCompra() {
 
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                  Valor Total
+                  Valor Total <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -156,7 +156,7 @@ export default function AtualizarCompra() {
                       compra ? formatarPreco(compra.valor_total || 0) : "-"
                     }
                     disabled
-                    className={`pl-4 ${inputDisabledClass}`}
+                    className="w-full pl-4 pr-4 py-2.5 border border-blue-100 rounded-lg text-sm font-bold text-blue-600 bg-blue-50 outline-none cursor-not-allowed"
                   />
                 </div>
               </div>
