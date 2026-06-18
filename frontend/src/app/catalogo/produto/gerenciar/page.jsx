@@ -4,7 +4,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import LoadingGerenciar from "@/components/LoadingGerenciar";
 import { ArrowLeft, Plus, Search, SlidersHorizontal, Pencil, Trash2, Loader2, AlertTriangle, CheckCircle } from "lucide-react";
-import { useGerenciarProduto } from "@/hooks/produto/useGerenciarProduto";
+import { useGerenciarProduto } from "@/hooks/catalogo/produto/useGerenciarProduto";
 
 export default function GerenciarProdutos() {
   const {
@@ -30,7 +30,7 @@ export default function GerenciarProdutos() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Link href="/" className="p-1.5 hover:bg-gray-200 rounded-full transition-all">
+            <Link href="/catalogo/" className="p-1.5 hover:bg-gray-200 rounded-full transition-all">
               <ArrowLeft className="w-5 h-5 text-gray-500" />
             </Link>
             <div>
@@ -38,7 +38,7 @@ export default function GerenciarProdutos() {
               <p className="text-xs text-gray-400">Gerencie os produtos do sistema</p>
             </div>
           </div>
-          <Link href="/produto/cadastrar">
+          <Link href="/catalogo/produto/cadastrar">
             <button className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow-md transition-all text-sm">
               <Plus className="w-4 h-4" /> Cadastrar Produto
             </button>
@@ -130,7 +130,7 @@ export default function GerenciarProdutos() {
                       className="absolute top-14 left-1/2 -translate-x-1/2 bg-white border border-gray-100 rounded-xl shadow-lg z-10 overflow-hidden w-36"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Link href={`/produto/atualizar/${p.id_produto}`}>
+                      <Link href={`/catalogo/produto/atualizar/${p.id_produto}`}>
                         <button className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-blue-500 hover:bg-blue-50 transition-colors">
                           <Pencil className="w-4 h-4" /> Atualizar
                         </button>

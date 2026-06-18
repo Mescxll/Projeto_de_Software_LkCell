@@ -7,7 +7,7 @@ import { Users, UserCog, Package, Truck, TrendingUp, ShoppingBasket, Wrench, Wal
 const modulos = [
   { titulo: "Clientes", icone: Users, link: "/cliente/gerenciar" },
   { titulo: "Funcionários", icone: UserCog, link: "/funcionario/gerenciar" },
-  { titulo: "Produtos", icone: Package, link: "/produto/gerenciar" },
+  { titulo: "Catálogo", icone: Package, link: "/catalogo/" },
   { titulo: "Fornecedores", icone: Truck, link: "/fornecedor/gerenciar" },
   { titulo: "Vendas", icone: TrendingUp, link: "/venda/gerenciar" },
   { titulo: "Compras", icone: ShoppingBasket, link: "/compra/gerenciar" },

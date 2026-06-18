@@ -5,7 +5,7 @@ import { Users, UserCog, Package, Truck, TrendingUp, ShoppingBasket, Wrench, Wal
 const painel = [
   { titulo: "Clientes", icone: Users, cor: "azul", link: "/cliente/gerenciar"},
   { titulo: "Funcionários", icone: UserCog, cor: "azul", link: "/funcionario/gerenciar"},
-  { titulo: "Produtos", icone: Package, cor: "verde", link: "/produto/gerenciar" },
+  { titulo: "Catálogo", icone: Package, cor: "verde", link: "/catalogo/" },
   { titulo: "Fornecedores", icone: Truck, cor: "azul", link: "/fornecedor/gerenciar" },
   { titulo: "Vendas", icone: TrendingUp, cor: "verde", link: "/venda/gerenciar" },
   { titulo: "Compras", icone: ShoppingBasket, cor: "green", link: "/compra/gerenciar" },
@@ -18,7 +18,7 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      <main className="p-8 px-55 min-h-screen bg-[#f8f9fa]">
+      <main className="p-8 px-55 min-h-screen bg-[#f8f9fa]">        
         <h1 className="text-2xl text-gray-800">Bem-vindo ao LkCell</h1>        
         <p className="font-light text-gray-500">Acesse o módulo que deseja gerenciar</p>
         <br/><br/>
