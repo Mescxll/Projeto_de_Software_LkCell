@@ -1,4 +1,4 @@
-// Controller Fornecedor
+// controllers/fornecedorController.js
 const prisma = require("../lib/prisma");
 
 const cadastrarFornecedor = async (req, res) => {

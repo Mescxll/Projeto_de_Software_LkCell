@@ -1,4 +1,4 @@
-// Controller Funcionario
+// controllers/funcionarioController.js
 const prisma = require("../lib/prisma");
 const formatarNome = require("../utils/formatarNome");
 

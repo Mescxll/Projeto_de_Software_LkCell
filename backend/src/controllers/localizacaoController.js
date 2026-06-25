@@ -1,4 +1,4 @@
-// Controller Localização
+// controllers/localizacaoController.js
 const prisma = require("../lib/prisma");
 
 const cadastrarLocalizacao = async (req, res) => {

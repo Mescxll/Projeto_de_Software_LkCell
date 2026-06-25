@@ -1,4 +1,4 @@
-// Controller Compra
+// controllers/compraController.js
 const prisma = require("../lib/prisma");
 
 const normalizarData = (valor) => {

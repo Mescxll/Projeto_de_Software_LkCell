@@ -1,4 +1,4 @@
-// Controller Cliente
+// controllers/clienteController.js
 const prisma = require("../lib/prisma");
 
 const cadastrarCliente = async (req, res) => {
