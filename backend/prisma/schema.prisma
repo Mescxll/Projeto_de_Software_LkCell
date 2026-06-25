@@ -71,14 +71,14 @@ model itenscompra {
 }
 
 model itensvenda {
-  fk_produto_id_produto     Int
-  fk_venda_id_venda         Int
-  fk_localizacao_id         Int
-  preco_unitario            Decimal?     @db.Decimal(10, 2)
-  quantidade_vendida        Int?
-  produto                   produto      @relation(fields: [fk_produto_id_produto], references: [id_produto], onUpdate: NoAction, map: "fk_itensvenda_1")
-  venda                     venda        @relation(fields: [fk_venda_id_venda], references: [id_venda], onUpdate: NoAction, map: "fk_itensvenda_2")
-  localizacao               localizacao? @relation(fields: [fk_localizacao_id], references: [id_localizacao])
+  fk_produto_id_produto Int
+  fk_venda_id_venda     Int
+  fk_localizacao_id     Int
+  preco_unitario        Decimal?     @db.Decimal(10, 2)
+  quantidade_vendida    Int?
+  produto               produto      @relation(fields: [fk_produto_id_produto], references: [id_produto], onUpdate: NoAction, map: "fk_itensvenda_1")
+  venda                 venda        @relation(fields: [fk_venda_id_venda], references: [id_venda], onUpdate: NoAction, map: "fk_itensvenda_2")
+  localizacao           localizacao? @relation(fields: [fk_localizacao_id], references: [id_localizacao])
 
   @@id([fk_produto_id_produto, fk_venda_id_venda, fk_localizacao_id])
 }
@@ -104,17 +104,19 @@ model categoria {
 }
 
 model marca {
-  id_marca Int      @id @default(autoincrement())
-  nome     String   @unique
-  modelos  modelo[]
+  id_marca        Int                       @id @default(autoincrement())
+  nome            String                    @unique
+  modelos         modelo[]
+  compatibilidade produto_compatibilidade[]
 }
 
 model modelo {
-  id_modelo   Int       @id @default(autoincrement())
-  nome        String
-  fk_marca_id Int
-  marca       marca     @relation(fields: [fk_marca_id], references: [id_marca])
-  produtos    produto[]
+  id_modelo       Int                       @id @default(autoincrement())
+  nome            String
+  fk_marca_id     Int
+  marca           marca                     @relation(fields: [fk_marca_id], references: [id_marca])
+  produtos        produto[]
+  compatibilidade produto_compatibilidade[]
 
   @@unique([nome, fk_marca_id])
 }
@@ -124,6 +126,10 @@ model produto {
   codigo_produto String  @unique @db.VarChar(25)
   nome           String? @db.VarChar(50)
   descricao      String  @db.VarChar(100)
+
+  // true  = compatível com TODAS as marcas (usa exclusões)
+  // false = compatível APENAS com as marcas listadas (usa inclusões)
+  compativel_todas_marcas Boolean @default(false)
 
   fk_categoria_id Int
   fk_modelo_id    Int?
@@ -135,9 +141,25 @@ model produto {
   preco_venda  Decimal  @db.Decimal(10, 2)
   margem_lucro Decimal? @db.Decimal(10, 2)
 
-  itenscompra itenscompra[]
-  itensvenda  itensvenda[]
-  estoque     estoque[]
+  itenscompra      itenscompra[]
+  itensvenda       itensvenda[]
+  estoque          estoque[]
+  compatibilidades produto_compatibilidade[]
+}
+
+model produto_compatibilidade {
+  id_compatibilidade Int                       @id @default(autoincrement())
+  fk_produto_id      Int
+  fk_marca_id        Int?
+  fk_modelo_id       Int?
+  tipo               tipo_compatibilidade_enum
+  observacao         String?                   @db.VarChar(200)
+
+  produto produto @relation(fields: [fk_produto_id], references: [id_produto], onDelete: Cascade)
+  marca   marca?  @relation(fields: [fk_marca_id], references: [id_marca], onDelete: SetNull)
+  modelo  modelo? @relation(fields: [fk_modelo_id], references: [id_modelo], onDelete: SetNull)
+
+  // @@unique([fk_produto_id, fk_marca_id, fk_modelo_id, tipo]) - Substituido por índice parcial na migration
 }
 
 model localizacao {
@@ -226,4 +248,9 @@ enum tipo_movimento_enum {
   ENTRADA
   SAIDA
   AJUSTE
+}
+
+enum tipo_compatibilidade_enum {
+  INCLUSAO // compatível com essa marca/modelo
+  EXCLUSAO // NÃO compatível com essa marca/modelo
 }
