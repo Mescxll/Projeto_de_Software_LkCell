@@ -1,4 +1,4 @@
-// middlewares/catalogo/validarListarCategoria.js
+// middlewares/catalogo/validarListarCategorias.js
 const validarListarCategorias = (req, res, next) => {
   const { search } = req.query;
 
