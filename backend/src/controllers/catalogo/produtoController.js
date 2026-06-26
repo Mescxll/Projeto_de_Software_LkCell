@@ -9,6 +9,7 @@ const cadastrarProduto = async (req, res) => {
       nome_categoria,
       nome_marca,
       nome_modelo,
+      compativel_todas_marcas,
       estoque_minimo,
       estoque_ideal,
       estoque_atual,
@@ -62,6 +63,7 @@ const cadastrarProduto = async (req, res) => {
           descricao: descricao.trim(),
           fk_categoria_id: categoriaDB.id_categoria,
           fk_modelo_id: modeloDB.id_modelo,
+          compativel_todas_marcas: compativel_todas_marcas === true,
           preco_venda: parseFloat(preco_venda),
           preco_compra: preco_compra ? parseFloat(preco_compra) : null,
           preco_custo: preco_custo ? parseFloat(preco_custo) : null,
@@ -114,6 +116,7 @@ const atualizarProduto = async (req, res) => {
     const {
       descricao,
       nome_categoria,
+      compativel_todas_marcas,
       preco_compra,
       preco_custo,
       preco_venda,
@@ -150,6 +153,8 @@ const atualizarProduto = async (req, res) => {
     if (preco_custo !== undefined)
       updateData.preco_custo =
         preco_custo === null ? null : parseFloat(preco_custo);
+    if (compativel_todas_marcas !== undefined) 
+      updateData.compativel_todas_marcas = compativel_todas_marcas === true;
 
     // Categoria
     if (nome_categoria !== undefined) {
@@ -246,6 +251,13 @@ const buscarProduto = async (req, res) => {
           orderBy: { data_hora: "desc" },
           take: 1,
         },
+        compatibilidades: {
+          include: {
+            marca: true,
+            modelo: { include: { marca: true } },
+          },
+          orderBy: [{ tip: "asc" }, { id_compatibilidade: "asc" }],
+        },
       },
     });
 
@@ -277,6 +289,7 @@ const buscarTodosProdutos = async (req, res) => {
           orderBy: { data_hora: "desc" },
           take: 1,
         },
+        _count: { select: { compatibilidades: true } },
       },
     });
 
