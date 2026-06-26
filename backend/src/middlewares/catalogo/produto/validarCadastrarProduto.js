@@ -3,9 +3,8 @@ const validarCadastrarProduto = (req, res, next) => {
   const {
     codigo_produto,
     descricao,
-    nome_categoria,
-    nome_marca,
-    nome_modelo,
+    fk_categoria_id,
+    fk_modelo_id,
     estoque_atual,
     preco_venda,
   } = req.body;
@@ -14,35 +13,33 @@ const validarCadastrarProduto = (req, res, next) => {
   if (
     !codigo_produto ||
     !descricao ||
-    !nome_categoria ||
-    !nome_marca ||
-    !nome_modelo ||
+    !fk_categoria_id ||
+    !fk_modelo_id ||
     preco_venda === undefined ||
     String(preco_venda).trim() === "" ||
     estoque_atual === undefined
   ) {
     return res.status(400).json({
-      erro: "Preencha todos os campos obrigatórios (Código, Descrição, Categoria, Marca, Modelo, Estoque Atual e Preço de Venda).",
+      erro: "Preencha todos os campos obrigatórios (Código, Descrição, Categoria, Modelo, Estoque Atual e Preço de Venda).",
     });
   }
 
   // Trava de Sanidade de Strings (Não aceita só espaço em branco)
-  if (
-    codigo_produto.trim() === "" ||
-    descricao.trim() === "" ||
-    nome_categoria.trim() === "" ||
-    nome_marca.trim() === "" ||
-    nome_modelo.trim() === ""
-  ) {
+  if (codigo_produto.trim() === "" || descricao.trim() === "") {
     return res.status(400).json({
       erro: "Os campos de texto não podem ser vazios.",
     });
   }
 
-  // Trava de Tipagem Matemática (Pra não quebrar o parseInt/parseFloat do Controller)
-  if (isNaN(estoque_atual) || isNaN(preco_venda)) {
+  // Trava de Tipagem (IDs e valores numéricos)
+  if (
+    isNaN(fk_categoria_id) ||
+    isNaN(fk_modelo_id) ||
+    isNaN(estoque_atual) ||
+    isNaN(preco_venda)
+  ) {
     return res.status(400).json({
-      erro: "O Estoque Atual e o Preço de Venda devem ser valores numéricos válidos.",
+      erro: "Categoria, Modelo, Estoque Atual e Preço de Venda devem ser valores válidos.",
     });
   }
 
