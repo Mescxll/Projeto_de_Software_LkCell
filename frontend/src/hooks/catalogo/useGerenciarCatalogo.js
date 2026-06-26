@@ -20,21 +20,21 @@ export function useGerenciarCatalogo() {
         // Cada rota deve retornar um array; usamos o tamanho dele
         // como contagem (ajuste se o backend já expuser um total).
 
-        // const [resCategoria, resMarca, resModelo] = await Promise.all([
-        //   fetch("http://localhost:3000/api/categorias"),
-        //   fetch("http://localhost:3000/api/marcas"),
-        //   fetch("http://localhost:3000/api/modelos"),
-        // ]);
+        const [resCategoria, resMarca, resModelo] = await Promise.all([
+          fetch("http://localhost:3000/api/categorias"),
+          fetch("http://localhost:3000/api/marcas"),
+          fetch("http://localhost:3000/api/modelos"),
+        ]);
 
-        // const categorias = resCategoria.ok ? await resCategoria.json() : [];
-        // const marcas = resMarca.ok ? await resMarca.json() : [];
-        // const modelos = resModelo.ok ? await resModelo.json() : [];
+        const categorias = resCategoria.ok ? await resCategoria.json() : [];
+        const marcas = resMarca.ok ? await resMarca.json() : [];
+        const modelos = resModelo.ok ? await resModelo.json() : [];
 
-        // setContagens({
-        //   categoria: Array.isArray(categorias) ? categorias.length : 0,
-        //   marca: Array.isArray(marcas) ? marcas.length : 0,
-        //   modelo: Array.isArray(modelos) ? modelos.length : 0,
-        // });
+        setContagens({
+          categoria: Array.isArray(categorias) ? categorias.length : 0,
+          marca: Array.isArray(marcas) ? marcas.length : 0,
+          modelo: Array.isArray(modelos) ? modelos.length : 0,
+        });
 
         // Mock temporário enquanto os endpoints não existem.
         // Troque pelos fetches reais acima quando o backend estiver pronto.
@@ -57,7 +57,7 @@ export function useGerenciarCatalogo() {
       titulo: "Categoria",
       icone: Folder,
       cor: "azul",
-      link: "/catalogo/categoria/gerenciar",
+      link: "/catalogo/categoria/gerenciar/",
       numero: 1,
       tooltip: "Nenhum pré-requisito",
     },
@@ -71,8 +71,8 @@ export function useGerenciarCatalogo() {
         contagens.categoria === null
           ? "Verificando pré-requisitos..."
           : contagens.categoria > 0
-          ? "Pré-requisito atendido: Categoria cadastrada"
-          : "Requer: cadastrar Categoria primeiro",
+            ? "Pré-requisito atendido: Categoria cadastrada"
+            : "Requer: cadastrar Categoria primeiro",
     },
     {
       titulo: "Modelo",
@@ -84,23 +84,25 @@ export function useGerenciarCatalogo() {
         contagens.marca === null
           ? "Verificando pré-requisitos..."
           : contagens.marca > 0
-          ? "Pré-requisito atendido: Marca cadastrada"
-          : "Requer: cadastrar Marca primeiro",
+            ? "Pré-requisito atendido: Marca cadastrada"
+            : "Requer: cadastrar Marca primeiro",
     },
     {
       titulo: "Produto",
       icone: Package,
       cor: "verde",
       link: "/catalogo/produto/gerenciar",
-      numero: 4,      
+      numero: 4,
       tooltip:
         contagens.categoria === null ||
         contagens.marca === null ||
         contagens.modelo === null
           ? "Verificando pré-requisitos..."
-          : contagens.categoria > 0 && contagens.marca > 0 && contagens.modelo > 0
-          ? "Pré-requisitos atendidos: Categoria, Marca e Modelo cadastrados"
-          : "Requer: Categoria, Marca e Modelo cadastrados",
+          : contagens.categoria > 0 &&
+              contagens.marca > 0 &&
+              contagens.modelo > 0
+            ? "Pré-requisitos atendidos: Categoria, Marca e Modelo cadastrados"
+            : "Requer: Categoria, Marca e Modelo cadastrados",
     },
   ];
 
