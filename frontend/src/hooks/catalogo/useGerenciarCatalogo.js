@@ -57,7 +57,7 @@ export function useGerenciarCatalogo() {
       titulo: "Categoria",
       icone: Folder,
       cor: "azul",
-      link: "/catalogo/categoria/gerenciar/",
+      link: "/catalogo/categoria/gerenciar",
       numero: 1,
       tooltip: "Nenhum pré-requisito",
     },
