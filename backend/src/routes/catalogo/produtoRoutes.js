@@ -1,38 +1,38 @@
-// Rotas Produto
+// routes/catalogo/produtoRoutes.js
 const express = require("express");
 const router = express.Router();
 
-const produtoController = require("../../controllers/catalogo/produtoController");
+const {
+  buscarTodosProdutos,
+  buscarEstoquePorLocalizacao,
+  cadastrarProduto,
+  atualizarProduto,
+  buscarProduto,
+  deletarProduto,
+} = require("../../controllers/catalogo/produtoController");
+
 const validarCadastrarProduto = require("../../middlewares/catalogo/produto/validarCadastrarProduto");
+const validarBuscarProduto = require("../../middlewares/catalogo/produto/validarBuscarProduto");
 const validarAtualizarProduto = require("../../middlewares/catalogo/produto/validarAtualizarProduto");
 const validarDeletarProduto = require("../../middlewares/catalogo/produto/validarDeletarProduto");
-const validarBuscarProduto = require("../../middlewares/catalogo/produto/validarBuscarProduto");
-const buscarEstoquePorLocalizacao = require("../../controllers/catalogo/produtoController");
 
-// Listar produtos (GET)
-router.get("/", produtoController.buscarTodosProdutos);
-// Cadastrar (POST)
-router.post("/", validarCadastrarProduto, produtoController.cadastrarProduto);
-// Atualizar (PUT)
-router.put(
-  "/:uuid",
-  validarAtualizarProduto,
-  produtoController.atualizarProduto,
-);
-// Deletar (DELETE)
-router.delete(
-  "/:uuid",
-  validarDeletarProduto,
-  produtoController.deletarProduto,
-);
-// Buscar (GET)
-router.get("/", produtoController.buscarTodosProdutos);
-// Buscar por id (GET)
-router.get("/:uuid", validarBuscarProduto, produtoController.buscarProduto);
-// Buscar estoque por localizacao
-router.get(
-  "/:id/estoque-por-localizacao",
-  produtoController.buscarEstoquePorLocalizacao,
-);
+// Rotas de compatibilidade aninhadas sob /:id
+const compatibilidadeRoutes = require("./compatibilidadeRoutes");
+
+router.get("/", buscarTodosProdutos);
+router.post("/", validarCadastrarProduto, cadastrarProduto);
+router.get("/:uuid", validarBuscarProduto, buscarProduto);
+router.patch("/:uuid", validarAtualizarProduto, atualizarProduto);
+router.delete("/:uuid", validarDeletarProduto, deletarProduto);
+router.get("/:id/estoque-por-localizacao", buscarEstoquePorLocalizacao);
+
+// Monta as rotas de compatibilidade aninhadas:
+// GET    /api/produtos/:id/compatibilidades
+// GET    /api/produtos/:id/compatibilidades/verificar
+// PATCH  /api/produtos/:id/compatibilidades/todas-marcas
+// POST   /api/produtos/:id/compatibilidades
+// PATCH  /api/produtos/:id/compatibilidades/:id_compatibilidade
+// DELETE /api/produtos/:id/compatibilidades/:id_compatibilidade
+router.use("/:id/compatibilidades", compatibilidadeRoutes);
 
 module.exports = router;
