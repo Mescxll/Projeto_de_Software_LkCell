@@ -10,7 +10,7 @@ const {
   deletarMarca,
 } = require("../../controllers/catalogo/marcaController");
 
-const validarListarMarca = require("../../middlewares/catalogo/marca/validarListarMarca");
+const validarListarMarca = require("../../middlewares/catalogo/marca/validarListarMarcas");
 const validarBuscarMarca = require("../../middlewares/catalogo/marca/validarBuscarMarca");
 const validarCadastrarMarca = require("../../middlewares/catalogo/marca/validarCadastrarMarca");
 const validarAtualizarMarca = require("../../middlewares/catalogo/marca/validarAtualizarMarca");

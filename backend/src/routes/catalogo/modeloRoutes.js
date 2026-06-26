@@ -10,7 +10,7 @@ const {
   deletarModelo,
 } = require("../../controllers/catalogo/modeloController");
 
-const validarListarModelo = require("../../middlewares/catalogo/modelo/validarListarModelo");
+const validarListarModelo = require("../../middlewares/catalogo/modelo/validarListarModelos");
 const validarBuscarModelo = require("../../middlewares/catalogo/modelo/validarBuscarModelo");
 const validarCadastrarModelo = require("../../middlewares/catalogo/modelo/validarCadastrarModelo");
 const validarAtualizarModelo = require("../../middlewares/catalogo/modelo/validarAtualizarModelo");

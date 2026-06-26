@@ -12,8 +12,8 @@ const {
   verificarCompatibilidade,
 } = require("../../controllers/catalogo/compatibilidadeController");
 
-const validarListarCompatibilidade = require("../../middlewares/catalogo/compatibilidade/validarListarCompatibilidade");
-const validarTodasMarcas = require("../../middlewares/catalogo/compatibilidade/validarTodasMarcas");
+const validarListarCompatibilidade = require("../../middlewares/catalogo/compatibilidade/validarListarCompatibilidades");
+const validarTodasMarcas = require("../../middlewares/catalogo/compatibilidade/validarAtualizarTodasMarcas");
 const validarAdicionarCompatibilidade = require("../../middlewares/catalogo/compatibilidade/validarAdicionarCompatibilidade");
 const validarAtualizarCompatibilidade = require("../../middlewares/catalogo/compatibilidade/validarAtualizarCompatibilidade");
 const validarRemoverCompatibilidade = require("../../middlewares/catalogo/compatibilidade/validarRemoverCompatibilidade");

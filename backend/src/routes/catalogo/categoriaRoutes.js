@@ -10,7 +10,7 @@ const {
   deletarCategoria,
 } = require("../../controllers/catalogo/categoriaController");
 
-const validarListarCategoria = require("../../middlewares/catalogo/categoria/validarListarCategoria");
+const validarListarCategoria = require("../../middlewares/catalogo/categoria/validarListarCategorias");
 const validarBuscarCategoria = require("../../middlewares/catalogo/categoria/validarBuscarCategoria");
 const validarCadastrarCategoria = require("../../middlewares/catalogo/categoria/validarCadastrarCategoria");
 const validarAtualizarCategoria = require("../../middlewares/catalogo/categoria/validarAtualizarCategoria");
