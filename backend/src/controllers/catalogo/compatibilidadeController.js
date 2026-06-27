@@ -356,7 +356,8 @@ const verificarCompatibilidade = async (req, res) => {
         motivo = `Produto explicitamente incompatível com a marca ${exclusaoMarca.marca?.nome}.`;
       } else {
         compativel = true;
-        motivo = "Produto compatível com todas as marcas, sem exceções para esta seleção.";
+        motivo =
+          "Produto compatível com todas as marcas, sem exceções para esta seleção.";
       }
     } else {
       // Compatível apenas com inclusões explícitas
@@ -384,7 +385,8 @@ const verificarCompatibilidade = async (req, res) => {
         motivo = `Compatível com todos os modelos da marca ${inclusaoMarca.marca?.nome}.`;
       } else {
         compativel = false;
-        motivo = "Produto não possui inclusão de compatibilidade para esta marca/modelo.";
+        motivo =
+          "Produto não possui inclusão de compatibilidade para esta marca/modelo.";
       }
     }
 

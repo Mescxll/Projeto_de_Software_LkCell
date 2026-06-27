@@ -1,12 +1,11 @@
-// Validação de Atualização de Produto
+// middlewares/catalogo/produto/validarAtualizarProduto.js
 const validarAtualizarProduto = (req, res, next) => {
   const { uuid } = req.params;
+
   const {
     descricao,
-    nome_categoria,
-    estoque_minimo,
-    estoque_ideal,
-    estoque_atual,
+    fk_categoria_id,
+    fk_modelo_id,
     preco_compra,
     preco_custo,
     preco_venda,
@@ -14,44 +13,31 @@ const validarAtualizarProduto = (req, res, next) => {
 
   const camposPermitidos = [
     "descricao",
-    "nome_categoria",
-    "estoque_minimo",
-    "estoque_ideal",
-    "estoque_atual",
+    "fk_categoria_id",
+    "fk_modelo_id",
     "preco_compra",
     "preco_custo",
     "preco_venda",
   ];
 
-  const camposEnviados = Object.keys(req.body || {});
-  const camposInvalidos = camposEnviados.filter(
-    (campo) => !camposPermitidos.includes(campo),
-  );
-
-  // Trava da URL
   if (!uuid) {
     return res
       .status(400)
       .json({ erro: "O identificador do produto é obrigatório na URL." });
   }
 
+  const camposEnviados = Object.keys(req.body || {});
+  const camposInvalidos = camposEnviados.filter(
+    (campo) => !camposPermitidos.includes(campo)
+  );
+
   if (camposInvalidos.length > 0) {
     return res.status(400).json({
-      erro: "Somente descrição, categoria, estoque e valores podem ser atualizados.",
+      erro: `Campos não permitidos: ${camposInvalidos.join(", ")}. Apenas descrição, categoria, modelo e preços podem ser atualizados.`,
     });
   }
 
-  // Trava do Vento (Tentou atualizar sem mandar nada?)
-  if (
-    descricao === undefined &&
-    nome_categoria === undefined &&
-    estoque_minimo === undefined &&
-    estoque_ideal === undefined &&
-    estoque_atual === undefined &&
-    preco_compra === undefined &&
-    preco_custo === undefined &&
-    preco_venda === undefined
-  ) {
+  if (camposEnviados.length === 0) {
     return res
       .status(400)
       .json({ erro: "Nenhum dado válido foi enviado para atualização." });
@@ -63,16 +49,34 @@ const validarAtualizarProduto = (req, res, next) => {
       .json({ erro: "O Preço de Venda é obrigatório na atualização." });
   }
 
-  // Trava Matemática Básica
-  if (estoque_atual !== undefined && isNaN(Number(estoque_atual))) {
-    return res
-      .status(400)
-      .json({ erro: "O Estoque Atual deve ser um número válido." });
-  }
   if (preco_venda !== undefined && isNaN(Number(preco_venda))) {
     return res
       .status(400)
       .json({ erro: "O Preço de Venda deve ser um número válido." });
+  }
+
+  if (preco_compra !== undefined && preco_compra !== null && isNaN(Number(preco_compra))) {
+    return res
+      .status(400)
+      .json({ erro: "O Preço de Compra deve ser um número válido." });
+  }
+
+  if (preco_custo !== undefined && preco_custo !== null && isNaN(Number(preco_custo))) {
+    return res
+      .status(400)
+      .json({ erro: "O Preço de Custo deve ser um número válido." });
+  }
+
+  if (fk_categoria_id !== undefined && isNaN(parseInt(fk_categoria_id))) {
+    return res
+      .status(400)
+      .json({ erro: "O ID da categoria deve ser um número válido." });
+  }
+
+  if (fk_modelo_id !== undefined && isNaN(parseInt(fk_modelo_id))) {
+    return res
+      .status(400)
+      .json({ erro: "O ID do modelo deve ser um número válido." });
   }
 
   next();

@@ -19,40 +19,44 @@ const cadastrarProduto = async (req, res) => {
     } = req.body;
 
     const categoriaId = parseInt(fk_categoria_id);
-    const modeloId = parseInt(fk_modelo_id);
+    const modeloId = fk_modelo_id ? parseInt(fk_modelo_id) : null;
 
     const estoqueAtualInt = parseInt(estoque_atual) || 0;
     const estoqueMinimoInt = estoque_minimo ? parseInt(estoque_minimo) : null;
     const estoqueIdealInt = estoque_ideal ? parseInt(estoque_ideal) : null;
 
-    // Categoria e Modelo agora são SOMENTE seleção — valida existência,
-    // não cria automaticamente. Marca é resolvida via modelo.fk_marca_id,
-    // já que produto não guarda fk_marca_id diretamente.
-    const [categoriaDB, modeloDB] = await Promise.all([
-      prisma.categoria.findUnique({ where: { id_categoria: categoriaId } }),
-      prisma.modelo.findUnique({
-        where: { id_modelo: modeloId },
-        include: { marca: true },
-      }),
-    ]);
+    const categoriaDB = await prisma.categoria.findUnique({
+      where: { id_categoria: categoriaId },
+    });
 
     if (!categoriaDB) {
       return res.status(404).json({ erro: "Categoria não encontrada." });
     }
 
-    if (!modeloDB) {
-      return res.status(404).json({ erro: "Modelo não encontrado." });
+    let modeloDB = null;
+    if (modeloId) {
+      modeloDB = await prisma.modelo.findUnique({
+        where: { id_modelo: modeloId },
+        include: { marca: true },
+      });
+      if (!modeloDB) {
+        return res.status(404).json({ erro: "Modelo não encontrado." });
+      }
     }
 
-    // Criação do produto + registro inicial de estoque em uma única transação
+    // Nome: "Marca Modelo" se tiver modelo, senão usa a descrição
+    const nomeProduto = modeloDB
+      ? `${modeloDB.marca.nome} ${modeloDB.nome}`
+      : descricao.trim();
+
     const [novoProduto] = await prisma.$transaction(async (tx) => {
       const produto = await tx.produto.create({
         data: {
           codigo_produto: codigo_produto.trim(),
-          nome: `${modeloDB.marca.nome} ${modeloDB.nome}`,
+          nome: nomeProduto,
           descricao: descricao.trim(),
           fk_categoria_id: categoriaDB.id_categoria,
-          fk_modelo_id: modeloDB.id_modelo,
+          fk_modelo_id: modeloDB?.id_modelo ?? null,
           compativel_todas_marcas: compativel_todas_marcas === true,
           preco_venda: parseFloat(preco_venda),
           preco_compra: preco_compra ? parseFloat(preco_compra) : null,
@@ -65,7 +69,6 @@ const cadastrarProduto = async (req, res) => {
         },
       });
 
-      // Registro inicial de estoque — sempre gerado ao cadastrar um produto
       await tx.estoque.create({
         data: {
           fk_produto_id: produto.id_produto,
@@ -105,14 +108,14 @@ const atualizarProduto = async (req, res) => {
     const { uuid } = req.params;
     const {
       descricao,
-      nome_categoria,
+      fk_categoria_id,
+      fk_modelo_id,
       compativel_todas_marcas,
       preco_compra,
       preco_custo,
       preco_venda,
     } = req.body;
 
-    // Busca inteligente por ID numérico ou código do produto
     const isNumericId = /^\d+$/.test(String(uuid));
     const whereIdentifier = isNumericId
       ? { id_produto: parseInt(uuid) }
@@ -146,15 +149,33 @@ const atualizarProduto = async (req, res) => {
     if (compativel_todas_marcas !== undefined)
       updateData.compativel_todas_marcas = compativel_todas_marcas === true;
 
-    // Categoria
-    if (nome_categoria !== undefined) {
-      const catLimpa = nome_categoria.trim().toUpperCase();
-      let catDB = await prisma.categoria.findUnique({
-        where: { nome: catLimpa },
+    if (fk_categoria_id !== undefined) {
+      const categoriaDB = await prisma.categoria.findUnique({
+        where: { id_categoria: parseInt(fk_categoria_id) },
       });
-      if (!catDB)
-        catDB = await prisma.categoria.create({ data: { nome: catLimpa } });
-      updateData.fk_categoria_id = catDB.id_categoria;
+      if (!categoriaDB) {
+        return res.status(404).json({ erro: "Categoria não encontrada." });
+      }
+      updateData.fk_categoria_id = categoriaDB.id_categoria;
+    }
+
+    // fk_modelo_id: null = desvincula; número = troca; undefined = não mexe
+    if (fk_modelo_id !== undefined) {
+      if (fk_modelo_id === null) {
+        updateData.fk_modelo_id = null;
+        // Sem modelo, nome cai para a descrição atual (ou nova, se veio junto)
+        updateData.nome = descricao?.trim() ?? produtoExistente.descricao;
+      } else {
+        const modeloDB = await prisma.modelo.findUnique({
+          where: { id_modelo: parseInt(fk_modelo_id) },
+          include: { marca: true },
+        });
+        if (!modeloDB) {
+          return res.status(404).json({ erro: "Modelo não encontrado." });
+        }
+        updateData.fk_modelo_id = modeloDB.id_modelo;
+        updateData.nome = `${modeloDB.marca.nome} ${modeloDB.nome}`;
+      }
     }
 
     const produtoAtualizado = await prisma.produto.update({
