@@ -26,8 +26,8 @@ export function useGerenciarProduto() {
   useEffect(() => {
     Promise.all([
       fetch("http://localhost:3000/api/produtos").then((r) => r.json()),
-      fetch("http://localhost:3000/api/catalogo/categorias").then((r) => r.json()),
-      fetch("http://localhost:3000/api/catalogo/marcas").then((r) => r.json()),
+      fetch("http://localhost:3000/api/categorias").then((r) => r.json()),
+      fetch("http://localhost:3000/api/marcas").then((r) => r.json()),
     ])
       .then(([produtosData, categoriasData, marcasData]) => {
         setProdutos(Array.isArray(produtosData) ? produtosData : []);
@@ -50,7 +50,9 @@ export function useGerenciarProduto() {
     const marcaSelecionada = todasMarcas.find((m) => m.nome === marca);
     if (!marcaSelecionada) return;
 
-    fetch(`http://localhost:3000/api/catalogo/modelos?marca_id=${marcaSelecionada.id_marca}`)
+    fetch(
+      `http://localhost:3000/api/modelos?marca_id=${marcaSelecionada.id_marca}`,
+    )
       .then((r) => r.json())
       .then((data) => {
         setModelos(["Todos", ...data.map((m) => m.nome)]);
@@ -76,15 +78,24 @@ export function useGerenciarProduto() {
     if (!produtoSelecionado) return;
     setIsDeleting(true);
     try {
-      await fetch(`http://localhost:3000/api/produtos/${produtoSelecionado.id_produto}`, {
-        method: "DELETE",
-      });
-      setProdutos((prev) =>
-        prev.filter((p) => p.id_produto !== produtoSelecionado.id_produto)
+      const res = await fetch(
+        `http://localhost:3000/api/produtos/${produtoSelecionado.id_produto}`,
+        { method: "DELETE" },
       );
-      setModalConfirmar(false);
-      setMenuAberto(null);
-      setModalSucesso(true);
+
+      if (res.ok) {
+        setProdutos((prev) =>
+          prev.filter((p) => p.id_produto !== produtoSelecionado.id_produto),
+        );
+        setModalConfirmar(false);
+        setMenuAberto(null);
+        setModalSucesso(true);
+      } else {
+        const data = await res.json();
+        console.error("Erro ao excluir produto:", data.erro);
+        // precisa de um estado de erro para mostrar isso na tela —
+        // hoje o hook não tem nenhum erroMsg/modalErro
+      }
     } catch (error) {
       console.error("Erro ao excluir produto:", error);
     } finally {
@@ -99,32 +110,47 @@ export function useGerenciarProduto() {
       p.descricao?.toLowerCase().includes(termoBusca) ||
       p.codigo_produto?.toLowerCase().includes(termoBusca) ||
       String(p.id_produto).includes(termoBusca);
-    const matchCategoria = categoria === "Todas" || p.categoria?.nome === categoria;
+    const matchCategoria =
+      categoria === "Todas" || p.categoria?.nome === categoria;
     const matchMarca = marca === "Todas" || p.modelo?.marca?.nome === marca;
     const matchModelo = modelo === "Todos" || p.modelo?.nome === modelo;
     return matchBusca && matchCategoria && matchMarca && matchModelo;
   });
 
   const formatarPreco = (valor) =>
-    Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    Number(valor).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
 
   return {
     loading,
-    busca, setBusca,
-    filtrosAbertos, setFiltrosAbertos,
-    categoria, setCategoria,
-    marca, setMarca,
-    modelo, setModelo,
-    categorias, marcas, modelos,
+    busca,
+    setBusca,
+    filtrosAbertos,
+    setFiltrosAbertos,
+    categoria,
+    setCategoria,
+    marca,
+    setMarca,
+    modelo,
+    setModelo,
+    categorias,
+    marcas,
+    modelos,
     produtosFiltrados,
     formatarPreco,
     filtroRef,
-    menuAberto, setMenuAberto,
+    menuAberto,
+    setMenuAberto,
     menuRef,
-    modalConfirmar, setModalConfirmar,
-    modalSucesso, setModalSucesso,
+    modalConfirmar,
+    setModalConfirmar,
+    modalSucesso,
+    setModalSucesso,
     isDeleting,
-    produtoSelecionado, setProdutoSelecionado,
+    produtoSelecionado,
+    setProdutoSelecionado,
     handleExcluir,
   };
 }

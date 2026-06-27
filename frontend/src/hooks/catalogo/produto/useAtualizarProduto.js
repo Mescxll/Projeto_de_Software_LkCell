@@ -1,26 +1,26 @@
 // Lógica da Tela de Atualizar Produtos
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 export function useAtualizarProduto(id) {
   const [loading, setLoading] = useState(true);
+  const [loadingDados, setLoadingDados] = useState(true);
   const [modal, setModal] = useState(null);
   const [erroMsg, setErroMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     descricao: "",
-    nome_categoria: "",
+    fk_categoria_id: "",
+    fk_marca_id: "",
+    fk_modelo_id: "",
     preco_compra: "",
     preco_custo: "",
     preco_venda: "",
     margem_lucro: "",
   });
 
-  const [infoSomenteLeitura, setInfoSomenteLeitura] = useState({
-    codigo_produto: "",
-    nome_marca: "",
-    nome_modelo: "",
-  });
+  // Código é o único campo verdadeiramente travado — não muda após o cadastro
+  const [codigoProduto, setCodigoProduto] = useState("");
 
   // Estoque é somente leitura — vem do último registro da tabela estoque
   const [estoqueAtual, setEstoqueAtual] = useState({
@@ -29,8 +29,10 @@ export function useAtualizarProduto(id) {
     estoque_ideal: "-",
   });
 
-  const dropdownRef = useRef(null);
-  const [sugestoesCategoria, setSugestoesCategoria] = useState([]);
+  // Dados de apoio para os selects — mesmo padrão do cadastro
+  const [categorias, setCategorias] = useState([]);
+  const [marcas, setMarcas] = useState([]);
+  const [modelos, setModelos] = useState([]); // filtrados pela marca escolhida
 
   const formatarPrecoBrasil = (valor) => {
     if (valor === null || valor === undefined) return "";
@@ -45,18 +47,41 @@ export function useAtualizarProduto(id) {
     return Number.isFinite(numero) ? numero : null;
   };
 
+  // Busca categorias e marcas (dados de apoio dos selects)
+  useEffect(() => {
+    const buscarDadosApoio = async () => {
+      try {
+        const [resCategorias, resMarcas] = await Promise.all([
+          fetch("http://localhost:3000/api/categorias"),
+          fetch("http://localhost:3000/api/marcas"),
+        ]);
+
+        const dataCategorias = resCategorias.ok
+          ? await resCategorias.json()
+          : [];
+        const dataMarcas = resMarcas.ok ? await resMarcas.json() : [];
+
+        setCategorias(Array.isArray(dataCategorias) ? dataCategorias : []);
+        setMarcas(Array.isArray(dataMarcas) ? dataMarcas : []);
+      } catch (err) {
+        console.error("Erro ao buscar dados do catálogo:", err);
+      } finally {
+        setLoadingDados(false);
+      }
+    };
+
+    buscarDadosApoio();
+  }, []);
+
+  // Busca o produto em si
   useEffect(() => {
     if (!id) return;
+
     fetch(`http://localhost:3000/api/produtos/${id}`)
       .then((res) => res.json())
       .then((data) => {
-        setInfoSomenteLeitura({
-          codigo_produto: data.codigo_produto || "",
-          nome_marca: data.modelo?.marca?.nome || "",
-          nome_modelo: data.modelo?.nome || "",
-        });
+        setCodigoProduto(data.codigo_produto || "");
 
-        // Pega o snapshot mais recente do estoque 
         const ultimoEstoque = data.estoque?.[0];
         setEstoqueAtual({
           estoque_atual: ultimoEstoque?.estoque_atual ?? "-",
@@ -71,12 +96,22 @@ export function useAtualizarProduto(id) {
         const custo = converterPrecoBrasil(precoCusto);
         const venda = converterPrecoBrasil(precoVenda);
         if (custo && venda && custo > 0 && venda > 0) {
-          margem = (((venda - custo) / custo) * 100).toFixed(2).replace(".", ",");
+          margem = (((venda - custo) / custo) * 100)
+            .toFixed(2)
+            .replace(".", ",");
         }
 
         setForm({
           descricao: data.descricao || "",
-          nome_categoria: data.categoria?.nome || "",
+          fk_categoria_id: data.categoria?.id_categoria
+            ? String(data.categoria.id_categoria)
+            : "",
+          fk_marca_id: data.modelo?.marca?.id_marca
+            ? String(data.modelo.marca.id_marca)
+            : "",
+          fk_modelo_id: data.modelo?.id_modelo
+            ? String(data.modelo.id_modelo)
+            : "",
           preco_compra: formatarPrecoBrasil(data.preco_compra),
           preco_custo: precoCusto,
           preco_venda: precoVenda,
@@ -91,15 +126,19 @@ export function useAtualizarProduto(id) {
       });
   }, [id]);
 
+  // Busca os modelos da marca selecionada — dispara sempre que fk_marca_id muda,
+  // inclusive no carregamento inicial do produto.
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setSugestoesCategoria([]);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    if (!form.fk_marca_id) {
+      setModelos([]);
+      return;
+    }
+
+    fetch(`http://localhost:3000/api/modelos?marca_id=${form.fk_marca_id}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setModelos(Array.isArray(data) ? data : []))
+      .catch((err) => console.error("Erro ao buscar modelos:", err));
+  }, [form.fk_marca_id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -128,34 +167,30 @@ export function useAtualizarProduto(id) {
     }
 
     setForm((prev) => ({ ...prev, [name]: value }));
-
-    if (name === "nome_categoria") buscarCategorias(value);
   };
 
-  const buscarCategorias = async (texto) => {
-    if (!texto.trim()) {
-      setSugestoesCategoria([]);
-      return;
-    }
-    try {
-      const res = await fetch(
-        `http://localhost:3000/api/catalogo/categorias?search=${texto}`,
-      );
-      const data = await res.json();
-      setSugestoesCategoria(data);
-    } catch (err) {
-      console.error(err);
-    }
+  const handleSelecionarCategoria = (val) => {
+    setForm((prev) => ({ ...prev, fk_categoria_id: val }));
   };
 
-  const selecionarCategoria = (categoria) => {
-    setForm((prev) => ({ ...prev, nome_categoria: categoria.nome }));
-    setSugestoesCategoria([]);
+  // Trocar a marca limpa o modelo escolhido — mesma regra do cadastro
+  const handleSelecionarMarca = (val) => {
+    setForm((prev) => ({ ...prev, fk_marca_id: val, fk_modelo_id: "" }));
+  };
+
+  const handleSelecionarModelo = (val) => {
+    setForm((prev) => ({ ...prev, fk_modelo_id: val }));
   };
 
   const handleSalvar = async () => {
-    if (!form.descricao.trim() || !form.nome_categoria.trim() || !form.preco_venda) {
-      setErroMsg("Preencha todos os campos obrigatórios: Descrição, Categoria e Preço Venda.");
+    if (
+      !form.descricao.trim() ||
+      !form.fk_categoria_id ||
+      !form.preco_venda?.trim()
+    ) {
+      setErroMsg(
+        "Preencha todos os campos obrigatórios: Descrição, Categoria e Preço de Venda.",
+      );
       setModal("erro");
       return;
     }
@@ -163,19 +198,21 @@ export function useAtualizarProduto(id) {
     setIsSubmitting(true);
     try {
       const res = await fetch(`http://localhost:3000/api/produtos/${id}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           descricao: form.descricao,
-          nome_categoria: form.nome_categoria,
+          fk_categoria_id: parseInt(form.fk_categoria_id),
+          fk_modelo_id: form.fk_modelo_id ? parseInt(form.fk_modelo_id) : null,
           preco_compra: converterPrecoBrasil(form.preco_compra),
           preco_custo: converterPrecoBrasil(form.preco_custo),
           preco_venda: converterPrecoBrasil(form.preco_venda),
         }),
       });
 
-      if (res.ok) setModal("sucesso");
-      else {
+      if (res.ok) {
+        setModal("sucesso");
+      } else {
         const data = await res.json();
         setErroMsg(data.erro || "Erro ao atualizar produto.");
         setModal("erro");
@@ -190,17 +227,21 @@ export function useAtualizarProduto(id) {
 
   return {
     loading,
+    loadingDados,
     modal,
     setModal,
     erroMsg,
     isSubmitting,
     form,
-    infoSomenteLeitura,
+    codigoProduto,
     estoqueAtual,
-    dropdownRef,
-    sugestoesCategoria,
-    selecionarCategoria,
+    categorias,
+    marcas,
+    modelos,
     handleChange,
+    handleSelecionarCategoria,
+    handleSelecionarMarca,
+    handleSelecionarModelo,
     handleSalvar,
   };
 }
