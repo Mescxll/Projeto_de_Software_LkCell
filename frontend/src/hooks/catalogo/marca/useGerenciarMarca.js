@@ -11,6 +11,9 @@ export function useGerenciarMarca() {
   const [erroMsg, setErroMsg] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [marcaSelecionada, setMarcaSelecionada] = useState(null);
+  const [modalDetalhes, setModalDetalhes] = useState(false);
+  const [marcaDetalhes, setMarcaDetalhes] = useState(null);
+  const [loadingDetalhes, setLoadingDetalhes] = useState(false);
 
   useEffect(() => {
     buscarMarcas();
@@ -59,6 +62,34 @@ export function useGerenciarMarca() {
     }
   };
 
+  const handleVisualizarDetalhes = async (marca) => {
+    setMarcaSelecionada(marca);
+    setMarcaDetalhes(null);
+    setModalDetalhes(true);
+    setLoadingDetalhes(true);
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/marcas/${marca.id_marca}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setModalDetalhes(false);
+        setErroMsg(data.erro || "Erro ao buscar detalhes da marca.");
+        setModalErro(true);
+        return;
+      }
+
+      setMarcaDetalhes(data);
+    } catch (err) {
+      console.error("Erro ao buscar detalhes da marca:", err);
+      setModalDetalhes(false);
+      setErroMsg("Nao foi possivel conectar ao servidor.");
+      setModalErro(true);
+    } finally {
+      setLoadingDetalhes(false);
+    }
+  };
+
   const marcasFiltradas = marcas.filter((m) =>
     m.nome.toLowerCase().includes(busca.toLowerCase()),
   );
@@ -78,6 +109,11 @@ export function useGerenciarMarca() {
     isDeleting,
     marcaSelecionada,
     setMarcaSelecionada,
+    modalDetalhes,
+    setModalDetalhes,
+    marcaDetalhes,
+    loadingDetalhes,
+    handleVisualizarDetalhes,
     handleDeletar,
   };
 }

@@ -20,7 +20,7 @@ export default function Catalogo() {
           <ArrowLeft className="w-4 h-4" /> Voltar
         </button>
 
-        <div className="max-w-7xl mx-auto">
+        <div>
           <h1 className="text-2xl text-gray-800">Catálogo</h1>
           <p className="font-light text-gray-500">
             Gerencie a estrutura de produtos do sistema
@@ -29,7 +29,7 @@ export default function Catalogo() {
         <br />
         <br />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
           {painel.map((card, index) => {
             const isAzul = card.cor === "azul";
             const corFundoIcone = isAzul ? "bg-blue-600/80" : "bg-green-700/80";

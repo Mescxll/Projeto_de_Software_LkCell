@@ -13,7 +13,10 @@ import {
   Loader2,
   AlertTriangle,
   CheckCircle,
+  Eye,
   Tag,
+  Smartphone,
+  Layers3,
 } from "lucide-react";
 
 export default function GerenciarMarcas() {
@@ -32,8 +35,24 @@ export default function GerenciarMarcas() {
     isDeleting,
     marcaSelecionada,
     setMarcaSelecionada,
+    modalDetalhes,
+    setModalDetalhes,
+    marcaDetalhes,
+    loadingDetalhes,
+    handleVisualizarDetalhes,
     handleDeletar,
   } = useGerenciarMarca();
+
+  const modelosDetalhes = marcaDetalhes?.modelos ?? [];
+  const categoriasAssociadas = Array.from(
+    new Map(
+      modelosDetalhes
+        .flatMap((modelo) => modelo.produtos ?? [])
+        .map((produto) => produto.categoria)
+        .filter(Boolean)
+        .map((categoria) => [categoria.id_categoria, categoria]),
+    ).values(),
+  );
 
   return (
     <>
@@ -117,6 +136,13 @@ export default function GerenciarMarcas() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => handleVisualizarDetalhes(m)}
+                          className="inline-flex items-center justify-center p-1.5 rounded-md text-green-500 hover:bg-green-50 transition-colors"
+                          title="Visualizar modelos e categorias"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <Link
                           href={`/catalogo/marca/atualizar/${m.id_marca}`}
                           className="inline-flex items-center justify-center p-1.5 rounded-md text-blue-500 hover:bg-blue-50 transition-colors"
@@ -148,6 +174,93 @@ export default function GerenciarMarcas() {
           </div>
         )}
       </main>
+
+      {/* Modal Detalhes */}
+      {modalDetalhes && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-2xl">
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase">
+                  Marca
+                </p>
+                <h2 className="text-lg font-bold text-gray-800">
+                  {marcaSelecionada?.nome}
+                </h2>
+              </div>
+              <button
+                onClick={() => setModalDetalhes(false)}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all"
+              >
+                Fechar
+              </button>
+            </div>
+
+            {loadingDetalhes ? (
+              <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Carregando detalhes...
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="border border-gray-100 rounded-xl overflow-hidden">
+                  <div className="flex items-center gap-2 bg-gray-50 px-4 py-3 border-b border-gray-100">
+                    <Smartphone className="w-4 h-4 text-blue-500" />
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      Modelos ({modelosDetalhes.length})
+                    </h3>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                    {modelosDetalhes.length > 0 ? (
+                      modelosDetalhes.map((modelo) => (
+                        <div key={modelo.id_modelo} className="px-4 py-3">
+                          <p className="text-sm font-medium text-gray-800">
+                            {modelo.nome}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {modelo._count?.produtos ?? 0} produto(s)
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center py-8">
+                        Nenhum modelo associado.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border border-gray-100 rounded-xl overflow-hidden">
+                  <div className="flex items-center gap-2 bg-gray-50 px-4 py-3 border-b border-gray-100">
+                    <Layers3 className="w-4 h-4 text-purple-500" />
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      Categorias ({categoriasAssociadas.length})
+                    </h3>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                    {categoriasAssociadas.length > 0 ? (
+                      categoriasAssociadas.map((categoria) => (
+                        <div
+                          key={categoria.id_categoria}
+                          className="px-4 py-3"
+                        >
+                          <p className="text-sm font-medium text-gray-800">
+                            {categoria.nome}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center py-8">
+                        Nenhuma categoria associada.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Modal Confirmar Exclusão */}
       {modalDeletar && (

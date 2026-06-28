@@ -65,11 +65,15 @@ const validarCadastrarCompra = (req, res, next) => {
   }
 
   // Verificação de produtos duplicados na mesma compra
-  const ids = itens.map((i) => i.fk_produto_id_produto);
-  const idsUnicos = new Set(ids);
-  if (idsUnicos.size !== ids.length) {
+  // Duplicata real = mesmo produto NA MESMA localização (PK composta de itenscompra)
+  const chaves = itens.map(
+    (i) => `${i.fk_produto_id_produto}-${i.fk_localizacao_id ?? "null"}`,
+  );
+  const chavesUnicas = new Set(chaves);
+  if (chavesUnicas.size !== chaves.length) {
     return res.status(400).json({
-      erro: "A compra contém produtos duplicados. Ajuste a quantidade em vez de repetir o produto.",
+      erro:
+        "A compra contém o mesmo produto repetido na mesma localização. Ajuste a quantidade em vez de repetir o item.",
     });
   }
 

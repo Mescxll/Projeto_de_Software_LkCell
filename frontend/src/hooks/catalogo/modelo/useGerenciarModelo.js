@@ -14,6 +14,9 @@ export function useGerenciarModelo() {
   const [erroMsg, setErroMsg] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [modeloSelecionado, setModeloSelecionado] = useState(null);
+  const [modalDetalhes, setModalDetalhes] = useState(false);
+  const [modeloDetalhes, setModeloDetalhes] = useState(null);
+  const [loadingDetalhes, setLoadingDetalhes] = useState(false);
 
   useEffect(() => {
     buscarDados();
@@ -67,6 +70,34 @@ export function useGerenciarModelo() {
     }
   };
 
+  const handleVisualizarDetalhes = async (modelo) => {
+    setModeloSelecionado(modelo);
+    setModeloDetalhes(null);
+    setModalDetalhes(true);
+    setLoadingDetalhes(true);
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/modelos/${modelo.id_modelo}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setModalDetalhes(false);
+        setErroMsg(data.erro || "Erro ao buscar detalhes do modelo.");
+        setModalErro(true);
+        return;
+      }
+
+      setModeloDetalhes(data);
+    } catch (err) {
+      console.error("Erro ao buscar detalhes do modelo:", err);
+      setModalDetalhes(false);
+      setErroMsg("Nao foi possivel conectar ao servidor.");
+      setModalErro(true);
+    } finally {
+      setLoadingDetalhes(false);
+    }
+  };
+
   const modelosFiltrados = modelos.filter((m) => {
     const matchBusca =
       m.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -98,6 +129,11 @@ export function useGerenciarModelo() {
     isDeleting,
     modeloSelecionado,
     setModeloSelecionado,
+    modalDetalhes,
+    setModalDetalhes,
+    modeloDetalhes,
+    loadingDetalhes,
+    handleVisualizarDetalhes,
     handleDeletar,
   };
 }

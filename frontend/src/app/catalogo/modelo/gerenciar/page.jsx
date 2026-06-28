@@ -14,6 +14,7 @@ import {
   Loader2,
   AlertTriangle,
   CheckCircle,
+  Eye,
   Smartphone,
   Tag,
 } from "lucide-react";
@@ -39,8 +40,15 @@ export default function GerenciarModelos() {
     isDeleting,
     modeloSelecionado,
     setModeloSelecionado,
+    modalDetalhes,
+    setModalDetalhes,
+    modeloDetalhes,
+    loadingDetalhes,
+    handleVisualizarDetalhes,
     handleDeletar,
   } = useGerenciarModelo();
+
+  const produtosDetalhes = modeloDetalhes?.produtos ?? [];
 
   return (
     <>
@@ -166,6 +174,13 @@ export default function GerenciarModelos() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => handleVisualizarDetalhes(m)}
+                          className="inline-flex items-center justify-center p-1.5 rounded-md text-green-500 hover:bg-green-50 transition-colors"
+                          title="Visualizar detalhes"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <Link
                           href={`/catalogo/modelo/atualizar/${m.id_modelo}`}
                           className="inline-flex items-center justify-center p-1.5 rounded-md text-blue-500 hover:bg-blue-50 transition-colors"
@@ -197,6 +212,88 @@ export default function GerenciarModelos() {
           </div>
         )}
       </main>
+
+      {/* Modal Detalhes */}
+      {modalDetalhes && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-2xl">
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase">
+                  Modelo
+                </p>
+                <h2 className="text-lg font-bold text-gray-800">
+                  {modeloSelecionado?.nome}
+                </h2>
+                <p className="text-xs text-gray-400 mt-1">
+                  Marca: {modeloDetalhes?.marca?.nome ?? modeloSelecionado?.marca?.nome ?? "—"}
+                </p>
+              </div>
+              <button
+                onClick={() => setModalDetalhes(false)}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-all"
+              >
+                Fechar
+              </button>
+            </div>
+
+            {loadingDetalhes ? (
+              <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Carregando detalhes...
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                <div className="border border-gray-100 rounded-xl overflow-hidden">
+                  <div className="flex items-center gap-2 bg-gray-50 px-4 py-3 border-b border-gray-100">
+                    <Tag className="w-4 h-4 text-blue-500" />
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      Informações
+                    </h3>
+                  </div>
+                  <div className="px-4 py-4 space-y-2">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-semibold">Marca:</span>{" "}
+                      {modeloDetalhes?.marca?.nome ?? "—"}
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      <span className="font-semibold">Total de produtos:</span>{" "}
+                      {modeloDetalhes?._count?.produtos ?? 0}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border border-gray-100 rounded-xl overflow-hidden">
+                  <div className="flex items-center gap-2 bg-gray-50 px-4 py-3 border-b border-gray-100">
+                    <Smartphone className="w-4 h-4 text-blue-500" />
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      Produtos ({produtosDetalhes.length})
+                    </h3>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                    {produtosDetalhes.length > 0 ? (
+                      produtosDetalhes.map((produto) => (
+                        <div key={produto.id_produto} className="px-4 py-3">
+                          <p className="text-sm font-medium text-gray-800">
+                            {produto.nome}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {produto.codigo_produto || "Sem código"}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center py-8">
+                        Nenhum produto associado.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Modal Confirmar Exclusão */}
       {modalDeletar && (
