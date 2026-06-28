@@ -1,13 +1,36 @@
 "use client";
-import { Search, Bell, Settings } from "lucide-react";
+import { Search, Bell, Settings, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
-import { Users, UserCog, Package, Truck, TrendingUp, ShoppingBasket, Wrench, Wallet, Boxes } from "lucide-react";
+import {
+  Users,
+  UserCog,
+  Package,
+  Truck,
+  TrendingUp,
+  ShoppingBasket,
+  Wrench,
+  Wallet,
+  Boxes,
+  Tag,
+  Folder,
+  Smartphone,
+} from "lucide-react";
 
 const modulos = [
   { titulo: "Clientes", icone: Users, link: "/cliente/gerenciar" },
   { titulo: "Funcionários", icone: UserCog, link: "/funcionario/gerenciar" },
-  { titulo: "Catálogo", icone: Package, link: "/catalogo/" },
+  {
+    titulo: "Catálogo",
+    icone: Package,
+    link: "/catalogo/",
+    subitens: [
+      { titulo: "Produto", icone: Package, link: "/catalogo/produto/gerenciar" },
+      { titulo: "Marca", icone: Tag, link: "/catalogo/marca/gerenciar" },
+      { titulo: "Categoria", icone: Folder, link: "/catalogo/categoria/gerenciar" },
+      { titulo: "Modelo", icone: Smartphone, link: "/catalogo/modelo/gerenciar" },
+    ],
+  },
   { titulo: "Fornecedores", icone: Truck, link: "/fornecedor/gerenciar" },
   { titulo: "Vendas", icone: TrendingUp, link: "/venda/gerenciar" },
   { titulo: "Compras", icone: ShoppingBasket, link: "/compra/gerenciar" },
@@ -30,10 +53,28 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickFora);
   }, []);
 
+  // Filtra módulos e subitens pelo termo de busca.
+  // Um módulo aparece se o próprio título combina (mostrando todos os subitens)
+  // ou se algum subitem combina (mostrando só os subitens que combinam).
+  const termo = busca.trim().toLowerCase();
 
+  const modulosFiltrados = termo
+    ? modulos
+        .map((m) => {
+          const moduloCombina = m.titulo.toLowerCase().includes(termo);
+          const subitensCombinando = m.subitens
+            ? m.subitens.filter((s) => s.titulo.toLowerCase().includes(termo))
+            : [];
 
-  const modulosFiltrados = busca.trim()
-    ? modulos.filter(m => m.titulo.toLowerCase().includes(busca.toLowerCase()))
+          if (moduloCombina) {
+            return { ...m, subitensExibidos: m.subitens ?? [] };
+          }
+          if (subitensCombinando.length > 0) {
+            return { ...m, subitensExibidos: subitensCombinando };
+          }
+          return null;
+        })
+        .filter(Boolean)
     : [];
 
   return (
@@ -66,20 +107,36 @@ export default function Navbar() {
 
         {/* Dropdown de resultados */}
         {modulosFiltrados.length > 0 && (
-          <div className="absolute top-full left-8 right-8 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+          <div className="absolute top-full left-8 right-8 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-96 overflow-y-auto">
             {modulosFiltrados.map((m) => (
-              <Link href={m.link} key={m.titulo} onClick={() => setBusca("")}>
-                <div className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
-                  <m.icone className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">{m.titulo}</span>
-                </div>
-              </Link>
+              <div key={m.titulo}>
+                <Link href={m.link} onClick={() => setBusca("")}>
+                  <div className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                    <m.icone className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm text-gray-700">{m.titulo}</span>
+                  </div>
+                </Link>
+
+                {m.subitensExibidos?.length > 0 && (
+                  <div className="border-t border-gray-50">
+                    {m.subitensExibidos.map((s) => (
+                      <Link href={s.link} key={s.titulo} onClick={() => setBusca("")}>
+                        <div className="flex items-center gap-3 pl-9 pr-4 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer">
+                          <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                          <s.icone className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="text-sm text-gray-600">{s.titulo}</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}
 
         {/* Sem resultados */}
-        {busca.trim() && modulosFiltrados.length === 0 && (
+        {termo && modulosFiltrados.length === 0 && (
           <div className="absolute top-full left-8 right-8 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg px-4 py-3">
             <span className="text-sm text-gray-400">Nenhum módulo encontrado</span>
           </div>
