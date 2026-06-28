@@ -12,6 +12,7 @@ export function useAtualizarCliente(uuid) {
     documento: "",
     nome: "",
     telefone: "",
+    telefone_secundario: "",
     email: "",
     logradouro: "",
     numero: "",
@@ -72,6 +73,9 @@ export function useAtualizarCliente(uuid) {
           telefone: formatarTelefone(
             data.telefone_cliente?.[0]?.telefone_cliente,
           ),
+          telefone_secundario: formatarTelefone(
+            data.telefone_cliente?.[1]?.telefone_cliente,
+          ),
           email: data.email || "",
           logradouro: data.logradouro || "",
           numero: data.numero?.toString() || "",
@@ -116,6 +120,7 @@ export function useAtualizarCliente(uuid) {
   const handleSalvar = async () => {
     // Limpando formatação para validar tamanho e salvar
     const telefoneLimpo = form.telefone.replace(/\D/g, "");
+    const telefoneLimpo2 = form.telefone_secundario.replace(/\D/g, "");
     const cepLimpo = form.cep.replace(/\D/g, "");
 
     // Trava de campos em branco
@@ -127,6 +132,14 @@ export function useAtualizarCliente(uuid) {
 
     // Trava de tamanho do Telefone
     if (telefoneLimpo.length !== 11) {
+      setErroMsg(
+        "O telefone precisa ter exatamente 11 números (DDD + 9 dígitos)!",
+      );
+      setModalErro(true);
+      return;
+    }
+
+    if (telefoneLimpo2.length !== 11) {
       setErroMsg(
         "O telefone precisa ter exatamente 11 números (DDD + 9 dígitos)!",
       );
@@ -150,6 +163,7 @@ export function useAtualizarCliente(uuid) {
         body: JSON.stringify({
           nome: form.nome,
           telefone: telefoneLimpo, // Enviando limpo pro Prisma
+          telefone_secundario: telefoneLimpo2,
           email: form.email,
           logradouro: form.logradouro,
           numero: form.numero,

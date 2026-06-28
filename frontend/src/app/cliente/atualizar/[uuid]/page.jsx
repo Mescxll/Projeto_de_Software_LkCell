@@ -125,6 +125,22 @@ export default function AtualizarCliente() {
                   />
                 </div>
               </div>
+              <div className="mb-4">
+                <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                  Telefone Secundário
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    name="telefone_secundario"
+                    value={form.telefone_secundario}
+                    onChange={handleChange}
+                    placeholder="DDD + Número (Ex: 77999999999)"
+                    className={inputIconClass}
+                  />
+                </div>
+              </div>
               {/* E-mail */}
               <div className="mb-4">
                 <label className="text-xs font-semibold text-gray-600 mb-1.5 block">

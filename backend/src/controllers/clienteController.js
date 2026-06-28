@@ -7,6 +7,7 @@ const cadastrarCliente = async (req, res) => {
       nome,
       tipo_cliente,
       telefone,
+      telefone_secundario,
       email,
       logradouro,
       cidade,
@@ -30,6 +31,7 @@ const cadastrarCliente = async (req, res) => {
     const cpfLimpo = cpf ? cpf.replace(/\D/g, "") : undefined;
     const cnpjLimpo = cnpj ? cnpj.replace(/\D/g, "") : undefined;
     const telefoneLimpo = telefone ? telefone.replace(/\D/g, "") : undefined;
+    const telefoneLimpo2 = telefone_secundario ? telefone_secundario.replace(/\D/g, "") : undefined;
 
     const novoCliente = await prisma.cliente.create({
       data: {
@@ -43,11 +45,12 @@ const cadastrarCliente = async (req, res) => {
         cep,
         bairro,
         // Criando Telefone e PF/PJ
-        telefone_cliente: telefoneLimpo
-          ? {
-              create: { telefone_cliente: telefoneLimpo },
-            }
-          : undefined,
+        telefone_cliente: {
+          create: [
+            ...(telefoneLimpo ? [{ telefone_cliente: telefoneLimpo }] : []),
+            ...(telefoneLimpo2 ? [{ telefone_cliente: telefoneLimpo2 }] : []),
+          ],
+        },
         pessoafisica:
           tipoNormalizado === "FISICO"
             ? {
@@ -93,6 +96,15 @@ const cadastrarCliente = async (req, res) => {
       if (
         textoParaBusca.includes("telefone_cliente") ||
         textoParaBusca.includes("telefone")
+      ) {
+        return res.status(409).json({
+          erro: "Este telefone já está vinculado a outro cliente. Tente outro.",
+        });
+      }
+
+      if (
+        textoParaBusca.includes("telefone_cliente") ||
+        textoParaBusca.includes("telefone_secundario")
       ) {
         return res.status(409).json({
           erro: "Este telefone já está vinculado a outro cliente. Tente outro.",
@@ -190,12 +202,14 @@ const atualizarCliente = async (req, res) => {
       cep,
       bairro,
       telefone,
+      telefone_secundario,
       email,
     } = req.body;
 
     // Limpeza de Dados
     // Limpa telefone e CEP (tira pontos, traços, etc)
     const telefoneLimpo = telefone ? telefone.replace(/\D/g, "") : undefined;
+    const telefoneLimpo2 = telefone_secundario ? telefone_secundario.replace(/\D/g, "") : undefined;
     const cepLimpo = cep ? cep.replace(/\D/g, "") : undefined;
 
     // Padroniza as strings para o banco
@@ -216,12 +230,13 @@ const atualizarCliente = async (req, res) => {
         bairro,
 
         // Full Replacement pros telefones
-        telefone_cliente: telefoneLimpo
-          ? {
-              deleteMany: {},
-              create: { telefone_cliente: telefoneLimpo },
-            }
-          : undefined,
+        telefone_cliente: {
+          deleteMany: {},
+          create: [
+            ...(telefoneLimpo ? [{ telefone_cliente: telefoneLimpo }] : []),
+            ...(telefoneLimpo2 ? [{ telefone_cliente: telefoneLimpo2 }] : []),
+          ],
+        },
       },
       include: {
         telefone_cliente: true,

@@ -14,6 +14,7 @@ export function useCadastrarCliente() {
     razao_social: "",
     nome_fantasia: "",
     telefone: "",
+    telefone_secundario: "",
     email: "",
     logradouro: "",
     numero: "",
@@ -51,6 +52,12 @@ export function useCadastrarCliente() {
         .replace(/(\d{5})(\d)/, "$1-$2")   // Coloca traço após o 5º dígito do número
         .slice(0, 15);
     } 
+    else if (name === "telefone_secundario") {
+      value = num
+        .replace(/(\d{2})(\d)/, "($1) $2") // Coloca parênteses no DDD
+        .replace(/(\d{5})(\d)/, "$1-$2")   // Coloca traço após o 5º dígito do número
+        .slice(0, 15);
+    } 
     else if (name === "cep") {
       value = num
         .replace(/(\d{5})(\d)/, "$1-$2")
@@ -68,6 +75,8 @@ export function useCadastrarCliente() {
     const cpfLimpo = form.cpf.replace(/\D/g, "");
     const cnpjLimpo = form.cnpj.replace(/\D/g, "");
     const telefoneLimpo = form.telefone.replace(/\D/g, "");
+    const telefoneLimpo2 = form.telefone_secundario.replace(/\D/g, "");
+
     const cepLimpo = form.cep.replace(/\D/g, "");
 
     const docLimpo = tipo === "FISICA" ? cpfLimpo : cnpjLimpo;
@@ -96,6 +105,12 @@ export function useCadastrarCliente() {
       return;
     }
 
+    if (telefoneLimpo2.length !== 11) {
+      setErroMsg("O telefone precisa ter exatamente 11 números (DDD + 9 dígitos)!");
+      setModal("erro");
+      return;
+    }
+
     if (cepLimpo && cepLimpo.length !== 8) {
       setErroMsg("O CEP está incompleto! Digite exatamente 8 números.");
       setModal("erro");
@@ -106,6 +121,7 @@ export function useCadastrarCliente() {
       nome: form.nome,
       tipo_cliente: tipo,
       telefone: telefoneLimpo, 
+      telefone_secundario: telefoneLimpo2,
       email: form.email,
       logradouro: form.logradouro,
       numero: form.numero,
