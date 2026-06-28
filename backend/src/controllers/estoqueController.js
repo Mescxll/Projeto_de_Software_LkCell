@@ -105,14 +105,117 @@ const buscarHistoricoPorProduto = async (req, res) => {
 };
 
 /**
- * Lista produtos com saldo abaixo (ou igual) ao mínimo, por localização.
- * Compara o último registro de cada combinação produto+localização
- * com o estoque_minimo vigente naquele mesmo registro.
+ * Movimentações gerais de estoque, cruzando todos os produtos.
+ * Aceita filtros opcionais por período, tipo de movimento, produto e
+ * localização, com paginação (20 itens por página por padrão).
  *
- * GET /estoque/alertas
+ * GET /estoque/movimentacoes?data_inicio=&data_fim=&tipo_movimento=&fk_produto_id=&fk_localizacao_id=&pagina=&por_pagina=
  */
-const buscarAlertasEstoqueBaixo = async (req, res) => {
+const buscarMovimentacoesGerais = async (req, res) => {
   try {
+    const {
+      data_inicio,
+      data_fim,
+      tipo_movimento,
+      fk_produto_id,
+      fk_localizacao_id,
+      pagina,
+      por_pagina,
+    } = req.query;
+
+    const paginaAtual = pagina ? parseInt(pagina) : 1;
+    const itensPorPagina = por_pagina ? parseInt(por_pagina) : 20;
+
+    const where = {};
+
+    if (data_inicio || data_fim) {
+      where.data_hora = {};
+      if (data_inicio) where.data_hora.gte = new Date(data_inicio);
+      if (data_fim) {
+        const fim = new Date(data_fim);
+        fim.setHours(23, 59, 59, 999);
+        where.data_hora.lte = fim;
+      }
+    }
+
+    if (tipo_movimento) {
+      where.tipo_movimento = tipo_movimento;
+    }
+
+    if (fk_produto_id) {
+      where.fk_produto_id = parseInt(fk_produto_id);
+    }
+
+    if (fk_localizacao_id !== undefined) {
+      where.fk_localizacao_id =
+        fk_localizacao_id === "null" ? null : parseInt(fk_localizacao_id);
+    }
+
+    const [total, movimentacoes] = await prisma.$transaction([
+      prisma.estoque.count({ where }),
+      prisma.estoque.findMany({
+        where,
+        orderBy: { data_hora: "desc" },
+        skip: (paginaAtual - 1) * itensPorPagina,
+        take: itensPorPagina,
+        include: {
+          produto: {
+            select: { id_produto: true, nome: true, codigo_produto: true },
+          },
+          localizacao: true,
+          venda: { select: { id_venda: true } },
+          compra: { select: { id_compra: true } },
+        },
+      }),
+    ]);
+
+    return res.status(200).json({
+      movimentacoes,
+      paginacao: {
+        pagina: paginaAtual,
+        por_pagina: itensPorPagina,
+        total,
+        total_paginas: Math.ceil(total / itensPorPagina),
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao buscar movimentações gerais de estoque:", error);
+    return res
+      .status(500)
+      .json({ erro: "Erro interno no servidor ao buscar movimentações de estoque." });
+  }
+};
+
+// Ordem de gravidade usada para definir o status agregado do produto:
+// se qualquer localização estiver pior, o produto herda o pior status.
+const GRAVIDADE_STATUS = { abaixo_minimo: 2, acima_ideal: 1, normal: 0 };
+
+const calcularStatusLocalizacao = (estoqueAtual, estoqueMinimo, estoqueIdeal) => {
+  if (estoqueMinimo !== null && estoqueAtual <= estoqueMinimo) {
+    return "abaixo_minimo";
+  }
+  if (estoqueIdeal !== null && estoqueAtual > estoqueIdeal) {
+    return "acima_ideal";
+  }
+  return "normal";
+};
+
+/**
+ * Visão geral de estoque: um item por produto, com as localizações
+ * aninhadas. O status de cada localização é calculado individualmente
+ * (saldo daquela localização vs. mínimo/ideal do produto); o status do
+ * produto (linha principal) é o "pior caso" entre suas localizações.
+ *
+ * Aceita ?status=abaixo_minimo para retornar apenas produtos que têm
+ * ao menos uma localização naquela condição (o produto retornado vem
+ * com todas as suas localizações, não só as problemáticas).
+ *
+ * GET /estoque?status=abaixo_minimo
+ */
+const buscarVisaoGeralEstoque = async (req, res) => {
+  try {
+    const { status } = req.query;
+
     // Busca todos os registros e mantém só o mais recente por
     // combinação produto+localização. Feito em memória pois o Prisma
     // não suporta "distinct + último por grupo" de forma nativa elegante.
@@ -120,7 +223,12 @@ const buscarAlertasEstoqueBaixo = async (req, res) => {
       orderBy: { data_hora: "desc" },
       include: {
         produto: {
-          select: { id_produto: true, nome: true, codigo_produto: true },
+          select: {
+            id_produto: true,
+            nome: true,
+            codigo_produto: true,
+            categoria: { select: { nome: true } },
+          },
         },
         localizacao: true,
       },
@@ -134,30 +242,75 @@ const buscarAlertasEstoqueBaixo = async (req, res) => {
       }
     }
 
-    const alertas = Array.from(mapaUltimos.values())
-      .filter(
-        (reg) =>
-          reg.estoque_minimo !== null &&
-          reg.estoque_atual <= reg.estoque_minimo,
-      )
-      .map((reg) => ({
-        fk_produto_id: reg.fk_produto_id,
-        produto: reg.produto?.nome ?? reg.produto?.codigo_produto,
-        codigo_produto: reg.produto?.codigo_produto,
+    // Agrupa os últimos registros por produto
+    const mapaProdutos = new Map();
+    for (const reg of mapaUltimos.values()) {
+      if (!mapaProdutos.has(reg.fk_produto_id)) {
+        mapaProdutos.set(reg.fk_produto_id, {
+          id_produto: reg.fk_produto_id,
+          nome: reg.produto?.nome,
+          codigo_produto: reg.produto?.codigo_produto,
+          categoria: reg.produto?.categoria?.nome ?? null,
+          estoque_minimo: reg.estoque_minimo,
+          estoque_ideal: reg.estoque_ideal,
+          localizacoes: [],
+        });
+      }
+
+      const statusLocalizacao = calcularStatusLocalizacao(
+        reg.estoque_atual,
+        reg.estoque_minimo,
+        reg.estoque_ideal,
+      );
+
+      mapaProdutos.get(reg.fk_produto_id).localizacoes.push({
         id_localizacao: reg.fk_localizacao_id,
         localizacao: reg.localizacao?.localizacao ?? "Sem localização",
         estoque_atual: reg.estoque_atual,
-        estoque_minimo: reg.estoque_minimo,
-        estoque_ideal: reg.estoque_ideal,
-      }))
-      .sort((a, b) => a.estoque_atual - b.estoque_atual);
+        status: statusLocalizacao,
+      });
+    }
 
-    return res.status(200).json(alertas);
+    let resultado = Array.from(mapaProdutos.values()).map((produto) => {
+      const saldo_total = produto.localizacoes.reduce(
+        (soma, loc) => soma + loc.estoque_atual,
+        0,
+      );
+
+      const statusProduto = produto.localizacoes.reduce(
+        (pior, loc) =>
+          GRAVIDADE_STATUS[loc.status] > GRAVIDADE_STATUS[pior]
+            ? loc.status
+            : pior,
+        "normal",
+      );
+
+      return {
+        ...produto,
+        saldo_total,
+        status: statusProduto,
+      };
+    });
+
+    if (status) {
+      resultado = resultado.filter((produto) =>
+        produto.localizacoes.some((loc) => loc.status === status),
+      );
+    }
+
+    resultado.sort((a, b) =>
+      (a.nome ?? a.codigo_produto ?? "").localeCompare(
+        b.nome ?? b.codigo_produto ?? "",
+        "pt-BR",
+      ),
+    );
+
+    return res.status(200).json(resultado);
   } catch (error) {
-    console.error("Erro ao buscar alertas de estoque baixo:", error);
+    console.error("Erro ao buscar visão geral de estoque:", error);
     return res
       .status(500)
-      .json({ erro: "Erro interno no servidor ao buscar alertas de estoque." });
+      .json({ erro: "Erro interno no servidor ao buscar visão geral de estoque." });
   }
 };
 
@@ -386,7 +539,8 @@ const transferirEstoque = async (req, res) => {
 module.exports = {
   buscarSaldoPorProduto,
   buscarHistoricoPorProduto,
-  buscarAlertasEstoqueBaixo,
+  buscarVisaoGeralEstoque,
+  buscarMovimentacoesGerais,
   ajustarParametros,
   transferirEstoque,
 };
