@@ -24,13 +24,16 @@ const cadastrarCompra = async (req, res) => {
     } = req.body;
 
     // Busca todos os produtos e seus estoques atuais
-    const ids = itens.map((i) => i.fk_produto_id_produto);
+    // Usa Set para comparar IDs ÚNICOS — o mesmo produto pode aparecer
+    // mais de uma vez no array `itens` (uma linha por localização),
+    // então comparar pela contagem bruta de `itens` geraria falso negativo.
+    const idsUnicos = [...new Set(itens.map((i) => i.fk_produto_id_produto))];
 
     const produtos = await prisma.produto.findMany({
-      where: { id_produto: { in: ids } },
+      where: { id_produto: { in: idsUnicos } },
     });
 
-    if (produtos.length !== ids.length) {
+    if (produtos.length !== idsUnicos.length) {
       return res
         .status(404)
         .json({ erro: "Um ou mais produtos não foram encontrados." });
