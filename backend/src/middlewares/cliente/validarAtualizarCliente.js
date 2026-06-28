@@ -10,6 +10,7 @@ const validarAtualizarCliente = (req, res, next) => {
     cep,
     bairro,
     telefone,
+    telefone_secundario,
     email,
   } = req.body;
 
@@ -28,6 +29,7 @@ const validarAtualizarCliente = (req, res, next) => {
     cep === undefined &&
     bairro === undefined &&
     telefone === undefined &&
+    telefone_secundario === undefined &&
     email === undefined
   ) {
     return res.status(400).json({ erro: "Nenhum dado válido foi enviado para atualização." });
