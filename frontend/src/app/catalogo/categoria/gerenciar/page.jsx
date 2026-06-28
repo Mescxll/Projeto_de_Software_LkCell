@@ -1,9 +1,11 @@
 // app/catalogo/categoria/gerenciar/page.jsx
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import LoadingGerenciar from "@/components/LoadingGerenciar";
 import { useGerenciarCategoria } from "@/hooks/catalogo/categoria/useGerenciarCategoria";
+import VisualizarCategoria from "@/components/catalogo/categoria/VisualizarCategoria";
 import {
   ArrowLeft,
   Plus,
@@ -18,6 +20,8 @@ import {
 } from "lucide-react";
 
 export default function GerenciarCategorias() {
+  const [visualizarId, setVisualizarId] = useState(null); 
+
   const {
     loading,
     categoriasFiltradas,
@@ -118,13 +122,14 @@ export default function GerenciarCategorias() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-center gap-2">
-                        <Link
-                          href={`/catalogo/categoria/visualizar/${c.id_categoria}`}
-                          className="inline-flex items-center justify-center p-1.5 rounded-md transition-colors text-green-500 icon-btn-green"
+                        
+                        <button
+                          onClick={() => setVisualizarId(c.id_categoria)}
+                          className="inline-flex items-center justify-center p-1.5 rounded-md transition-colors text-green-500 hover:bg-green-50 icon-btn-green"
                           title="Ver detalhes"
                         >
                           <Eye className="w-4 h-4" />
-                        </Link>
+                        </button>
                         
                         <Link
                           href={`/catalogo/categoria/atualizar/${c.id_categoria}`}
@@ -158,6 +163,14 @@ export default function GerenciarCategorias() {
           </div>
         )}
       </main>
+
+      {/*Modal de Visualizar Categoria */}
+      {visualizarId && (
+        <VisualizarCategoria 
+          id={visualizarId} 
+          onClose={() => setVisualizarId(null)} 
+        />
+      )}
 
       {/* Modal Confirmar Exclusão */}
       {modalDeletar && (
