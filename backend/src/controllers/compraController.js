@@ -28,12 +28,6 @@ const cadastrarCompra = async (req, res) => {
 
     const produtos = await prisma.produto.findMany({
       where: { id_produto: { in: ids } },
-      include: {
-        estoque: {
-          orderBy: { data_hora: "desc" },
-          take: 1,
-        },
-      },
     });
 
     if (produtos.length !== ids.length) {
@@ -67,7 +61,15 @@ const cadastrarCompra = async (req, res) => {
       // Cria itens + estoque para cada produto
       for (const item of itens) {
         const produto = mapaProdutos[item.fk_produto_id_produto];
-        const ultimoEstoque = produto.estoque[0];
+
+        const ultimoEstoque = await tx.estoque.findFirst({
+          where: {
+            fk_produto_id: item.fk_produto_id_produto,
+            fk_localizacao_id: item.fk_localizacao_id ?? null,
+          },
+          orderBy: { data_hora: "desc" },
+        });
+
         const novoEstoqueAtual =
           (ultimoEstoque?.estoque_atual ?? 0) + item.quantidade;
 
@@ -75,7 +77,7 @@ const cadastrarCompra = async (req, res) => {
           data: {
             fk_compra_id_compra: compra.id_compra,
             fk_produto_id_produto: item.fk_produto_id_produto,
-            fk_localizacao_id: item.fk_localizacao_id, // ✅ agora obrigatório no schema
+            fk_localizacao_id: item.fk_localizacao_id,
             quantidade: item.quantidade,
             preco_compra: item.preco_compra,
           },
@@ -189,7 +191,6 @@ const buscarCompra = async (req, res) => {
           },
         },
         estoque: {
-          // 👈 adicione
           include: {
             localizacao: true,
           },
@@ -252,9 +253,6 @@ const atualizarCompra = async (req, res) => {
 
         const produtos = await tx.produto.findMany({
           where: { id_produto: { in: ids } },
-          include: {
-            estoque: { orderBy: { data_hora: "desc" }, take: 1 },
-          },
         });
 
         if (produtos.length !== ids.length) {
@@ -284,7 +282,15 @@ const atualizarCompra = async (req, res) => {
         // Recria itens e entradas de estoque
         for (const item of itens) {
           const produto = mapaProdutos[item.fk_produto_id_produto];
-          const ultimoEstoque = produto.estoque[0];
+
+          const ultimoEstoque = await tx.estoque.findFirst({
+            where: {
+              fk_produto_id: item.fk_produto_id_produto,
+              fk_localizacao_id: item.fk_localizacao_id ?? null,
+            },
+            orderBy: { data_hora: "desc" },
+          });
+
           const novoEstoqueAtual =
             (ultimoEstoque?.estoque_atual ?? 0) + item.quantidade;
 
@@ -361,18 +367,7 @@ const cancelarCompra = async (req, res) => {
     const compra = await prisma.compra.findUnique({
       where: { id_compra: idCompra },
       include: {
-        itenscompra: {
-          include: {
-            produto: {
-              include: {
-                estoque: {
-                  orderBy: { data_hora: "desc" },
-                  take: 1,
-                },
-              },
-            },
-          },
-        },
+        itenscompra: true, 
       },
     });
 
@@ -387,15 +382,23 @@ const cancelarCompra = async (req, res) => {
     }
 
     await prisma.$transaction(async (tx) => {
+
       for (const item of compra.itenscompra) {
-        const ultimoEstoque = item.produto.estoque[0];
+         const ultimoEstoque = await tx.estoque.findFirst({
+          where: {
+            fk_produto_id: item.fk_produto_id_produto,
+            fk_localizacao_id: item.fk_localizacao_id ?? null,
+          },
+          orderBy: { data_hora: "desc" },
+        });
+
         const estoqueRestaurado =
           (ultimoEstoque?.estoque_atual ?? 0) - item.quantidade;
 
         await tx.estoque.create({
           data: {
             fk_produto_id: item.fk_produto_id_produto,
-            fk_localizacao_id: ultimoEstoque?.fk_localizacao_id ?? null,
+            fk_localizacao_id: item.fk_localizacao_id ?? null,
             tipo_movimento: "AJUSTE",
             quantidade: item.quantidade,
             estoque_atual: estoqueRestaurado,

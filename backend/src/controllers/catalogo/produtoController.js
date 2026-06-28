@@ -11,7 +11,9 @@ const cadastrarProduto = async (req, res) => {
       compativel_todas_marcas,
       estoque_minimo,
       estoque_ideal,
-      estoque_atual,
+      // Array de { fk_localizacao_id, quantidade }
+      // Array vazio ou ausente = produto cadastrado com estoque zero
+      estoque_entradas = [],
       preco_compra,
       preco_custo,
       preco_venda,
@@ -20,8 +22,6 @@ const cadastrarProduto = async (req, res) => {
 
     const categoriaId = parseInt(fk_categoria_id);
     const modeloId = fk_modelo_id ? parseInt(fk_modelo_id) : null;
-
-    const estoqueAtualInt = parseInt(estoque_atual) || 0;
     const estoqueMinimoInt = estoque_minimo ? parseInt(estoque_minimo) : null;
     const estoqueIdealInt = estoque_ideal ? parseInt(estoque_ideal) : null;
 
@@ -44,10 +44,24 @@ const cadastrarProduto = async (req, res) => {
       }
     }
 
-    // Nome: "Marca Modelo" se tiver modelo, senão usa a descrição
     const nomeProduto = modeloDB
       ? `${modeloDB.marca.nome} ${modeloDB.nome}`
       : descricao.trim();
+
+    // Valida localizações informadas antes de entrar na transação
+    if (estoque_entradas.length > 0) {
+      const ids = estoque_entradas.map((e) => parseInt(e.fk_localizacao_id));
+
+      const localizacoesDB = await prisma.localizacao.findMany({
+        where: { id_localizacao: { in: ids } },
+      });
+
+      if (localizacoesDB.length !== ids.length) {
+        return res.status(404).json({
+          erro: "Uma ou mais localizações informadas não foram encontradas.",
+        });
+      }
+    }
 
     const [novoProduto] = await prisma.$transaction(async (tx) => {
       const produto = await tx.produto.create({
@@ -69,17 +83,40 @@ const cadastrarProduto = async (req, res) => {
         },
       });
 
-      await tx.estoque.create({
-        data: {
-          fk_produto_id: produto.id_produto,
-          tipo_movimento: "ENTRADA",
-          quantidade: estoqueAtualInt,
-          estoque_atual: estoqueAtualInt,
-          estoque_minimo: estoqueMinimoInt,
-          estoque_ideal: estoqueIdealInt,
-          observacao: "Cadastro inicial do produto",
-        },
-      });
+      if (estoque_entradas.length === 0) {
+        // Estoque zero — um único registro sem localização (saldo inicial = 0)
+        await tx.estoque.create({
+          data: {
+            fk_produto_id: produto.id_produto,
+            tipo_movimento: "ENTRADA",
+            quantidade: 0,
+            estoque_atual: 0,
+            estoque_minimo: estoqueMinimoInt,
+            estoque_ideal: estoqueIdealInt,
+            observacao: "Cadastro inicial do produto",
+          },
+        });
+      } else {
+        // Um registro de ENTRADA por localização, saldo acumulado
+        let saldoAcumulado = 0;
+        for (const entrada of estoque_entradas) {
+          const qty = parseInt(entrada.quantidade);
+          saldoAcumulado += qty;
+
+          await tx.estoque.create({
+            data: {
+              fk_produto_id: produto.id_produto,
+              fk_localizacao_id: parseInt(entrada.fk_localizacao_id),
+              tipo_movimento: "ENTRADA",
+              quantidade: qty,
+              estoque_atual: saldoAcumulado,
+              estoque_minimo: estoqueMinimoInt,
+              estoque_ideal: estoqueIdealInt,
+              observacao: "Cadastro inicial do produto",
+            },
+          });
+        }
+      }
 
       return [produto];
     });
@@ -159,11 +196,9 @@ const atualizarProduto = async (req, res) => {
       updateData.fk_categoria_id = categoriaDB.id_categoria;
     }
 
-    // fk_modelo_id: null = desvincula; número = troca; undefined = não mexe
     if (fk_modelo_id !== undefined) {
       if (fk_modelo_id === null) {
         updateData.fk_modelo_id = null;
-        // Sem modelo, nome cai para a descrição atual (ou nova, se veio junto)
         updateData.nome = descricao?.trim() ?? produtoExistente.descricao;
       } else {
         const modeloDB = await prisma.modelo.findUnique({
@@ -231,13 +266,15 @@ const buscarEstoquePorLocalizacao = async (req, res) => {
     const resultado = Array.from(mapaLocalizacoes.values())
       .filter((l) => l.estoque_atual > 0)
       .sort((a, b) =>
-        (a.localizacao ?? "").localeCompare(b.localizacao ?? "", "pt-BR")
+        (a.localizacao ?? "").localeCompare(b.localizacao ?? "", "pt-BR"),
       );
 
     return res.status(200).json(resultado);
   } catch (error) {
     console.error("Erro ao buscar estoque por localização:", error);
-    return res.status(500).json({ erro: "Erro interno ao buscar estoque por localização." });
+    return res
+      .status(500)
+      .json({ erro: "Erro interno ao buscar estoque por localização." });
   }
 };
 
@@ -257,7 +294,6 @@ const buscarProduto = async (req, res) => {
         modelo: { include: { marca: true } },
         itenscompra: true,
         itensvenda: true,
-        // Retorna apenas o registro mais recente para saber o estoque atual
         estoque: {
           orderBy: { data_hora: "desc" },
           take: 1,
@@ -295,7 +331,6 @@ const buscarTodosProdutos = async (req, res) => {
         modelo: { include: { marca: true } },
         itenscompra: true,
         itensvenda: true,
-        // Retorna apenas o registro mais recente de cada produto
         estoque: {
           orderBy: { data_hora: "desc" },
           take: 1,
