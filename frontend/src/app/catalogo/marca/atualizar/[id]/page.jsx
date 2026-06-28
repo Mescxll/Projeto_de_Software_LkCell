@@ -22,6 +22,7 @@ export default function AtualizarMarca() {
     setNome,
     nomeOriginal,
     totalModelos,
+    modelos,
     loading,
     erro,
     modal,
@@ -148,6 +149,21 @@ export default function AtualizarMarca() {
                 {totalModelos}
               </span>
             </div>
+            {modelos.length > 0 && (
+              <div className="mt-4 overflow-hidden rounded-xl border border-gray-100 divide-y divide-gray-50">
+                {modelos.map((modelo) => (
+                  <div
+                    key={modelo.id_modelo}
+                    className="flex items-center gap-2 px-4 py-3 text-sm text-gray-700 bg-white"
+                  >
+                    <Smartphone className="w-4 h-4 text-blue-400" />
+                    <span className="font-medium text-gray-800">
+                      {modelo.nome}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
             {totalModelos > 0 && (
               <p className="text-xs text-gray-400 mt-2">
                 Esta marca possui modelos cadastrados. Para excluí-la, remova os

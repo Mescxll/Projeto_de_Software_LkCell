@@ -5,6 +5,7 @@ export function useAtualizarMarca(id) {
   const [nome, setNome] = useState("");
   const [nomeOriginal, setNomeOriginal] = useState("");
   const [totalModelos, setTotalModelos] = useState(0);
+  const [modelos, setModelos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(false);
   const [modal, setModal] = useState(null); // "sucesso" | "erro" | null
@@ -22,6 +23,7 @@ export function useAtualizarMarca(id) {
         setNome(data.nome);
         setNomeOriginal(data.nome);
         setTotalModelos(data._count?.modelos ?? 0);
+        setModelos(Array.isArray(data.modelos) ? data.modelos : []);
       } catch (err) {
         console.error(err);
         setErro(true);
@@ -78,6 +80,7 @@ export function useAtualizarMarca(id) {
     setNome,
     nomeOriginal,
     totalModelos,
+    modelos,
     loading,
     erro,
     modal,
