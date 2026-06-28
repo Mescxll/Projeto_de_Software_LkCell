@@ -4,10 +4,8 @@ import { useVisualizarCategoria } from "@/hooks/catalogo/categoria/useVisualizar
 import { X, Package, FolderOpen, Tag, Barcode, AlertTriangle } from "lucide-react";
 
 export default function VisualizarCategoria({ id, onClose }) {
-  // Passamos o ID recebido da prop direto para o hook
   const { loading, categoria, erro, formatarPreco } = useVisualizarCategoria(id);
 
-  // Fundo escuro do modal que fecha ao clicar fora
   const handleFundoClick = (e) => {
     if (e.target.id === "fundo-modal") onClose();
   };
@@ -46,7 +44,7 @@ export default function VisualizarCategoria({ id, onClose }) {
       onClick={handleFundoClick}
       className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm"
     >
-      {/* Container do Modal (com barra de rolagem se ficar muito grande) */}
+      {/* Container do Modal */}
       <div className="bg-[#f4f6fb] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative flex flex-col">
         
         {/* Cabeçalho Fixo do Modal */}

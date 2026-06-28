@@ -1,18 +1,24 @@
 // src/components/catalogo/categoria/VisualizarCategoria.jsx
 "use client";
+import Link from "next/link"; // Adicionado o import do Link
 import { useVisualizarCategoria } from "@/hooks/catalogo/categoria/useVisualizarCategoria";
-import { X, Package, FolderOpen, Tag, Barcode, AlertTriangle } from "lucide-react";
+import { 
+    X, 
+    Package, 
+    FolderOpen, 
+    Tag, 
+    Barcode, 
+    AlertTriangle, 
+    Eye 
+} from "lucide-react";
 
 export default function VisualizarCategoria({ id, onClose }) {
-  // Aqui o componente "chama" o hook, passando o ID, e recebe os dados
-  const { loading, categoria, erro, formatarPreco } = useVisualizarCategoria(id);
+  const { loading, categoria, erro } = useVisualizarCategoria(id);
 
-  // Função para fechar o modal ao clicar na parte escura do fundo
   const handleFundoClick = (e) => {
     if (e.target.id === "fundo-modal") onClose();
   };
 
-  // Tela de Carregamento enquanto o hook busca os dados
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
@@ -24,7 +30,6 @@ export default function VisualizarCategoria({ id, onClose }) {
     );
   }
 
-  // Tela de Erro caso a categoria não seja encontrada ou dê erro na API
   if (erro || !categoria) {
     return (
       <div 
@@ -55,17 +60,14 @@ export default function VisualizarCategoria({ id, onClose }) {
     );
   }
 
-  // Tela Principal do Modal com os dados carregados
   return (
     <div 
       id="fundo-modal" 
       onClick={handleFundoClick}
       className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
     >
-      {/* Container do Modal (com limite de altura e scroll) */}
       <div className="bg-[#f4f6fb] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative flex flex-col">
         
-        {/* Cabeçalho Fixo do Modal */}
         <div className="bg-white sticky top-0 z-10 border-b border-gray-100 p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-blue-50 rounded-lg">
@@ -85,10 +87,7 @@ export default function VisualizarCategoria({ id, onClose }) {
           </button>
         </div>
 
-        {/* Corpo do Modal */}
         <div className="p-6 flex flex-col gap-6">
-          
-          {/* Informações Resumidas (Cards) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
               <div className="p-3 bg-blue-50 rounded-lg">
@@ -110,7 +109,6 @@ export default function VisualizarCategoria({ id, onClose }) {
             </div>
           </div>
 
-          {/* Lista de Produtos Vinculados */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
             <div className="p-5 border-b border-gray-100 flex items-center gap-2">
               <Package className="w-5 h-5 text-gray-400" />
@@ -126,8 +124,6 @@ export default function VisualizarCategoria({ id, onClose }) {
                     <tr className="text-xs font-semibold text-gray-500">
                       <th className="px-6 py-4">Produto</th>
                       <th className="px-6 py-4">Código</th>
-                      <th className="px-6 py-4 text-right">Preço de Custo</th>
-                      <th className="px-6 py-4 text-right">Preço de Venda</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -144,12 +140,6 @@ export default function VisualizarCategoria({ id, onClose }) {
                             <Barcode className="w-3.5 h-3.5" />
                             {prod.codigo_produto}
                           </span>
-                        </td>
-                        <td className="px-6 py-4 text-right text-gray-600 font-medium">
-                          {formatarPreco(prod.preco_custo)}
-                        </td>
-                        <td className="px-6 py-4 text-right font-bold text-green-600">
-                          {formatarPreco(prod.preco_venda)}
                         </td>
                       </tr>
                     ))}
