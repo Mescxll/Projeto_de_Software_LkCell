@@ -102,6 +102,11 @@ export function useAtualizarCliente(uuid) {
         .replace(/(\d{2})(\d)/, "($1) $2")
         .replace(/(\d{5})(\d)/, "$1-$2")
         .slice(0, 15);
+    }else if(name === "telefone_secundario") {
+      value = num
+        .replace(/(\d{2})(\d)/, "($1) $2")
+        .replace(/(\d{5})(\d)/, "$1-$2")
+        .slice(0, 15);
     } else if (name === "cep") {
       value = num.replace(/(\d{5})(\d)/, "$1-$2").slice(0, 9);
     } else if (name === "numero") {
