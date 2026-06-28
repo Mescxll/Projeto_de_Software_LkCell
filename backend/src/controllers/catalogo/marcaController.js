@@ -40,6 +40,21 @@ const buscarMarca = async (req, res) => {
           orderBy: { nome: "asc" },
           include: {
             _count: { select: { produtos: true } },
+            produtos: {
+              select: {
+                id_produto: true,
+                codigo_produto: true,
+                nome: true,
+                descricao: true,
+                categoria: {
+                  select: {
+                    id_categoria: true,
+                    nome: true,
+                  },
+                },
+              },
+              orderBy: { nome: "asc" },
+            },
           },
         },
       },
