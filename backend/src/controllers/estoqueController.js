@@ -2,13 +2,97 @@
 const prisma = require("../lib/prisma");
 
 /**
- * Busca o saldo atual de um produto, agrupado por localização.
+ * Cadastra o estoque inicial de um produto que ainda não tem nenhum registro.
+ * Cria um registro ENTRADA por localização informada.
+ * Bloqueado se o produto já possuir qualquer registro de estoque.
+ *
+ * POST /estoque/entrada-inicial
+ * body: {
+ *   fk_produto_id,
+ *   estoque_minimo,
+ *   estoque_ideal,
+ *   entradas: [{ fk_localizacao_id, quantidade }]
+ * }
+ */
+const cadastrarEntradaInicial = async (req, res) => {
+  try {
+    const { fk_produto_id, estoque_minimo, estoque_ideal, entradas } = req.body;
+
+    const produtoId = parseInt(fk_produto_id);
+    const minimoInt = parseInt(estoque_minimo);
+    const idealInt = parseInt(estoque_ideal);
+
+    // Valida produto
+    const produto = await prisma.produto.findUnique({
+      where: { id_produto: produtoId },
+    });
+    if (!produto) {
+      return res.status(404).json({ erro: "Produto não encontrado." });
+    }
+
+    // Bloqueia se já tiver qualquer registro de estoque
+    const registroExistente = await prisma.estoque.findFirst({
+      where: { fk_produto_id: produtoId },
+    });
+    if (registroExistente) {
+      return res.status(409).json({
+        erro: "Este produto já possui registros de estoque. Use transferência ou compra para movimentar a quantidade.",
+      });
+    }
+
+    // Valida localizações
+    const ids = entradas.map((e) => parseInt(e.fk_localizacao_id));
+    const localizacoesDB = await prisma.localizacao.findMany({
+      where: { id_localizacao: { in: ids } },
+    });
+    if (localizacoesDB.length !== ids.length) {
+      return res.status(404).json({
+        erro: "Uma ou mais localizações informadas não foram encontradas.",
+      });
+    }
+
+    const resultado = await prisma.$transaction(async (tx) => {
+      const registros = [];
+      for (const entrada of entradas) {
+        const qty = parseInt(entrada.quantidade);
+        const registro = await tx.estoque.create({
+          data: {
+            fk_produto_id: produtoId,
+            fk_localizacao_id: parseInt(entrada.fk_localizacao_id),
+            tipo_movimento: "ENTRADA",
+            quantidade: qty,
+            estoque_atual: qty,
+            estoque_minimo: minimoInt,
+            estoque_ideal: idealInt,
+            observacao: "Estoque inicial do produto",
+          },
+          include: { localizacao: true },
+        });
+        registros.push(registro);
+      }
+      return registros;
+    });
+
+    return res.status(201).json({
+      mensagem: "Estoque inicial cadastrado com sucesso!",
+      registros: resultado,
+    });
+  } catch (error) {
+    console.error("Erro ao cadastrar estoque inicial:", error);
+    return res.status(500).json({
+      erro: "Erro interno no servidor ao cadastrar estoque inicial.",
+    });
+  }
+};
+
+/**
+ * Busca a quantidade atual de um produto, agrupado por localização.
  * Mesma lógica que existia em produtoController.buscarEstoquePorLocalizacao —
  * centralizada aqui pois é uma operação de "estoque", não de "produto".
  *
  * GET /estoque/produto/:id
  */
-const buscarSaldoPorProduto = async (req, res) => {
+const buscarQuantidadePorProduto = async (req, res) => {
   try {
     const produtoId = parseInt(req.params.id);
 
@@ -48,10 +132,10 @@ const buscarSaldoPorProduto = async (req, res) => {
 
     return res.status(200).json(resultado);
   } catch (error) {
-    console.error("Erro ao buscar saldo por produto:", error);
+    console.error("Erro ao buscar quantidade por produto:", error);
     return res
       .status(500)
-      .json({ erro: "Erro interno no servidor ao buscar saldo do produto." });
+      .json({ erro: "Erro interno no servidor ao buscar quantidade do produto." });
   }
 };
 
@@ -98,9 +182,9 @@ const buscarHistoricoPorProduto = async (req, res) => {
     return res.status(200).json(historico);
   } catch (error) {
     console.error("Erro ao buscar histórico de estoque:", error);
-    return res
-      .status(500)
-      .json({ erro: "Erro interno no servidor ao buscar histórico de estoque." });
+    return res.status(500).json({
+      erro: "Erro interno no servidor ao buscar histórico de estoque.",
+    });
   }
 };
 
@@ -180,9 +264,9 @@ const buscarMovimentacoesGerais = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao buscar movimentações gerais de estoque:", error);
-    return res
-      .status(500)
-      .json({ erro: "Erro interno no servidor ao buscar movimentações de estoque." });
+    return res.status(500).json({
+      erro: "Erro interno no servidor ao buscar movimentações de estoque.",
+    });
   }
 };
 
@@ -190,7 +274,11 @@ const buscarMovimentacoesGerais = async (req, res) => {
 // se qualquer localização estiver pior, o produto herda o pior status.
 const GRAVIDADE_STATUS = { abaixo_minimo: 2, acima_ideal: 1, normal: 0 };
 
-const calcularStatusLocalizacao = (estoqueAtual, estoqueMinimo, estoqueIdeal) => {
+const calcularStatusLocalizacao = (
+  estoqueAtual,
+  estoqueMinimo,
+  estoqueIdeal,
+) => {
   if (estoqueMinimo !== null && estoqueAtual <= estoqueMinimo) {
     return "abaixo_minimo";
   }
@@ -203,7 +291,7 @@ const calcularStatusLocalizacao = (estoqueAtual, estoqueMinimo, estoqueIdeal) =>
 /**
  * Visão geral de estoque: um item por produto, com as localizações
  * aninhadas. O status de cada localização é calculado individualmente
- * (saldo daquela localização vs. mínimo/ideal do produto); o status do
+ * (quantidade daquela localização vs. mínimo/ideal do produto); o status do
  * produto (linha principal) é o "pior caso" entre suas localizações.
  *
  * Aceita ?status=abaixo_minimo para retornar apenas produtos que têm
@@ -216,9 +304,6 @@ const buscarVisaoGeralEstoque = async (req, res) => {
   try {
     const { status } = req.query;
 
-    // Busca todos os registros e mantém só o mais recente por
-    // combinação produto+localização. Feito em memória pois o Prisma
-    // não suporta "distinct + último por grupo" de forma nativa elegante.
     const registros = await prisma.estoque.findMany({
       orderBy: { data_hora: "desc" },
       include: {
@@ -226,6 +311,7 @@ const buscarVisaoGeralEstoque = async (req, res) => {
           select: {
             id_produto: true,
             nome: true,
+            descricao: true,
             codigo_produto: true,
             categoria: { select: { nome: true } },
           },
@@ -242,7 +328,6 @@ const buscarVisaoGeralEstoque = async (req, res) => {
       }
     }
 
-    // Agrupa os últimos registros por produto
     const mapaProdutos = new Map();
     for (const reg of mapaUltimos.values()) {
       if (!mapaProdutos.has(reg.fk_produto_id)) {
@@ -250,6 +335,7 @@ const buscarVisaoGeralEstoque = async (req, res) => {
           id_produto: reg.fk_produto_id,
           nome: reg.produto?.nome,
           codigo_produto: reg.produto?.codigo_produto,
+          descricao: reg.produto?.descricao, 
           categoria: reg.produto?.categoria?.nome ?? null,
           estoque_minimo: reg.estoque_minimo,
           estoque_ideal: reg.estoque_ideal,
@@ -272,11 +358,10 @@ const buscarVisaoGeralEstoque = async (req, res) => {
     }
 
     let resultado = Array.from(mapaProdutos.values()).map((produto) => {
-      const saldo_total = produto.localizacoes.reduce(
+      const quantidade_total = produto.localizacoes.reduce(
         (soma, loc) => soma + loc.estoque_atual,
         0,
       );
-
       const statusProduto = produto.localizacoes.reduce(
         (pior, loc) =>
           GRAVIDADE_STATUS[loc.status] > GRAVIDADE_STATUS[pior]
@@ -284,12 +369,7 @@ const buscarVisaoGeralEstoque = async (req, res) => {
             : pior,
         "normal",
       );
-
-      return {
-        ...produto,
-        saldo_total,
-        status: statusProduto,
-      };
+      return { ...produto, quantidade_total: quantidade_total, status: statusProduto };
     });
 
     if (status) {
@@ -305,12 +385,34 @@ const buscarVisaoGeralEstoque = async (req, res) => {
       ),
     );
 
-    return res.status(200).json(resultado);
+    // ← NOVO: produtos que não têm nenhum registro de estoque
+    const idsComEstoque = new Set(
+      Array.from(mapaUltimos.values()).map((r) => r.fk_produto_id),
+    );
+
+    const produtosSemEstoque = await prisma.produto.findMany({
+      where: {
+        estoque: { none: {} },
+      },
+      select: {
+        id_produto: true,
+        nome: true,
+        descricao: true,
+        codigo_produto: true,
+        categoria: { select: { nome: true } },
+      },
+      orderBy: { nome: "asc" },
+    });
+
+    return res.status(200).json({
+      produtos: resultado,
+      sem_estoque: produtosSemEstoque,
+    });
   } catch (error) {
     console.error("Erro ao buscar visão geral de estoque:", error);
-    return res
-      .status(500)
-      .json({ erro: "Erro interno no servidor ao buscar visão geral de estoque." });
+    return res.status(500).json({
+      erro: "Erro interno no servidor ao buscar visão geral de estoque.",
+    });
   }
 };
 
@@ -320,7 +422,7 @@ const buscarVisaoGeralEstoque = async (req, res) => {
  * como esses campos vivem em cada registro de estoque (por desenho do
  * schema, para preservar histórico), o ajuste precisa "espalhar" o novo
  * valor para todas as localizações onde o produto tem movimento — criando
- * um novo registro AJUSTE (quantidade 0) em cada uma, sem alterar saldo.
+ * um novo registro AJUSTE (quantidade 0) em cada uma, sem alterar quantidade.
  *
  * PATCH /estoque/parametros/:produtoId
  * body: { estoque_minimo?, estoque_ideal? }
@@ -411,16 +513,16 @@ const ajustarParametros = async (req, res) => {
     }
 
     console.error("Erro ao ajustar parâmetros de estoque:", error);
-    return res
-      .status(500)
-      .json({ erro: "Erro interno no servidor ao ajustar parâmetros de estoque." });
+    return res.status(500).json({
+      erro: "Erro interno no servidor ao ajustar parâmetros de estoque.",
+    });
   }
 };
 
 /**
  * Transfere quantidade de um produto entre duas localizações.
  * Gera dois registros AJUSTE (saída na origem, entrada no destino),
- * com observações linkadas entre si. Saldo pode chegar a zero na origem.
+ * com observações linkadas entre si. Quantidade pode chegar a zero na origem.
  *
  * POST /estoque/transferencia
  * body: { fk_produto_id, fk_localizacao_origem_id, fk_localizacao_destino_id, quantidade }
@@ -441,8 +543,7 @@ const transferirEstoque = async (req, res) => {
 
     if (!produtoId || !origemId || !destinoId || !qtd) {
       return res.status(400).json({
-        erro:
-          "Informe fk_produto_id, fk_localizacao_origem_id, fk_localizacao_destino_id e quantidade.",
+        erro: "Informe fk_produto_id, fk_localizacao_origem_id, fk_localizacao_destino_id e quantidade.",
       });
     }
 
@@ -468,10 +569,14 @@ const transferirEstoque = async (req, res) => {
       return res.status(404).json({ erro: "Produto não encontrado." });
     }
     if (!origem) {
-      return res.status(404).json({ erro: "Localização de origem não encontrada." });
+      return res
+        .status(404)
+        .json({ erro: "Localização de origem não encontrada." });
     }
     if (!destino) {
-      return res.status(404).json({ erro: "Localização de destino não encontrada." });
+      return res
+        .status(404)
+        .json({ erro: "Localização de destino não encontrada." });
     }
 
     const ultimoOrigem = await prisma.estoque.findFirst({
@@ -479,11 +584,11 @@ const transferirEstoque = async (req, res) => {
       orderBy: { data_hora: "desc" },
     });
 
-    const saldoOrigem = ultimoOrigem?.estoque_atual ?? 0;
+    const quantidadeOrigem = ultimoOrigem?.estoque_atual ?? 0;
 
-    if (qtd > saldoOrigem) {
+    if (qtd > quantidadeOrigem) {
       return res.status(409).json({
-        erro: `Estoque insuficiente na localização de origem. Disponível: ${saldoOrigem}, solicitado: ${qtd}.`,
+        erro: `Estoque insuficiente na localização de origem. Disponível: ${quantidadeOrigem}, solicitado: ${qtd}.`,
       });
     }
 
@@ -499,7 +604,7 @@ const transferirEstoque = async (req, res) => {
           fk_localizacao_id: origemId,
           tipo_movimento: "AJUSTE",
           quantidade: qtd,
-          estoque_atual: saldoOrigem - qtd,
+          estoque_atual: quantidadeOrigem - qtd,
           estoque_minimo: ultimoOrigem?.estoque_minimo ?? null,
           estoque_ideal: ultimoOrigem?.estoque_ideal ?? null,
           observacao: `Transferência para ${destino.localizacao}`,
@@ -514,8 +619,12 @@ const transferirEstoque = async (req, res) => {
           tipo_movimento: "AJUSTE",
           quantidade: qtd,
           estoque_atual: (ultimoDestino?.estoque_atual ?? 0) + qtd,
-          estoque_minimo: ultimoDestino?.estoque_minimo ?? ultimoOrigem?.estoque_minimo ?? null,
-          estoque_ideal: ultimoDestino?.estoque_ideal ?? ultimoOrigem?.estoque_ideal ?? null,
+          estoque_minimo:
+            ultimoDestino?.estoque_minimo ??
+            ultimoOrigem?.estoque_minimo ??
+            null,
+          estoque_ideal:
+            ultimoDestino?.estoque_ideal ?? ultimoOrigem?.estoque_ideal ?? null,
           observacao: `Transferência de ${origem.localizacao}`,
         },
         include: { localizacao: true },
@@ -536,11 +645,116 @@ const transferirEstoque = async (req, res) => {
   }
 };
 
+/**
+ * Ajusta a quantidade de um produto por localização via diferença (adicionar/remover).
+ * Cada ajuste gera um registro AJUSTE no histórico.
+ *
+ * PATCH /estoque/ajuste-quantidade
+ * body: {
+ *   fk_produto_id,
+ *   ajustes: [{ fk_localizacao_id, tipo: "adicionar"|"remover", quantidade, observacao? }]
+ * }
+ */
+const ajustarQuantidade = async (req, res) => {
+  try {
+    const { fk_produto_id, ajustes } = req.body;
+    const produtoId = parseInt(fk_produto_id);
+
+    const produto = await prisma.produto.findUnique({
+      where: { id_produto: produtoId },
+    });
+    if (!produto) {
+      return res.status(404).json({ erro: "Produto não encontrado." });
+    }
+
+    // Busca a quantidade atual de cada localização antes da transação
+    // para validar remoções que deixariam quantidade negativa
+    const errosValidacao = [];
+    const quantidadeAtuais = new Map();
+
+    for (const ajuste of ajustes) {
+      const locId = parseInt(ajuste.fk_localizacao_id);
+      const ultimoRegistro = await prisma.estoque.findFirst({
+        where: { fk_produto_id: produtoId, fk_localizacao_id: locId },
+        orderBy: { data_hora: "desc" },
+      });
+
+      const quantidadeAtual = ultimoRegistro?.estoque_atual ?? 0;
+      quantidadeAtuais.set(locId, { quantidadeAtual, ultimoRegistro });
+
+      if (ajuste.tipo === "remover") {
+        const qty = parseInt(ajuste.quantidade);
+        if (qty > quantidadeAtual) {
+          const loc = await prisma.localizacao.findUnique({
+            where: { id_localizacao: locId },
+          });
+          errosValidacao.push(
+            `Quantidade insuficiente em "${loc?.localizacao ?? locId}": disponível ${quantidadeAtual}, tentativa de remover ${qty}.`,
+          );
+        }
+      }
+    }
+
+    if (errosValidacao.length > 0) {
+      return res.status(409).json({ erro: errosValidacao.join(" | ") });
+    }
+
+    const resultado = await prisma.$transaction(async (tx) => {
+      const registros = [];
+
+      for (const ajuste of ajustes) {
+        const locId = parseInt(ajuste.fk_localizacao_id);
+        const qty = parseInt(ajuste.quantidade);
+        const { quantidadeAtual, ultimoRegistro } = quantidadeAtuais.get(locId);
+
+        const novaQuantidade =
+          ajuste.tipo === "adicionar" ? quantidadeAtual + qty : quantidadeAtual - qty;
+
+        const observacao =
+          ajuste.observacao?.trim() ||
+          (ajuste.tipo === "adicionar"
+            ? `Adição manual de ${qty} unidade(s)`
+            : `Remoção manual de ${qty} unidade(s)`);
+
+        const registro = await tx.estoque.create({
+          data: {
+            fk_produto_id: produtoId,
+            fk_localizacao_id: locId,
+            tipo_movimento: "AJUSTE",
+            quantidade: qty,
+            estoque_atual: novaQuantidade,
+            estoque_minimo: ultimoRegistro?.estoque_minimo ?? null,
+            estoque_ideal: ultimoRegistro?.estoque_ideal ?? null,
+            observacao,
+          },
+          include: { localizacao: true },
+        });
+
+        registros.push(registro);
+      }
+
+      return registros;
+    });
+
+    return res.status(200).json({
+      mensagem: "Ajuste de quantidade registrada com sucesso!",
+      registros: resultado,
+    });
+  } catch (error) {
+    console.error("Erro ao ajustar quantidade:", error);
+    return res.status(500).json({
+      erro: "Erro interno no servidor ao ajustar quantidade de estoque.",
+    });
+  }
+};
+
 module.exports = {
-  buscarSaldoPorProduto,
+  buscarQuantidadePorProduto,
   buscarHistoricoPorProduto,
   buscarVisaoGeralEstoque,
   buscarMovimentacoesGerais,
   ajustarParametros,
+  ajustarQuantidade,
   transferirEstoque,
+  cadastrarEntradaInicial,
 };

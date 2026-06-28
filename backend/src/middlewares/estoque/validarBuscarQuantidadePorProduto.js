@@ -1,5 +1,5 @@
-// middlewares/estoque/validarBuscarSaldoPorProduto.js
-const validarBuscarSaldoPorProduto = (req, res, next) => {
+// middlewares/estoque/validarBuscarQuantidadePorProduto.js
+const validarBuscarQuantidadePorProduto = (req, res, next) => {
   const { id } = req.params;
 
   // Valida o ID do produto
@@ -12,4 +12,4 @@ const validarBuscarSaldoPorProduto = (req, res, next) => {
   next();
 };
 
-module.exports = validarBuscarSaldoPorProduto;
+module.exports = validarBuscarQuantidadePorProduto;

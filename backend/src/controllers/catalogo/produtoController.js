@@ -9,11 +9,6 @@ const cadastrarProduto = async (req, res) => {
       fk_categoria_id,
       fk_modelo_id,
       compativel_todas_marcas,
-      estoque_minimo,
-      estoque_ideal,
-      // Array de { fk_localizacao_id, quantidade }
-      // Array vazio ou ausente = produto cadastrado com estoque zero
-      estoque_entradas = [],
       preco_compra,
       preco_custo,
       preco_venda,
@@ -22,13 +17,10 @@ const cadastrarProduto = async (req, res) => {
 
     const categoriaId = parseInt(fk_categoria_id);
     const modeloId = fk_modelo_id ? parseInt(fk_modelo_id) : null;
-    const estoqueMinimoInt = estoque_minimo ? parseInt(estoque_minimo) : null;
-    const estoqueIdealInt = estoque_ideal ? parseInt(estoque_ideal) : null;
 
     const categoriaDB = await prisma.categoria.findUnique({
       where: { id_categoria: categoriaId },
     });
-
     if (!categoriaDB) {
       return res.status(404).json({ erro: "Categoria não encontrada." });
     }
@@ -48,77 +40,23 @@ const cadastrarProduto = async (req, res) => {
       ? `${modeloDB.marca.nome} ${modeloDB.nome}`
       : descricao.trim();
 
-    // Valida localizações informadas antes de entrar na transação
-    if (estoque_entradas.length > 0) {
-      const ids = estoque_entradas.map((e) => parseInt(e.fk_localizacao_id));
-
-      const localizacoesDB = await prisma.localizacao.findMany({
-        where: { id_localizacao: { in: ids } },
-      });
-
-      if (localizacoesDB.length !== ids.length) {
-        return res.status(404).json({
-          erro: "Uma ou mais localizações informadas não foram encontradas.",
-        });
-      }
-    }
-
-    const [novoProduto] = await prisma.$transaction(async (tx) => {
-      const produto = await tx.produto.create({
-        data: {
-          codigo_produto: codigo_produto.trim(),
-          nome: nomeProduto,
-          descricao: descricao.trim(),
-          fk_categoria_id: categoriaDB.id_categoria,
-          fk_modelo_id: modeloDB?.id_modelo ?? null,
-          compativel_todas_marcas: compativel_todas_marcas === true,
-          preco_venda: parseFloat(preco_venda),
-          preco_compra: preco_compra ? parseFloat(preco_compra) : null,
-          preco_custo: preco_custo ? parseFloat(preco_custo) : null,
-          margem_lucro: margem_lucro ? parseFloat(margem_lucro) : null,
-        },
-        include: {
-          categoria: true,
-          modelo: { include: { marca: true } },
-        },
-      });
-
-      if (estoque_entradas.length === 0) {
-        // Estoque zero — um único registro sem localização (saldo inicial = 0)
-        await tx.estoque.create({
-          data: {
-            fk_produto_id: produto.id_produto,
-            tipo_movimento: "ENTRADA",
-            quantidade: 0,
-            estoque_atual: 0,
-            estoque_minimo: estoqueMinimoInt,
-            estoque_ideal: estoqueIdealInt,
-            observacao: "Cadastro inicial do produto",
-          },
-        });
-      } else {
-        // Um registro de ENTRADA por localização, saldo acumulado
-        let saldoAcumulado = 0;
-        for (const entrada of estoque_entradas) {
-          const qty = parseInt(entrada.quantidade);
-          saldoAcumulado += qty;
-
-          await tx.estoque.create({
-            data: {
-              fk_produto_id: produto.id_produto,
-              fk_localizacao_id: parseInt(entrada.fk_localizacao_id),
-              tipo_movimento: "ENTRADA",
-              quantidade: qty,
-              estoque_atual: saldoAcumulado,
-              estoque_minimo: estoqueMinimoInt,
-              estoque_ideal: estoqueIdealInt,
-              observacao: "Cadastro inicial do produto",
-            },
-          });
-        }
-      }
-
-      return [produto];
+    const novoProduto = await prisma.produto.create({
+      data: {
+        codigo_produto: codigo_produto.trim(),
+        nome: nomeProduto,
+        descricao: descricao.trim(),
+        fk_categoria_id: categoriaDB.id_categoria,
+        fk_modelo_id: modeloDB?.id_modelo ?? null,
+        compativel_todas_marcas: compativel_todas_marcas === true,
+        preco_venda: parseFloat(preco_venda),
+        preco_compra: preco_compra ? parseFloat(preco_compra) : null,
+        preco_custo: preco_custo ? parseFloat(preco_custo) : null,
+        margem_lucro: margem_lucro ? parseFloat(margem_lucro) : null,
+      },
+      include: {
+        categoria: true,
+        modelo: { include: { marca: true } },
+      },
     });
 
     return res.status(201).json({
@@ -127,16 +65,14 @@ const cadastrarProduto = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao cadastrar produto:", error);
-
     if (error.code === "P2002" && error.message.includes("codigo_produto")) {
       return res.status(409).json({
         erro: "Este Código de Produto já está cadastrado no sistema!",
       });
     }
-
-    return res
-      .status(500)
-      .json({ erro: "Erro interno no servidor ao cadastrar produto." });
+    return res.status(500).json({
+      erro: "Erro interno no servidor ao cadastrar produto.",
+    });
   }
 };
 

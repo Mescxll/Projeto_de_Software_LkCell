@@ -5,7 +5,7 @@ const estoqueController = require("../controllers/estoqueController");
 
 const validarBuscarVisaoGeralEstoque = require("../middlewares/estoque/validarBuscarVisaoGeralEstoque");
 const validarBuscarMovimentacoesGerais = require("../middlewares/estoque/validarBuscarMovimentacoesGerais");
-const validarBuscarSaldoPorProduto = require("../middlewares/estoque/validarBuscarSaldoPorProduto");
+const validarBuscarQuantidadePorProduto = require("../middlewares/estoque/validarBuscarQuantidadePorProduto");
 const validarBuscarHistoricoPorProduto = require("../middlewares/estoque/validarBuscarHistoricoPorProduto");
 const validarAjustarParametros = require("../middlewares/estoque/validarAjustarParametros");
 const validarTransferirEstoque = require("../middlewares/estoque/validarTransferirEstoque");
@@ -17,10 +17,15 @@ router.get("/movimentacoes", validarBuscarMovimentacoesGerais, estoqueController
 // Buscar Histórico de Estoque Por Produto (GET)
 router.get("/produto/:id/historico", validarBuscarHistoricoPorProduto, estoqueController.buscarHistoricoPorProduto);
 // Buscar Saldo de Estoque Por Produto (GET)
-router.get("/produto/:id", validarBuscarSaldoPorProduto, estoqueController.buscarSaldoPorProduto);
+router.get("/produto/:id", validarBuscarQuantidadePorProduto, estoqueController.buscarQuantidadePorProduto);
 // Ajustar Parâmetros de Estoque — mínimo/ideal (PATCH)
 router.patch("/parametros/:produtoId", validarAjustarParametros, estoqueController.ajustarParametros);
 // Transferir Estoque Entre Localizações (POST)
 router.post("/transferencia", validarTransferirEstoque, estoqueController.transferirEstoque);
+// valida que produto não tem estoque, cria ENTRADAs por localização
+router.post("/entrada-inicial", estoqueController.cadastrarEntradaInicial);
+router.patch("/ajuste-quantidade", estoqueController.ajustarQuantidade);
+
+
 
 module.exports = router;
