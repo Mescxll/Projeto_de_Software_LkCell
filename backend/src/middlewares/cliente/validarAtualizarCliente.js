@@ -33,8 +33,8 @@ const validarAtualizarCliente = (req, res, next) => {
     return res.status(400).json({ erro: "Nenhum dado válido foi enviado para atualização." });
   }
 
-  // Trava (UF precisa ter 2 letras)
-  if (uf !== undefined && uf.trim().length !== 2) {
+  // Trava (UF precisa ter 2 letras quando for informada)
+  if (uf !== undefined && uf.trim() !== "" && uf.trim().length !== 2) {
     return res.status(400).json({ erro: "A UF (Estado) deve conter exatamente 2 letras (Ex: BA, SP)." });
   }
 

@@ -214,7 +214,7 @@ const atualizarCliente = async (req, res) => {
 
     // Padroniza as strings para o banco
     const emailLimpo = email ? email.trim().toLowerCase() : undefined;
-    const ufLimpa = uf ? uf.trim().toUpperCase() : undefined;
+    const ufLimpa = uf?.trim() ? uf.trim().toUpperCase() : undefined;
 
     // Atualização do Banco
     const clienteAtualizado = await prisma.cliente.update({

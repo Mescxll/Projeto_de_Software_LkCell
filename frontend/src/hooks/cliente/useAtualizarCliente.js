@@ -81,7 +81,7 @@ export function useAtualizarCliente(uuid) {
           numero: data.numero?.toString() || "",
           bairro: data.bairro || "",
           cidade: data.cidade || "",
-          uf: data.uf || "",
+          uf: data.uf?.trim() || "",
           cep: formatarCEP(data.cep),
         });
         setLoading(false);
