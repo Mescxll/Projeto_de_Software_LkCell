@@ -217,7 +217,7 @@ export function useCadastrarProduto() {
         }
       }
 
-      setNomeProduto(dataProduto.produto.nome ?? form.descricao.trim());
+      setNomeProduto(dataProduto.produto.descricao ?? form.nome.trim());
       setIdProdutoCriado(idProduto);
 
       if (falhas.length > 0) {

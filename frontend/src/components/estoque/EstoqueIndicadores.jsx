@@ -13,7 +13,7 @@ export default function EstoqueIndicadores({ dados, onClickAlertas }) {
 
   const cards = [
     {
-      titulo: "Itens cadastrados",
+      titulo: "Produtos cadastrados no Estoque",
       valor: dados.itensCadastrados,
       icone: Boxes,
       cor: "azul",
