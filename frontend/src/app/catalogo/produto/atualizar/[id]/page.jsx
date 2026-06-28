@@ -37,7 +37,6 @@ export default function AtualizarProduto() {
     isSubmitting,
     form,
     codigoProduto,
-    estoqueAtual,
     categorias,
     marcas,
     modelos,
@@ -73,9 +72,7 @@ export default function AtualizarProduto() {
   const inputIconClass =
     "w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none";
   const inputDisabledClass =
-    "w-full pl-9 pr-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed";
-  const inputDisabledNoIconClass =
-    "w-full px-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed";
+    "w-full pl-9 pr-4 py-2.5 border border-gray-100 rounded-lg text-sm text-gray-400 bg-gray-50 outline-none cursor-not-allowed"; 
 
   const opcoesCategorias = categorias.map((c) => ({
     value: c.id_categoria,
@@ -224,38 +221,7 @@ export default function AtualizarProduto() {
                     className="w-full pl-10 pr-4 pt-4 pb-3 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                   />
                 </div>
-              </div>
-
-              {/* Estoque — somente leitura */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-gray-600">
-                    Estoque
-                  </label>
-                  <span className="text-[10px] text-gray-400 italic">
-                    Gerenciado pelo módulo de estoque
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    ["Estoque Atual", estoqueAtual.estoque_atual],
-                    ["Estoque Mínimo", estoqueAtual.estoque_minimo],
-                    ["Estoque Ideal", estoqueAtual.estoque_ideal],
-                  ].map(([label, valor]) => (
-                    <div key={label}>
-                      <label className="text-xs text-gray-500 mb-1 block">
-                        {label}
-                      </label>
-                      <input
-                        type="text"
-                        value={valor}
-                        disabled
-                        className={inputDisabledNoIconClass}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              </div>           
 
               {/* Preços */}
               <div className="grid grid-cols-2 gap-3 mb-6">

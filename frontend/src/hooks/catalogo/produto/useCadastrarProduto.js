@@ -7,11 +7,10 @@ export function useCadastrarProduto() {
   const [nomeProduto, setNomeProduto] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Dados de apoio para os selects — agora SOMENTE seleção,
-  // sem criação automática de categoria/marca/modelo.
   const [categorias, setCategorias] = useState([]);
   const [marcas, setMarcas] = useState([]);
-  const [modelos, setModelos] = useState([]); // já filtrados pela marca escolhida
+  const [modelos, setModelos] = useState([]);
+  const [localizacoes, setLocalizacoes] = useState([]);
   const [loadingDados, setLoadingDados] = useState(true);
 
   const [form, setForm] = useState({
@@ -22,7 +21,6 @@ export function useCadastrarProduto() {
     fk_modelo_id: "",
     estoque_minimo: "",
     estoque_ideal: "",
-    estoque_atual: "",
     preco_compra: "",
     preco_custo: "",
     preco_venda: "",
@@ -30,36 +28,103 @@ export function useCadastrarProduto() {
   });
 
   // ---------------------------------------------------------------------
+  // Estoque por localização
+  // ---------------------------------------------------------------------
+  // Lista de entradas: [{ fk_localizacao_id, quantidade, localizacaoNome }]
+  const [estoqueEntradas, setEstoqueEntradas] = useState([]);
+
+  const [estoqueForm, setEstoqueForm] = useState({
+    fk_localizacao_id: "",
+    quantidade: "",
+  });
+
+  // Estoque atual total = soma das entradas (somente leitura)
+  const estoqueAtualTotal = estoqueEntradas.reduce(
+    (acc, e) => acc + e.quantidade,
+    0,
+  );
+
+  const handleChangeEstoqueForm = (campo, valor) => {
+    setEstoqueForm((prev) => ({ ...prev, [campo]: valor }));
+  };
+
+  const handleAdicionarEstoqueEntrada = () => {
+    if (!estoqueForm.fk_localizacao_id || !estoqueForm.quantidade) {
+      setErroMsg("Selecione uma localização e informe a quantidade.");
+      setModal("erro");
+      return;
+    }
+
+    const qty = parseInt(estoqueForm.quantidade);
+    if (!Number.isInteger(qty) || qty <= 0) {
+      setErroMsg("A quantidade deve ser um número inteiro maior que zero.");
+      setModal("erro");
+      return;
+    }
+
+    const locId = parseInt(estoqueForm.fk_localizacao_id);
+
+    // Bloqueia duplicata de localização
+    if (estoqueEntradas.some((e) => e.fk_localizacao_id === locId)) {
+      setErroMsg("Esta localização já foi adicionada. Remova-a para editar.");
+      setModal("erro");
+      return;
+    }
+
+    const loc = localizacoes.find((l) => l.id_localizacao === locId);
+
+    setEstoqueEntradas((prev) => [
+      ...prev,
+      {
+        fk_localizacao_id: locId,
+        quantidade: qty,
+        localizacaoNome: loc?.localizacao ?? "—",
+      },
+    ]);
+
+    setEstoqueForm({ fk_localizacao_id: "", quantidade: "" });
+  };
+
+  const handleRemoverEstoqueEntrada = (fk_localizacao_id) => {
+    setEstoqueEntradas((prev) =>
+      prev.filter((e) => e.fk_localizacao_id !== fk_localizacao_id),
+    );
+  };
+
+  // ---------------------------------------------------------------------
   // Compatibilidade
   // ---------------------------------------------------------------------
-  // "especificas" | "todas" | "universal"
   const [modoCompat, setModoCompat] = useState("especificas");
-  // Lista local — nada é enviado à API até o produto ser criado
   const [compatibilidades, setCompatibilidades] = useState([]);
-
-  // Formulário de adicionar uma entrada de compatibilidade
   const [compatForm, setCompatForm] = useState({
     fk_marca_id: "",
     fk_modelo_id: "",
     observacao: "",
   });
-  const [modelosCompat, setModelosCompat] = useState([]); // modelos filtrados p/ o form de compat
+  const [modelosCompat, setModelosCompat] = useState([]);
 
   useEffect(() => {
     const buscarDados = async () => {
       try {
-        const [resCategorias, resMarcas] = await Promise.all([
+        const [resCategorias, resMarcas, resLocalizacoes] = await Promise.all([
           fetch("http://localhost:3000/api/categorias"),
           fetch("http://localhost:3000/api/marcas"),
+          fetch("http://localhost:3000/api/localizacoes"),
         ]);
 
         const dataCategorias = resCategorias.ok
           ? await resCategorias.json()
           : [];
         const dataMarcas = resMarcas.ok ? await resMarcas.json() : [];
+        const dataLocalizacoes = resLocalizacoes.ok
+          ? await resLocalizacoes.json()
+          : [];
 
         setCategorias(Array.isArray(dataCategorias) ? dataCategorias : []);
         setMarcas(Array.isArray(dataMarcas) ? dataMarcas : []);
+        setLocalizacoes(
+          Array.isArray(dataLocalizacoes) ? dataLocalizacoes : [],
+        );
       } catch (err) {
         console.error("Erro ao buscar dados do catálogo:", err);
       } finally {
@@ -70,27 +135,22 @@ export function useCadastrarProduto() {
     buscarDados();
   }, []);
 
-  // Busca os modelos da marca selecionada no produto (não confundir com
-  // modelosCompat, que é para o formulário de compatibilidade)
   useEffect(() => {
     if (!form.fk_marca_id) {
       setModelos([]);
       return;
     }
-
     fetch(`http://localhost:3000/api/modelos?marca_id=${form.fk_marca_id}`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setModelos(Array.isArray(data) ? data : []))
       .catch((err) => console.error("Erro ao buscar modelos:", err));
   }, [form.fk_marca_id]);
 
-  // Busca os modelos da marca selecionada no formulário de compatibilidade
   useEffect(() => {
     if (!compatForm.fk_marca_id) {
       setModelosCompat([]);
       return;
     }
-
     fetch(
       `http://localhost:3000/api/modelos?marca_id=${compatForm.fk_marca_id}`,
     )
@@ -137,16 +197,14 @@ export function useCadastrarProduto() {
       return;
     }
 
-    if (["estoque_atual", "estoque_minimo", "estoque_ideal"].includes(name)) {
-      const somenteNumeros = value.replace(/\D/g, "");
-      setForm((prev) => ({ ...prev, [name]: somenteNumeros }));
+    if (["estoque_minimo", "estoque_ideal"].includes(name)) {
+      setForm((prev) => ({ ...prev, [name]: value.replace(/\D/g, "") }));
       return;
     }
 
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Marca do produto — ao trocar, limpa o modelo já escolhido
   const handleSelecionarMarca = (val) => {
     setForm((prev) => ({ ...prev, fk_marca_id: val, fk_modelo_id: "" }));
   };
@@ -162,9 +220,6 @@ export function useCadastrarProduto() {
   // ---------------------------------------------------------------------
   // Compatibilidade — handlers
   // ---------------------------------------------------------------------
-
-  // Trocar o modo descarta a lista local — nada foi persistido ainda,
-  // e as duas listas (INCLUSAO/EXCLUSAO) não podem coexistir.
   const handleTrocarModoCompat = (novoModo) => {
     setModoCompat(novoModo);
     setCompatibilidades([]);
@@ -173,7 +228,6 @@ export function useCadastrarProduto() {
 
   const handleChangeCompatForm = (campo, valor) => {
     if (campo === "fk_marca_id") {
-      // Trocar a marca no formulário de compat limpa o modelo escolhido
       setCompatForm((prev) => ({
         ...prev,
         fk_marca_id: valor,
@@ -196,7 +250,6 @@ export function useCadastrarProduto() {
       ? parseInt(compatForm.fk_modelo_id)
       : null;
 
-    // Bloqueia duplicata antes de chegar no backend
     const jaExiste = compatibilidades.some(
       (c) => c.fk_marca_id === marcaId && c.fk_modelo_id === modeloId,
     );
@@ -235,7 +288,7 @@ export function useCadastrarProduto() {
   };
 
   // ---------------------------------------------------------------------
-  // Submit — cria o produto e, em seguida, envia cada compatibilidade
+  // Submit
   // ---------------------------------------------------------------------
   const handleSubmit = async () => {
     if (
@@ -246,6 +299,15 @@ export function useCadastrarProduto() {
     ) {
       setErroMsg(
         "Preencha todos os campos obrigatórios: Código, Descrição, Categoria e Preço de Venda.",
+      );
+      setModal("erro");
+      return;
+    }
+
+    // Estoque > 0 exige pelo menos uma localização
+    if (estoqueAtualTotal > 0 && estoqueEntradas.length === 0) {
+      setErroMsg(
+        "Informe ao menos uma localização para o estoque inicial, ou deixe o estoque zerado.",
       );
       setModal("erro");
       return;
@@ -271,9 +333,13 @@ export function useCadastrarProduto() {
           }),
           compativel_todas_marcas:
             modoCompat === "todas" || modoCompat === "universal",
-          estoque_minimo: form.estoque_minimo,
-          estoque_ideal: form.estoque_ideal,
-          estoque_atual: form.estoque_atual,
+          estoque_minimo: form.estoque_minimo || null,
+          estoque_ideal: form.estoque_ideal || null,
+          // Envia as entradas por localização; array vazio = estoque zero
+          estoque_entradas: estoqueEntradas.map((e) => ({
+            fk_localizacao_id: e.fk_localizacao_id,
+            quantidade: e.quantidade,
+          })),
           preco_compra: precoCompra,
           preco_custo: precoCusto,
           preco_venda: precoVenda,
@@ -293,9 +359,6 @@ export function useCadastrarProduto() {
       const idProduto = dataProduto.produto.id_produto;
       const tipo = modoCompat === "todas" ? "EXCLUSAO" : "INCLUSAO";
 
-      // Produto criado — agora envia cada compatibilidade em sequência.
-      // Se uma falhar, o produto já existe; avisamos e direcionamos
-      // o usuário para a tela de Atualizar (ver especificação, seção 6.1).
       const falhas = [];
       for (const c of compatibilidades) {
         try {
@@ -337,8 +400,7 @@ export function useCadastrarProduto() {
         setModal("sucesso");
       }
 
-      // Reseta o formulário independentemente do resultado das
-      // compatibilidades, já que o produto em si foi criado com sucesso.
+      // Reset completo
       setForm({
         codigo_produto: "",
         descricao: "",
@@ -347,12 +409,13 @@ export function useCadastrarProduto() {
         fk_modelo_id: "",
         estoque_minimo: "",
         estoque_ideal: "",
-        estoque_atual: "",
         preco_compra: "",
         preco_custo: "",
         preco_venda: "",
         margem_lucro: "",
       });
+      setEstoqueEntradas([]);
+      setEstoqueForm({ fk_localizacao_id: "", quantidade: "" });
       setModoCompat("especificas");
       setCompatibilidades([]);
       setCompatForm({ fk_marca_id: "", fk_modelo_id: "", observacao: "" });
@@ -375,11 +438,20 @@ export function useCadastrarProduto() {
     categorias,
     marcas,
     modelos,
+    localizacoes,
     handleChange,
     handleSelecionarCategoria,
     handleSelecionarMarca,
     handleSelecionarModelo,
     handleSubmit,
+
+    // Estoque por localização
+    estoqueEntradas,
+    estoqueAtualTotal,
+    estoqueForm,
+    handleChangeEstoqueForm,
+    handleAdicionarEstoqueEntrada,
+    handleRemoverEstoqueEntrada,
 
     // Compatibilidade
     modoCompat,

@@ -22,13 +22,6 @@ export function useAtualizarProduto(id) {
   // Código é o único campo verdadeiramente travado — não muda após o cadastro
   const [codigoProduto, setCodigoProduto] = useState("");
 
-  // Estoque é somente leitura — vem do último registro da tabela estoque
-  const [estoqueAtual, setEstoqueAtual] = useState({
-    estoque_atual: "-",
-    estoque_minimo: "-",
-    estoque_ideal: "-",
-  });
-
   // Dados de apoio para os selects — mesmo padrão do cadastro
   const [categorias, setCategorias] = useState([]);
   const [marcas, setMarcas] = useState([]);
@@ -80,14 +73,7 @@ export function useAtualizarProduto(id) {
     fetch(`http://localhost:3000/api/produtos/${id}`)
       .then((res) => res.json())
       .then((data) => {
-        setCodigoProduto(data.codigo_produto || "");
-
-        const ultimoEstoque = data.estoque?.[0];
-        setEstoqueAtual({
-          estoque_atual: ultimoEstoque?.estoque_atual ?? "-",
-          estoque_minimo: ultimoEstoque?.estoque_minimo ?? "-",
-          estoque_ideal: ultimoEstoque?.estoque_ideal ?? "-",
-        });
+        setCodigoProduto(data.codigo_produto || "");       
 
         const precoCusto = formatarPrecoBrasil(data.preco_custo);
         const precoVenda = formatarPrecoBrasil(data.preco_venda);
@@ -234,7 +220,6 @@ export function useAtualizarProduto(id) {
     isSubmitting,
     form,
     codigoProduto,
-    estoqueAtual,
     categorias,
     marcas,
     modelos,

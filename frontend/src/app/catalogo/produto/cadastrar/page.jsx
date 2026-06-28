@@ -23,6 +23,8 @@ import {
   ShieldCheck,
   Plus,
   Trash2,
+  MapPin,
+  WarehouseIcon,
 } from "lucide-react";
 
 export default function CadastroProduto() {
@@ -39,11 +41,20 @@ export default function CadastroProduto() {
     categorias,
     marcas,
     modelos,
+    localizacoes,
     handleChange,
     handleSelecionarCategoria,
     handleSelecionarMarca,
     handleSelecionarModelo,
     handleSubmit,
+
+    // Estoque por localização
+    estoqueEntradas,
+    estoqueAtualTotal,
+    estoqueForm,
+    handleChangeEstoqueForm,
+    handleAdicionarEstoqueEntrada,
+    handleRemoverEstoqueEntrada,
 
     // Compatibilidade
     modoCompat,
@@ -78,6 +89,16 @@ export default function CadastroProduto() {
     value: m.id_modelo,
     label: m.nome,
   }));
+  const opcoesLocalizacoes = localizacoes.map((l) => ({
+    value: l.id_localizacao,
+    label: l.localizacao,
+  }));
+
+  // Localizações ainda não usadas nas entradas de estoque
+  const opcoesLocalizacoesDisponiveis = opcoesLocalizacoes.filter(
+    (opt) =>
+      !estoqueEntradas.some((e) => e.fk_localizacao_id === opt.value),
+  );
 
   if (loadingDados) {
     return (
@@ -107,9 +128,9 @@ export default function CadastroProduto() {
 
         <div className="flex justify-center">
           <div className="flex flex-col gap-6 w-full max-w-6xl">
+
             {/* Card 1 — Dados do Produto */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-              {/* Título */}
               <div className="mb-6">
                 <h1 className="text-xl font-bold text-gray-800">
                   Cadastrar Produto
@@ -137,9 +158,8 @@ export default function CadastroProduto() {
                 </div>
               </div>
 
-              {/* Categoria / Marca / Modelo — SearchableSelect */}
+              {/* Categoria / Marca / Modelo */}
               <div className="grid grid-cols-3 gap-3 mb-4">
-                {/* Categoria */}
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                     Categoria <span className="text-red-400">*</span>
@@ -159,7 +179,6 @@ export default function CadastroProduto() {
                   )}
                 </div>
 
-                {/* Marca */}
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                     Marca
@@ -172,14 +191,8 @@ export default function CadastroProduto() {
                     placeholder="Selecione"
                     icon={<Tag className="w-4 h-4" />}
                   />
-                  {marcas.length === 0 && (
-                    <p className="text-[11px] text-orange-500 mt-1">
-                      Nenhuma marca cadastrada.
-                    </p>
-                  )}
                 </div>
 
-                {/* Modelo — depende de Marca */}
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
                     Modelo
@@ -197,11 +210,6 @@ export default function CadastroProduto() {
                     icon={<Smartphone className="w-4 h-4" />}
                     disabled={!form.fk_marca_id}
                   />
-                  {form.fk_marca_id && modelos.length === 0 && (
-                    <p className="text-[11px] text-orange-500 mt-1">
-                      Esta marca não possui modelos cadastrados.
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -220,55 +228,6 @@ export default function CadastroProduto() {
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 pt-4 pb-3 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                     placeholder="Digite a descrição do produto (até 100 caracteres)..."
-                  />
-                </div>
-              </div>
-
-              {/* Estoque */}
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    Estoque Atual <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="estoque_atual"
-                    value={form.estoque_atual}
-                    onChange={handleChange}
-                    onKeyDown={blockNonNumericKeys}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    Estoque Mínimo
-                  </label>
-                  <input
-                    type="number"
-                    name="estoque_minimo"
-                    value={form.estoque_minimo}
-                    onChange={handleChange}
-                    onKeyDown={blockNonNumericKeys}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
-                    Estoque Ideal
-                  </label>
-                  <input
-                    type="number"
-                    name="estoque_ideal"
-                    value={form.estoque_ideal}
-                    onChange={handleChange}
-                    onKeyDown={blockNonNumericKeys}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    className={inputClass}
                   />
                 </div>
               </div>
@@ -311,7 +270,7 @@ export default function CadastroProduto() {
                     )}
                     {name === "preco_custo" && (
                       <span className="text-[10px] text-gray-400 italic">
-                        Preço de compra somado as despesas
+                        Preço de compra somado às despesas
                       </span>
                     )}
                   </div>
@@ -338,7 +297,181 @@ export default function CadastroProduto() {
               </div>
             </div>
 
-            {/* Card 2 — Compatibilidade */}
+            {/* Card 2 — Estoque */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/90 flex items-center justify-center shrink-0">
+                  <WarehouseIcon className="w-4.5 h-4.5 text-white" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-800">Estoque</h2>
+              </div>
+              <p className="text-xs text-gray-400 mb-6 ml-12">
+                Defina os limites de estoque e distribua o saldo inicial por localização
+              </p>
+
+              {/* Mínimo e Ideal */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                    Estoque Mínimo
+                  </label>
+                  <input
+                    type="number"
+                    name="estoque_minimo"
+                    value={form.estoque_minimo}
+                    onChange={handleChange}
+                    onKeyDown={blockNonNumericKeys}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="0"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                    Estoque Ideal
+                  </label>
+                  <input
+                    type="number"
+                    name="estoque_ideal"
+                    value={form.estoque_ideal}
+                    onChange={handleChange}
+                    onKeyDown={blockNonNumericKeys}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="0"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              {/* Divisor */}
+              <div className="border-t border-gray-100 mb-6" />
+
+              {/* Distribuição por localização */}
+              <p className="text-xs font-semibold text-gray-600 mb-3">
+                Estoque Inicial por Localização
+              </p>
+
+              <div className="grid grid-cols-[1fr_auto_auto] gap-3 mb-4 items-end">
+                {/* Localização */}
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                    Localização
+                  </label>
+                  <SearchableSelect
+                    name="estoque_fk_localizacao_id"
+                    options={opcoesLocalizacoesDisponiveis}
+                    value={estoqueForm.fk_localizacao_id}
+                    onChange={(val) =>
+                      handleChangeEstoqueForm("fk_localizacao_id", val)
+                    }
+                    placeholder={
+                      localizacoes.length === 0
+                        ? "Nenhuma localização cadastrada"
+                        : opcoesLocalizacoesDisponiveis.length === 0
+                        ? "Todas as localizações adicionadas"
+                        : "Selecione"
+                    }
+                    icon={<MapPin className="w-4 h-4" />}
+                    disabled={opcoesLocalizacoesDisponiveis.length === 0}
+                  />
+                </div>
+
+                {/* Quantidade */}
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                    Quantidade
+                  </label>
+                  <input
+                    type="number"
+                    value={estoqueForm.quantidade}
+                    onChange={(e) =>
+                      handleChangeEstoqueForm(
+                        "quantidade",
+                        e.target.value.replace(/\D/g, ""),
+                      )
+                    }
+                    onKeyDown={blockNonNumericKeys}
+                    inputMode="numeric"
+                    placeholder="0"
+                    className="w-28 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+
+                {/* Botão */}
+                <button
+                  type="button"
+                  onClick={handleAdicionarEstoqueEntrada}
+                  disabled={opcoesLocalizacoesDisponiveis.length === 0}
+                  className="flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition-all"
+                >
+                  <Plus className="w-4 h-4" /> Adicionar
+                </button>
+              </div>
+
+              {/* Tabela de entradas */}
+              {estoqueEntradas.length > 0 ? (
+                <div className="border border-gray-100 rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                      <tr className="text-xs font-semibold text-gray-500">
+                        <th className="px-4 py-3">Localização</th>
+                        <th className="px-4 py-3 text-right">Quantidade</th>
+                        <th className="px-4 py-3 text-center w-16">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {estoqueEntradas.map((entrada) => (
+                        <tr
+                          key={entrada.fk_localizacao_id}
+                          className="hover:bg-gray-50"
+                        >
+                          <td className="px-4 py-3 font-medium text-gray-700">
+                            {entrada.localizacaoNome}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold text-gray-800">
+                            {entrada.quantidade}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleRemoverEstoqueEntrada(
+                                  entrada.fk_localizacao_id,
+                                )
+                              }
+                              className="inline-flex items-center justify-center p-1.5 rounded-md text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              title="Remover"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Total */}
+                  <div className="bg-gray-50 border-t border-gray-100 px-4 py-3 flex justify-end items-center gap-3">
+                    <span className="text-xs font-semibold text-gray-500">
+                      Estoque Inicial Total:
+                    </span>
+                    <span className="text-lg font-bold text-emerald-600">
+                      {estoqueAtualTotal} unid.
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 border border-dashed border-gray-200 rounded-lg py-5 text-center">
+                  {localizacoes.length === 0
+                    ? "Nenhuma localização cadastrada. O produto será criado com estoque zero."
+                    : "Nenhuma localização adicionada — produto será criado com estoque zero."}
+                </p>
+              )}
+            </div>
+
+            {/* Card 3 — Compatibilidade */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
               <div className="flex items-center gap-3 mb-1">
                 <div className="w-9 h-9 rounded-xl bg-blue-600/80 flex items-center justify-center shrink-0">
@@ -352,8 +485,6 @@ export default function CadastroProduto() {
                 Defina com quais marcas e modelos este produto é compatível
               </p>
 
-              {/* Modo: todas as marcas vs específicas */}
-              {/* Substitui o bloco inteiro "Modo: todas as marcas vs específicas" */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
                 <button
                   type="button"
@@ -364,9 +495,7 @@ export default function CadastroProduto() {
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
-                  <p
-                    className={`text-sm font-semibold ${modoCompat === "especificas" ? "text-blue-700" : "text-gray-700"}`}
-                  >
+                  <p className={`text-sm font-semibold ${modoCompat === "especificas" ? "text-blue-700" : "text-gray-700"}`}>
                     Marcas específicas
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
@@ -383,9 +512,7 @@ export default function CadastroProduto() {
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
-                  <p
-                    className={`text-sm font-semibold ${modoCompat === "todas" ? "text-blue-700" : "text-gray-700"}`}
-                  >
+                  <p className={`text-sm font-semibold ${modoCompat === "todas" ? "text-blue-700" : "text-gray-700"}`}>
                     Todas as marcas
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
@@ -402,9 +529,7 @@ export default function CadastroProduto() {
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
-                  <p
-                    className={`text-sm font-semibold ${modoCompat === "universal" ? "text-blue-700" : "text-gray-700"}`}
-                  >
+                  <p className={`text-sm font-semibold ${modoCompat === "universal" ? "text-blue-700" : "text-gray-700"}`}>
                     Universal
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
@@ -413,7 +538,6 @@ export default function CadastroProduto() {
                 </button>
               </div>
 
-              {/* Formulário de adicionar entrada */}
               <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 mb-3">
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
@@ -469,7 +593,6 @@ export default function CadastroProduto() {
                 </div>
               </div>
 
-              {/* Observação opcional */}
               <div className="mb-5">
                 <input
                   disabled={modoCompat === "universal"}
@@ -484,14 +607,13 @@ export default function CadastroProduto() {
                 />
               </div>
 
-              {/* Lista de entradas adicionadas */}
               <div>
                 <p className="text-xs font-semibold text-gray-600 mb-2">
                   {modoCompat === "todas"
                     ? "Exceções (não compatível com)"
                     : modoCompat === "universal"
-                      ? "Nenhuma exceção — compatível com tudo"
-                      : "Compatível com"}
+                    ? "Nenhuma exceção — compatível com tudo"
+                    : "Compatível com"}
                 </p>
                 {compatibilidades.length === 0 ? (
                   <p className="text-xs text-gray-400 border border-dashed border-gray-200 rounded-lg py-4 text-center">
@@ -589,7 +711,7 @@ export default function CadastroProduto() {
         </div>
       )}
 
-      {/* Modal Erro — falha total (produto não foi criado) */}
+      {/* Modal Erro */}
       {modal === "erro" && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
@@ -612,7 +734,7 @@ export default function CadastroProduto() {
         </div>
       )}
 
-      {/* Modal Erro Parcial — produto criado, mas alguma compatibilidade falhou */}
+      {/* Modal Erro Parcial */}
       {modal === "erro-parcial" && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
