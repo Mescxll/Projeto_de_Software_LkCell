@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Folder,
+  Eye,
 } from "lucide-react";
 
 export default function GerenciarCategorias() {
@@ -118,12 +119,21 @@ export default function GerenciarCategorias() {
                     <td className="px-6 py-4">
                       <div className="flex justify-center gap-2">
                         <Link
+                          href={`/catalogo/categoria/visualizar/${c.id_categoria}`}
+                          className="inline-flex items-center justify-center p-1.5 rounded-md transition-colors text-green-500 icon-btn-green"
+                          title="Ver detalhes"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                        
+                        <Link
                           href={`/catalogo/categoria/atualizar/${c.id_categoria}`}
                           className="inline-flex items-center justify-center p-1.5 rounded-md text-blue-500 hover:bg-blue-50 transition-colors"
                           title="Editar"
                         >
                           <Pencil className="w-4 h-4" />
                         </Link>
+
                         <button
                           onClick={() => {
                             setCategoriaSelecionada(c);
@@ -133,7 +143,7 @@ export default function GerenciarCategorias() {
                           title="Excluir"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </button>
+                        </button>                       
                       </div>
                     </td>
                   </tr>
