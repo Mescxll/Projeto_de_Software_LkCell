@@ -3,13 +3,17 @@
 import { ArrowLeftRight, X, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useTransferirEstoque } from "@/hooks/estoque/useTransferirEstoque";
 
-export default function ModalTransferencia({ produtoInicial, onClose, onSuccess }) {
+export default function ModalTransferencia({
+  produtoInicial,
+  onClose,
+  onSuccess,
+}) {
   const {
     produtos,
     localizacoes,
     loadingDados,
-    saldoOrigem,
-    loadingSaldo,
+    quantidadeOrigem,
+    loadingQuantidade,
     form,
     modal,
     erroMsg,
@@ -31,13 +35,19 @@ export default function ModalTransferencia({ produtoInicial, onClose, onSuccess 
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-gray-400 flex items-center justify-center">
-                <ArrowLeftRight className="w-4.5 h-4.5 text-white" strokeWidth={2} />
+                <ArrowLeftRight
+                  className="w-4.5 h-4.5 text-white"
+                  strokeWidth={2}
+                />
               </div>
               <h2 className="text-gray-800 font-semibold text-base">
                 Transferir estoque
               </h2>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
               <X className="w-4.5 h-4.5" />
             </button>
           </div>
@@ -46,12 +56,14 @@ export default function ModalTransferencia({ produtoInicial, onClose, onSuccess 
             <p className="text-sm text-gray-400">Carregando dados...</p>
           ) : (
             <>
-              <label className="text-xs text-gray-500 block mb-1">Produto</label>
+              <label className="text-xs text-gray-500 block mb-1">
+                Produto
+              </label>
               <select
                 name="fk_produto_id"
                 value={form.fk_produto_id}
                 onChange={handleChange}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-400 mb-4"
+                className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px- py-2 outline-none focus:border-blue-400"
               >
                 <option value="">Selecione um produto</option>
                 {produtos.map((p) => (
@@ -61,14 +73,14 @@ export default function ModalTransferencia({ produtoInicial, onClose, onSuccess 
                 ))}
               </select>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 mt-2">
                 <div>
                   <label className="text-xs text-gray-500 block mb-1">De</label>
                   <select
                     name="fk_localizacao_origem_id"
                     value={form.fk_localizacao_origem_id}
                     onChange={handleChange}
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-400"
+                    className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-400"
                   >
                     <option value="">Selecione</option>
                     {localizacoes.map((l) => (
@@ -80,27 +92,29 @@ export default function ModalTransferencia({ produtoInicial, onClose, onSuccess 
                   {form.fk_localizacao_origem_id && (
                     <p
                       className={`text-xs mt-1.5 ${
-                        loadingSaldo
+                        loadingQuantidade
                           ? "text-gray-400"
-                          : saldoOrigem > 0
-                          ? "text-green-600"
-                          : "text-red-500"
+                          : quantidadeOrigem > 0
+                            ? "text-green-600"
+                            : "text-red-500"
                       }`}
                     >
-                      {loadingSaldo
-                        ? "Consultando saldo..."
-                        : `Saldo disponível: ${saldoOrigem ?? 0} un.`}
+                      {loadingQuantidade
+                        ? "Consultando Quantidade..."
+                      : `Quantidade disponível: ${quantidadeOrigem ?? 0} un.`}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">Para</label>
+                  <label className="text-xs text-gray-500 block mb-1">
+                    Para
+                  </label>
                   <select
                     name="fk_localizacao_destino_id"
                     value={form.fk_localizacao_destino_id}
                     onChange={handleChange}
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-400"
+                    className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-400"
                   >
                     <option value="">Selecione</option>
                     {localizacoesDestino.map((l) => (
@@ -120,13 +134,15 @@ export default function ModalTransferencia({ produtoInicial, onClose, onSuccess 
                 value={form.quantidade}
                 onChange={handleChange}
                 inputMode="numeric"
-                className="w-32 text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-400"
+                className="w-32 text-sm  text-gray-800  border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-400"
               />
 
               {modal === "erro" && (
                 <div className="flex items-start gap-2 bg-red-50 rounded-lg p-3 mt-4">
                   <AlertCircle className="w-3.5 h-3.5 text-red-500 mt-0.5 shrink-0" />
-                  <p className="text-xs text-red-600 leading-relaxed">{erroMsg}</p>
+                  <p className="text-xs text-red-600 leading-relaxed">
+                    {erroMsg}
+                  </p>
                 </div>
               )}
 

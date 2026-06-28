@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 
 export function useGerenciarEstoque() {
   const [produtos, setProdutos] = useState([]);
+  const [produtosSemEstoque, setProdutosSemEstoque] = useState([]);
   const [localizacoes, setLocalizacoes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erroMsg, setErroMsg] = useState("");
@@ -26,15 +27,21 @@ export function useGerenciarEstoque() {
       const res = await fetch("http://localhost:3000/api/estoque");
       if (res.ok) {
         const data = await res.json();
-        setProdutos(Array.isArray(data) ? data : []);
+        // ← resposta agora é { produtos, sem_estoque }
+        setProdutos(Array.isArray(data.produtos) ? data.produtos : []);
+        setProdutosSemEstoque(
+          Array.isArray(data.sem_estoque) ? data.sem_estoque : [],
+        );
       } else {
         const data = await res.json();
         setErroMsg(data.erro || "Erro ao buscar dados de estoque.");
         setProdutos([]);
+        setProdutosSemEstoque([]);
       }
     } catch {
       setErroMsg("Não foi possível conectar ao servidor.");
       setProdutos([]);
+      setProdutosSemEstoque([]);
     } finally {
       setLoading(false);
     }
@@ -60,8 +67,6 @@ export function useGerenciarEstoque() {
   // Indicadores derivados localmente — evita um endpoint extra,
   // já que os dados de produtos já trazem tudo que é necessário.
   const indicadores = useMemo(() => {
-    const movimentosHoje = null; // não disponível sem um endpoint dedicado
-
     const totalLocalizacoesAtivas = new Set(
       produtos.flatMap((p) =>
         p.localizacoes
@@ -72,18 +77,21 @@ export function useGerenciarEstoque() {
 
     return {
       itensCadastrados: produtos.length,
-      abaixoDoMinimo: produtos.filter((p) => p.status === "abaixo_minimo").length,
+      abaixoDoMinimo: produtos.filter((p) => p.status === "abaixo_minimo")
+        .length,
       localizacoesAtivas: totalLocalizacoesAtivas,
-      movimentosHoje,
+      semEstoque: produtosSemEstoque.length, // ← novo
+      movimentosHoje: null,
     };
-  }, [produtos]);
+  }, [produtos, produtosSemEstoque]);
 
   // Filtragem client-side (busca, localização, status)
   const produtosFiltrados = useMemo(() => {
     return produtos.filter((produto) => {
       if (busca) {
         const termo = busca.toLowerCase();
-        const alvo = `${produto.nome ?? ""} ${produto.codigo_produto ?? ""}`.toLowerCase();
+        const alvo =
+          `${produto.descricao ?? ""} ${produto.codigo_produto ?? ""}`.toLowerCase();
         if (!alvo.includes(termo)) return false;
       }
 
@@ -160,6 +168,7 @@ export function useGerenciarEstoque() {
 
     modalAberto,
     produtoSelecionado,
+    produtosSemEstoque,
     abrirModalParametros,
     abrirModalTransferencia,
     abrirHistorico,

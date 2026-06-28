@@ -21,8 +21,8 @@ const STATUS_CONFIG = {
   },
   acima_ideal: {
     label: "Acima do ideal",
-    cor: "text-amber-600",
-    bg: "bg-amber-600/10",
+    cor: "text-blue-600",
+    bg: "bg-blue-600/10",
   },
 };
 
@@ -82,7 +82,7 @@ export default function EstoqueTabela({
             value={busca}
             onChange={(e) => onBuscaChange(e.target.value)}
             placeholder="Buscar por produto ou código"
-            className="w-full text-sm border border-gray-200 rounded-lg pl-8 pr-3 py-2 outline-none focus:border-blue-400"
+            className="w-full text-sm text-gray-800 border border-gray-200 rounded-lg pl-8 pr-3 py-2 outline-none focus:border-blue-400"
           />
         </div>
 
@@ -178,35 +178,32 @@ export default function EstoqueTabela({
                       </button>
                     </td>
                     <td className="py-2.5 px-2 text-gray-800 font-medium">
-                      {produto.nome || produto.codigo_produto}
+                      {produto.descricao || produto.codigo_produto}
                     </td>
                     <td className="py-2.5 px-2 text-gray-500">
                       {produto.categoria ?? "—"}
                     </td>
                     <td className="py-2.5 px-2 text-gray-800">
-                      {produto.saldo_total}
+                      {produto.quantidade_total}
                       {(() => {
                         const { abaixoMinimo, acimaIdeal } =
                           contarLocalizacoesProblematicas(produto.localizacoes);
                         if (abaixoMinimo === 0 && acimaIdeal === 0) return null;
                         return (
-                          <span className="ml-1.5 text-[11px] text-amber-600 font-medium">
+                          <span className="ml-1.5 text-[11px] font-medium inline-flex items-center gap-1.5">
                             {abaixoMinimo > 0 && (
-                              <>
-                                <TriangleAlert
-                                  size={13}
-                                  className="inline mr-1"
-                                />
-                                {`${abaixoMinimo} ${abaixoMinimo > 1 ? "locais" : "local"} abaixo${abaixoMinimo > 1 ? "s" : ""} do mínimo`}
-                              </>
+                              <span className="text-amber-600 inline-flex items-center gap-1">
+                                <TriangleAlert size={13} className="inline" />
+                                {`${abaixoMinimo} ${abaixoMinimo > 1 ? "locais" : "local"} abaixo do mínimo`}
+                              </span>
                             )}
-
-                            {abaixoMinimo > 0 && acimaIdeal > 0 && " · "}
-
+                            {abaixoMinimo > 0 && acimaIdeal > 0 && (
+                              <span className="text-gray-300">·</span>
+                            )}
                             {acimaIdeal > 0 && (
-                              <>
-                                {`${acimaIdeal} ${acimaIdeal > 1 ? "locais" : "local"} acima${acimaIdeal > 1 ? "s" : ""} do ideal`}
-                              </>
+                              <span className="text-blue-600">
+                                {`${acimaIdeal} ${acimaIdeal > 1 ? "locais" : "local"} acima do ideal`}
+                              </span>
                             )}
                           </span>
                         );

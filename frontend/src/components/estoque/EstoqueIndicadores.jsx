@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Boxes, AlertTriangle, MapPin, ArrowLeftRight } from "lucide-react";
+import {
+  Boxes,
+  AlertTriangle,
+  MapPin,
+  ArrowLeftRight,
+  PackageX,
+} from "lucide-react";
 
 export default function EstoqueIndicadores({ dados, onClickAlertas }) {
   const router = useRouter();
@@ -13,6 +19,14 @@ export default function EstoqueIndicadores({ dados, onClickAlertas }) {
       icone: Boxes,
       cor: "azul",
       onClick: () => router.push("/catalogo/produto/gerenciar"),
+    },
+    {
+      titulo: "Produtos sem estoque inicial",
+      valor: dados.semEstoque ?? 0,
+      icone: PackageX,
+      cor: dados.semEstoque > 0 ? "ambar" : "cinza",
+      onClick:
+        dados.semEstoque > 0 ? () => router.push("/estoque/cadastrar") : null,
     },
     {
       titulo: "Abaixo do mínimo",
@@ -28,13 +42,14 @@ export default function EstoqueIndicadores({ dados, onClickAlertas }) {
       cor: "verde",
       onClick: null,
     },
-    {
-      titulo: "Movimentos hoje",
-      valor: dados.movimentosHoje ?? "—",
-      icone: ArrowLeftRight,
-      cor: "cinza",
-      onClick: null,
-    },
+    //  Implementação Futura
+    // {
+    //   titulo: "Movimentos hoje",
+    //   valor: dados.movimentosHoje ?? "—",
+    //   icone: ArrowLeftRight,
+    //   cor: "cinza",
+    //   onClick: null,
+    // },
   ];
 
   return (

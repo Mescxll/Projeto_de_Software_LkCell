@@ -1,11 +1,32 @@
 "use client";
 
-import { ArrowDown, ArrowUp, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  SlidersHorizontal,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 const TIPO_CONFIG = {
-  ENTRADA: { label: "Entrada", icone: ArrowUp, cor: "text-green-700", bg: "bg-green-700/10" },
-  SAIDA: { label: "Saída", icone: ArrowDown, cor: "text-red-600", bg: "bg-red-600/10" },
-  AJUSTE: { label: "Ajuste", icone: SlidersHorizontal, cor: "text-gray-500", bg: "bg-gray-500/10" },
+  ENTRADA: {
+    label: "Entrada",
+    icone: ArrowUp,
+    cor: "text-green-700",
+    bg: "bg-green-700/10",
+  },
+  SAIDA: {
+    label: "Saída",
+    icone: ArrowDown,
+    cor: "text-red-600",
+    bg: "bg-red-600/10",
+  },
+  AJUSTE: {
+    label: "Ajuste",
+    icone: SlidersHorizontal,
+    cor: "text-gray-500",
+    bg: "bg-gray-500/10",
+  },
 };
 
 function formatarData(dataIso) {
@@ -24,6 +45,14 @@ function descricaoOrigem(registro) {
   if (registro.tipo_movimento === "AJUSTE" && registro.quantidade === 0)
     return "Ajuste de parâmetros";
   return registro.observacao || "Ajuste manual";
+}
+
+function calcularSinal(registro) {
+  if (registro.tipo_movimento === "SAIDA") return "-";
+  if (registro.tipo_movimento === "ENTRADA") return "+";
+  if (registro.observacao?.startsWith("Transferência para")) return "+";
+  if (registro.observacao?.startsWith("Transferência de")) return "-";
+  return "+";
 }
 
 export default function MovimentacoesTabela({
@@ -76,14 +105,18 @@ export default function MovimentacoesTabela({
           <input
             type="date"
             value={filtroDataFim}
-            onChange={(e) => onFiltroDataChange(filtroDataInicio, e.target.value)}
+            onChange={(e) =>
+              onFiltroDataChange(filtroDataInicio, e.target.value)
+            }
             className="text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 text-gray-600 outline-none focus:border-blue-400"
           />
         </div>
       </div>
 
       {loading && (
-        <p className="text-sm text-gray-400 py-6 text-center">Carregando movimentações...</p>
+        <p className="text-sm text-gray-400 py-6 text-center">
+          Carregando movimentações...
+        </p>
       )}
 
       {!loading && erroMsg && (
@@ -106,18 +139,24 @@ export default function MovimentacoesTabela({
                 <th className="py-2 px-2 font-medium">Origem</th>
                 <th className="py-2 px-2 font-medium">Localização</th>
                 <th className="py-2 px-2 font-medium text-right">Quantidade</th>
-                <th className="py-2 px-2 font-medium text-right">Saldo após</th>
+                <th className="py-2 px-2 font-medium text-right">
+                  Quantidade após
+                </th>
                 <th className="py-2 px-2 font-medium">Data</th>
               </tr>
             </thead>
             <tbody>
               {movimentacoes.map((registro) => {
-                const config = TIPO_CONFIG[registro.tipo_movimento] ?? TIPO_CONFIG.AJUSTE;
+                const config =
+                  TIPO_CONFIG[registro.tipo_movimento] ?? TIPO_CONFIG.AJUSTE;
                 const Icone = config.icone;
-                const sinal = registro.tipo_movimento === "SAIDA" ? "-" : "+";
+                const sinal = calcularSinal(registro);
 
                 return (
-                  <tr key={registro.id_estoque} className="border-b border-gray-50">
+                  <tr
+                    key={registro.id_estoque}
+                    className="border-b border-gray-50"
+                  >
                     <td className="py-2.5 px-2">
                       <span
                         className={
@@ -132,7 +171,8 @@ export default function MovimentacoesTabela({
                       </span>
                     </td>
                     <td className="py-2.5 px-2 text-gray-800 font-medium">
-                      {registro.produto?.nome || registro.produto?.codigo_produto}
+                      {registro.produto?.nome ||
+                        registro.produto?.codigo_produto}
                     </td>
                     <td className="py-2.5 px-2 text-gray-500">
                       {descricaoOrigem(registro)}
@@ -140,8 +180,14 @@ export default function MovimentacoesTabela({
                     <td className="py-2.5 px-2 text-gray-500">
                       {registro.localizacao?.localizacao ?? "Sem localização"}
                     </td>
-                    <td className={"py-2.5 px-2 text-right font-semibold " + config.cor}>
-                      {registro.quantidade === 0 ? "+0" : sinal + registro.quantidade}
+                    <td
+                      className={
+                        "py-2.5 px-2 text-right font-semibold " + config.cor
+                      }
+                    >
+                      {registro.quantidade === 0
+                        ? "+0"
+                        : sinal + registro.quantidade}
                     </td>
                     <td className="py-2.5 px-2 text-right text-gray-700">
                       {registro.estoque_atual}

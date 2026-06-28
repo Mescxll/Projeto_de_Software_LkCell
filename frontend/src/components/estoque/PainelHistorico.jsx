@@ -55,7 +55,7 @@ export default function PainelHistorico({ produto, onClose }) {
             </button>
           </div>
           <p className="text-xs text-gray-400 mb-3">
-            Saldo total atual:{" "}
+            Quantidade total atual:{" "}
             <span className="text-gray-800 font-semibold">
               {produto.estoque_atual ?? "—"} un.
             </span>
@@ -127,7 +127,7 @@ export default function PainelHistorico({ produto, onClose }) {
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {registro.localizacao?.localizacao ?? "Sem localização"} ·{" "}
-                      {formatarData(registro.data_hora)} · saldo:{" "}
+                      {formatarData(registro.data_hora)} · quantidade:{" "}
                       {registro.estoque_atual}
                     </p>
                   </div>

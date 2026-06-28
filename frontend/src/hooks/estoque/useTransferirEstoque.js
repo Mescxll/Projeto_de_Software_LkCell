@@ -5,8 +5,8 @@ export function useTransferirEstoque(produtoInicial, onSuccess) {
   const [produtos, setProdutos] = useState([]);
   const [localizacoes, setLocalizacoes] = useState([]);
   const [loadingDados, setLoadingDados] = useState(true);
-  const [saldoOrigem, setSaldoOrigem] = useState(null);
-  const [loadingSaldo, setLoadingSaldo] = useState(false);
+  const [quantidadeOrigem, setQuantidadeOrigem] = useState(null);
+  const [loadingQuantidade, setLoadingQuantidade] = useState(false);
 
   const [modal, setModal] = useState(null);
   const [erroMsg, setErroMsg] = useState("");
@@ -49,15 +49,15 @@ export function useTransferirEstoque(produtoInicial, onSuccess) {
     buscarDados();
   }, []);
 
-  // Busca o saldo da localização de origem sempre que produto ou origem mudam
+  // Busca o quantidade da localização de origem sempre que produto ou origem mudam
   useEffect(() => {
-    const buscarSaldo = async () => {
+    const buscarQuantidade = async () => {
       if (!form.fk_produto_id || !form.fk_localizacao_origem_id) {
-        setSaldoOrigem(null);
+        setQuantidadeOrigem(null);
         return;
       }
 
-      setLoadingSaldo(true);
+      setLoadingQuantidade(true);
       try {
         const res = await fetch(
           `http://localhost:3000/api/estoque/produto/${form.fk_produto_id}`,
@@ -71,18 +71,18 @@ export function useTransferirEstoque(produtoInicial, onSuccess) {
                   String(form.fk_localizacao_origem_id),
               )
             : null;
-          setSaldoOrigem(localizacaoEncontrada?.estoque_atual ?? 0);
+          setQuantidadeOrigem(localizacaoEncontrada?.estoque_atual ?? 0);
         } else {
-          setSaldoOrigem(null);
+          setQuantidadeOrigem(null);
         }
       } catch {
-        setSaldoOrigem(null);
+        setQuantidadeOrigem(null);
       } finally {
-        setLoadingSaldo(false);
+        setLoadingQuantidade(false);
       }
     };
 
-    buscarSaldo();
+    buscarQuantidade();
   }, [form.fk_produto_id, form.fk_localizacao_origem_id]);
 
   const handleChange = (e) => {
@@ -132,9 +132,9 @@ export function useTransferirEstoque(produtoInicial, onSuccess) {
       return;
     }
 
-    if (saldoOrigem !== null && qty > saldoOrigem) {
+    if (quantidadeOrigem !== null && qty > quantidadeOrigem) {
       setErroMsg(
-        `Estoque insuficiente na localização de origem. Disponível: ${saldoOrigem}, solicitado: ${qty}.`,
+        `Estoque insuficiente na localização de origem. Disponível: ${quantidadeOrigem}, solicitado: ${qty}.`,
       );
       setModal("erro");
       return;
@@ -185,8 +185,8 @@ export function useTransferirEstoque(produtoInicial, onSuccess) {
     produtos,
     localizacoes,
     loadingDados,
-    saldoOrigem,
-    loadingSaldo,
+    quantidadeOrigem,
+    loadingQuantidade,
     form,
     modal,
     setModal,
