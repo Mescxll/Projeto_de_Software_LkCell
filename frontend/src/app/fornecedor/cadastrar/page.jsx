@@ -167,6 +167,23 @@ export default function CadastroFornecedor() {
                   </div>
                 </div>
 
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1.5 block">
+                    Telefone Secundário <span className="text-gray-400 font-normal">(opcional)</span>
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="text"
+                      name="telefone_secundario"
+                      placeholder="(00) 00000-0000"
+                      value={form.telefone_secundario}
+                      onChange={handleChange}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
                 <div className="flex gap-3">
                   <button
                     onClick={() => router.push("/fornecedor/gerenciar")}

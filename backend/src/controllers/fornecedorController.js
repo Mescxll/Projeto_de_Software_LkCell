@@ -1,6 +1,24 @@
 // controllers/fornecedorController.js
 const prisma = require("../lib/prisma");
 
+const montarTelefonesFornecedor = (telefones = [], telefone, telefone_secundario) => {
+  const lista = Array.isArray(telefones) ? telefones : [];
+
+  if (typeof telefone === "string") {
+    lista.push(telefone);
+  }
+
+  if (typeof telefone_secundario === "string") {
+    lista.push(telefone_secundario);
+  }
+
+  return lista
+    .filter((tel) => typeof tel === "string")
+    .map((tel) => tel.replace(/\D/g, ""))
+    .filter((tel) => tel !== "")
+    .map((tel) => ({ telefone_fornecedor: tel }));
+};
+
 const cadastrarFornecedor = async (req, res) => {
   try {
     const {
@@ -10,6 +28,8 @@ const cadastrarFornecedor = async (req, res) => {
       politica_preco,
       prazo_entrega,
       telefones,
+      telefone,
+      telefone_secundario,
     } = req.body;
 
     // Limpeza e Padronização 
@@ -19,12 +39,7 @@ const cadastrarFornecedor = async (req, res) => {
     const razaoSocialLimpa = razao_social.trim().toUpperCase();
     const emailLimpo = email ? email.trim().toLowerCase() : null;
 
-    let telefonesData = [];
-    if (telefones && Array.isArray(telefones) && telefones.length > 0) {
-      telefonesData = telefones.map((tel) => ({
-        telefone_fornecedor: tel.replace(/\D/g, ""), 
-      }));
-    }
+    const telefonesData = montarTelefonesFornecedor(telefones, telefone, telefone_secundario);
 
     // Inserção no Banco 
     const novoFornecedor = await prisma.fornecedor.create({
@@ -69,8 +84,7 @@ const cadastrarFornecedor = async (req, res) => {
 const atualizarFornecedor = async (req, res) => {
   try {
     const { uuid } = req.params;
-    const { email, razao_social, politica_preco, prazo_entrega, telefones } = req.body;
-
+const { email, razao_social, politica_preco, prazo_entrega, telefones, telefone, telefone_secundario } = req.body;
     // Verifica se o fornecedor existe no banco 
     const fornecedorExistente = await prisma.fornecedor.findUnique({
       where: { uuid: uuid }
@@ -99,15 +113,12 @@ const atualizarFornecedor = async (req, res) => {
       updateData.prazo_entrega = prazo_entrega ? parseInt(prazo_entrega) : null;
     }
 
-    if (telefones !== undefined) {
-      // Limpa as máscaras de cada número recebido
-      const telefonesLimpos = telefones
-        .map(tel => ({ telefone_fornecedor: tel.replace(/\D/g, "") }))
-        .filter(tel => tel.telefone_fornecedor !== ""); // Tira os vazios
+    if (telefones !== undefined || telefone !== undefined || telefone_secundario !== undefined) {
+      const telefonesLimpos = montarTelefonesFornecedor(telefones, telefone, telefone_secundario);
 
       updateData.telefone_fornecedor = {
-        deleteMany: {}, // Apaga todas as amarrações antigas desse fornecedor
-        create: telefonesLimpos 
+        deleteMany: {},
+        create: telefonesLimpos,
       };
     }
 

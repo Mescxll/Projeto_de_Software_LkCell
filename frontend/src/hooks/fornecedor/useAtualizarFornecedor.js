@@ -10,6 +10,7 @@ export function useAtualizarFornecedor(uuid) {
     politica_preco: "",
     prazo_entrega: "",
     telefone: "",
+    telefone_secundario: "",
   });
   const [modal, setModal] = useState(false);
   const [modalErro, setModalErro] = useState(false);
@@ -63,6 +64,8 @@ export function useAtualizarFornecedor(uuid) {
       .then((data) => {
         const telefone =
           data.telefone_fornecedor?.[0]?.telefone_fornecedor || "";
+        const telefone_secundario =
+          data.telefone_fornecedor?.[1]?.telefone_fornecedor || "";
         setForm({
           cnpj: formatCNPJ(data.cnpj || ""),
           razao_social: data.razao_social || "",
@@ -70,6 +73,7 @@ export function useAtualizarFornecedor(uuid) {
           politica_preco: formatPriceBR(data.politica_preco),
           prazo_entrega: data.prazo_entrega?.toString() || "",
           telefone: formatPhone(telefone),
+          telefone_secundario: formatPhone(telefone_secundario),
         });
       })
       .catch((err) => {
@@ -90,6 +94,10 @@ export function useAtualizarFornecedor(uuid) {
       value = formatPhone(rawValue);
     }
 
+    if (name === "telefone_secundario") {
+      value = formatPhone(rawValue);
+    }
+
     if (name === "politica_preco") {
       value = formatPrice(rawValue);
     }
@@ -103,6 +111,7 @@ export function useAtualizarFornecedor(uuid) {
 
   const handleSalvar = async () => {
     const telefoneLimpo = form.telefone.replace(/\D/g, "");
+    const telefoneLimpo2 = form.telefone_secundario.replace(/\D/g, "");
     const politicaPrecoLimpa = form.politica_preco.replace(/,/g, ".");
 
     if (!form.razao_social.trim()) {
@@ -137,6 +146,10 @@ export function useAtualizarFornecedor(uuid) {
 
     if (telefoneLimpo) {
       body.telefones = [telefoneLimpo];
+
+      if (telefoneLimpo2) {
+        body.telefones.push(telefoneLimpo2);
+      }
     }
 
     try {

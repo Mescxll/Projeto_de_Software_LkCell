@@ -9,6 +9,7 @@ export function useCadastrarFornecedor() {
     politica_preco: "",
     prazo_entrega: "",
     telefone: "",
+    telefone_secundario: "",
   });
   const [modal, setModal] = useState(false);
   const [modalErro, setModalErro] = useState(false);
@@ -56,6 +57,10 @@ export function useCadastrarFornecedor() {
       value = formatPhone(rawValue);
     }
 
+    if (name === "telefone_secundario") {
+      value = formatPhone(rawValue);
+    }
+
     if (name === "politica_preco") {
       value = formatarPrecoReal(rawValue);
     }
@@ -70,6 +75,7 @@ export function useCadastrarFornecedor() {
   const handleSubmit = async () => {
     const cnpjLimpo = form.cnpj.replace(/\D/g, "");
     const telefoneLimpo = form.telefone.replace(/\D/g, "");
+    const telefoneLimpo2 = form.telefone_secundario.replace(/\D/g, "");
     const politicaPrecoLimpa = form.politica_preco.replace(/,/g, ".");
 
     if (!cnpjLimpo || cnpjLimpo.length !== 14) {
@@ -108,7 +114,7 @@ export function useCadastrarFornecedor() {
           email: form.email.trim() || null,
           politica_preco: politicaPrecoLimpa,
           prazo_entrega: form.prazo_entrega ? Number(form.prazo_entrega) : null,
-          telefones: [telefoneLimpo],
+          telefones: [telefoneLimpo, telefoneLimpo2],
         }),
       });
 
