@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { Users, UserCog, Package, Truck, TrendingUp, ShoppingBasket, Wrench, Wallet, Boxes } from "lucide-react";
+import { link } from "fs";
 
 const painel = [
   { titulo: "Clientes", icone: Users, cor: "azul", link: "/cliente/gerenciar"},
@@ -11,7 +12,7 @@ const painel = [
   { titulo: "Compras", icone: ShoppingBasket, cor: "green", link: "/compra/gerenciar" },
   { titulo: "Ordens de Serviço", icone: Wrench, cor: "cinza" },
   { titulo: "Despesas", icone: Wallet, cor: "cinza" },
-  { titulo: "Estoque", icone: Boxes, cor: "cinza" },
+  { titulo: "Estoque", icone: Boxes, cor: "green", link: "/estoque/gerenciar" },
 ];
 
 export default function Home() {
