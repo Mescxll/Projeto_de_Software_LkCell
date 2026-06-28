@@ -144,14 +144,6 @@ export function useAtualizarCliente(uuid) {
       return;
     }
 
-    if (telefoneLimpo2.length !== 11) {
-      setErroMsg(
-        "O telefone precisa ter exatamente 11 números (DDD + 9 dígitos)!",
-      );
-      setModalErro(true);
-      return;
-    }
-
     // Trava de tamanho do CEP
     if (cepLimpo && cepLimpo.length !== 8) {
       setErroMsg("O CEP está incompleto! Digite exatamente 8 números.");

@@ -105,12 +105,6 @@ export function useCadastrarCliente() {
       return;
     }
 
-    if (telefoneLimpo2.length !== 11) {
-      setErroMsg("O telefone precisa ter exatamente 11 números (DDD + 9 dígitos)!");
-      setModal("erro");
-      return;
-    }
-
     if (cepLimpo && cepLimpo.length !== 8) {
       setErroMsg("O CEP está incompleto! Digite exatamente 8 números.");
       setModal("erro");
