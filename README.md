@@ -1,5 +1,6 @@
 *Status: Em produção*
 *Sprint 1 concluída*
+*Sprint 2 concluída*
 
 # Projeto de Software - LKCell 
 Projeto criado para a matéria de Processo de Desenvolvimento de Software (PDS), com o objetivo de implementar o sistema anteriormente analisado, LKCell. 
@@ -15,65 +16,44 @@ Projeto criado para a matéria de Processo de Desenvolvimento de Software (PDS),
 - Tailwind CSS
 - Supabase
 
-### Utilização 
-
-Clone o repositório:
-
-```bash
-git clone https://github.com/Mescxll/Projeto_de_Software_LkCell.git
-```
-
 ## Backend
-Acesse o diretório:
+1. Acesse o diretório:
 
 ```bash
 cd backend
 ```
-Instale as dependências:
+2. Instale as dependências:
 
 ```bash
 npm install
 ```
 
-### Configurando o .env:
-Atenção: Use a porta 6543 para pooling (DATABASE_URL) e 5432 para conexão direta (DIRECT_URL).
-```
-DATABASE_URL="postgresql://postgres.id_do_banco:sua_senha@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
-DIRECT_URL="postgresql://postgres.id_do_banco:sua_senha@aws-0-sa-east-1.pooler.supabase.com:5432/postgres"
-```
-**Sincronizando o Prisma**
-
-Com o `.env` configurado, gere o cliente para o seu sistema reconhecer as tabelas:
+3. Gere o cliente para o seu sistema reconhecer as tabelas:
 
 ```bash
 npx prisma generate
 ```
+> O banco de dados utilizado é o Supabase (PostgreSQL). O arquivo .env já está no projeto, não precisa configurar o acesso ao banco. O arquivo .env foi mantido no proejto para faciliar o acesso ao banco e configuração do projeto
 
-Instale o Driver Adapter:
-
-```bash
-npm install @prisma/adapter-pg pg
-```
-
-Inicie o servidor backend:
+4. Inicie o servidor backend:
 
 ```bash
 npm run dev
 ```
 
 ## Frontend
-Abra um novo terminal para o frontend:
+1. Abra um novo terminal para o frontend:
 
 ```bash
 cd frontend
 ```
 
-Instale as dependências:
+2. Instale as dependências:
 ```bash
 npm install
 ```
 
-Execute:
+3. Execute:
 ```bash
 npm run dev
 ```
