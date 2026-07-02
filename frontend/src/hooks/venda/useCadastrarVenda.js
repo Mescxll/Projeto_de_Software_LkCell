@@ -10,8 +10,6 @@ export function useCadastrarVenda() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingDados, setLoadingDados] = useState(true);
 
-  // Estoques por localização do produto atualmente selecionado no itemForm.
-  // Formato: [{ id_localizacao, localizacao, estoque_atual }]
   const [estoquesPorLocalizacao, setEstoquesPorLocalizacao] = useState([]);
   const [loadingEstoque, setLoadingEstoque] = useState(false);
 
@@ -30,7 +28,6 @@ export function useCadastrarVenda() {
     preco_unitario: "",
   });
 
-  // Busca clientes, funcionários e produtos ao abrir
   useEffect(() => {
     const buscarDados = async () => {
       try {
@@ -66,7 +63,6 @@ export function useCadastrarVenda() {
     buscarDados();
   }, []);
 
-  // Sempre que o produto selecionado mudar, busca o estoque por localização
   useEffect(() => {
     const produtoId = itemForm.fk_produto_id_produto;
 
@@ -78,7 +74,6 @@ export function useCadastrarVenda() {
     const buscarEstoque = async () => {
       setLoadingEstoque(true);
       setEstoquesPorLocalizacao([]);
-      // Limpa a localização anterior ao trocar de produto
       setItemForm((prev) => ({ ...prev, fk_localizacao_id: "" }));
 
       try {
@@ -100,7 +95,6 @@ export function useCadastrarVenda() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemForm.fk_produto_id_produto]);
 
-  // Retorna o estoque disponível da localização atualmente selecionada (ou null)
   const estoqueDisponivel = (() => {
     if (!itemForm.fk_localizacao_id) return null;
     const loc = estoquesPorLocalizacao.find(
@@ -115,9 +109,7 @@ export function useCadastrarVenda() {
       !itemForm.quantidade_vendida ||
       !itemForm.fk_localizacao_id
     ) {
-      setErroMsg(
-        "Selecione um produto, uma localização e informe a quantidade.",
-      );
+      setErroMsg("Selecione um produto, uma localização e informe a quantidade.");
       setModal("erro");
       return;
     }
@@ -129,7 +121,6 @@ export function useCadastrarVenda() {
       return;
     }
 
-    // Valida contra o estoque da localização escolhida
     if (estoqueDisponivel !== null && qty > estoqueDisponivel) {
       setErroMsg(
         `Quantidade solicitada (${qty}) excede o estoque disponível na localização selecionada (${estoqueDisponivel}).`,
@@ -148,12 +139,10 @@ export function useCadastrarVenda() {
       return;
     }
 
-    // Verifica se o produto + localização já foi adicionado
     if (
       form.itens.some(
         (i) =>
-          i.fk_produto_id_produto ===
-            parseInt(itemForm.fk_produto_id_produto) &&
+          i.fk_produto_id_produto === parseInt(itemForm.fk_produto_id_produto) &&
           String(i.fk_localizacao_id) === String(itemForm.fk_localizacao_id),
       )
     ) {
@@ -177,10 +166,7 @@ export function useCadastrarVenda() {
       localizacaoNome: localizacaoSelecionada?.localizacao ?? "—",
     };
 
-    setForm({
-      ...form,
-      itens: [...form.itens, novoItem],
-    });
+    setForm({ ...form, itens: [...form.itens, novoItem] });
 
     setItemForm({
       fk_produto_id_produto: "",
@@ -250,8 +236,21 @@ export function useCadastrarVenda() {
   };
 
   const handleSubmit = async () => {
-    if (!form.fk_funcionario_id_funcionario || form.itens.length === 0) {
-      setErroMsg("Selecione um funcionário e pelo menos um item.");
+    // Cliente e funcionário obrigatórios
+    if (!form.fk_cliente_id_cliente) {
+      setErroMsg("Selecione um cliente.");
+      setModal("erro");
+      return;
+    }
+
+    if (!form.fk_funcionario_id_funcionario) {
+      setErroMsg("Selecione um funcionário.");
+      setModal("erro");
+      return;
+    }
+
+    if (form.itens.length === 0) {
+      setErroMsg("Adicione pelo menos um produto.");
       setModal("erro");
       return;
     }
@@ -259,15 +258,10 @@ export function useCadastrarVenda() {
     setIsSubmitting(true);
 
     const body = {
-      fk_cliente_id_cliente: form.fk_cliente_id_cliente
-        ? parseInt(form.fk_cliente_id_cliente)
-        : null,
-      fk_funcionario_id_funcionario: parseInt(
-        form.fk_funcionario_id_funcionario,
-      ),
+      fk_cliente_id_cliente: parseInt(form.fk_cliente_id_cliente),
+      fk_funcionario_id_funcionario: parseInt(form.fk_funcionario_id_funcionario),
       status_pagamento: form.status_pagamento,
       data_vencimento: form.data_vencimento || null,
-      // Cada item carrega sua própria localização
       itens: form.itens.map((item) => ({
         fk_produto_id_produto: item.fk_produto_id_produto,
         fk_localizacao_id: item.fk_localizacao_id,
@@ -310,11 +304,11 @@ export function useCadastrarVenda() {
       currency: "BRL",
     });
 
-  const calcularTotal = () => {
-    return form.itens.reduce((acc, item) => {
-      return acc + item.preco_unitario * item.quantidade_vendida;
-    }, 0);
-  };
+  const calcularTotal = () =>
+    form.itens.reduce(
+      (acc, item) => acc + item.preco_unitario * item.quantidade_vendida,
+      0,
+    );
 
   return {
     clientes,

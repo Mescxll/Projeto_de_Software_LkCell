@@ -5,13 +5,15 @@ export function useAtualizarVenda(id) {
   const [venda, setVenda] = useState(null);
   const [erro, setErro] = useState(false);
 
-  // Campos editáveis da venda
   const [statusPagamentoNovo, setStatusPagamentoNovo] = useState("");
   const [dataVencimento, setDataVencimento] = useState("");
+  const [clienteId, setClienteId] = useState("");
+  const [funcionarioId, setFuncionarioId] = useState("");
   const [itens, setItens] = useState([]);
   const [produtos, setProdutos] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [funcionarios, setFuncionarios] = useState([]);
 
-  // --- CONTROLE DO NOVO ITEM (Igual ao Cadastro) ---
   const [itemForm, setItemForm] = useState({
     fk_produto_id_produto: "",
     fk_localizacao_id: "",
@@ -21,19 +23,16 @@ export function useAtualizarVenda(id) {
   const [estoquesPorLocalizacao, setEstoquesPorLocalizacao] = useState([]);
   const [loadingEstoque, setLoadingEstoque] = useState(false);
 
-  // Modais
   const [modalConfirmar, setModalConfirmar] = useState(false);
   const [modalCancelar, setModalCancelar] = useState(false);
   const [modalSucesso, setModalSucesso] = useState(false);
-  const [modalSucessoCancelamento, setModalSucessoCancelamento] =
-    useState(false);
+  const [modalSucessoCancelamento, setModalSucessoCancelamento] = useState(false);
   const [modalErro, setModalErro] = useState(false);
   const [erroMsg, setErroMsg] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  // Busca a venda e os produtos disponíveis
   useEffect(() => {
     if (!id) return;
 
@@ -43,12 +42,13 @@ export function useAtualizarVenda(id) {
         return r.json();
       }),
       fetch("http://localhost:3000/api/produtos").then((r) => r.json()),
+      fetch("http://localhost:3000/api/clientes").then((r) => r.json()),
+      fetch("http://localhost:3000/api/funcionarios").then((r) => r.json()),
     ])
-      .then(([vendaData, produtosData]) => {
+      .then(([vendaData, produtosData, clientesData, funcionariosData]) => {
         const itensComLocalizacao = vendaData.itensvenda.map((item) => ({
           ...item,
           localizacao: item.localizacao?.localizacao ?? "—",
-          // fk_localizacao_id já está no item, não precisa mais buscar no estoque
         }));
 
         setVenda(vendaData);
@@ -58,8 +58,12 @@ export function useAtualizarVenda(id) {
             ? vendaData.data_vencimento.split("T")[0]
             : "",
         );
+        setClienteId(vendaData.fk_cliente_id_cliente ?? "");
+        setFuncionarioId(vendaData.fk_funcionario_id_funcionario ?? "");
         setItens(itensComLocalizacao);
         setProdutos(Array.isArray(produtosData) ? produtosData : []);
+        setClientes(Array.isArray(clientesData) ? clientesData : []);
+        setFuncionarios(Array.isArray(funcionariosData) ? funcionariosData : []);
         setLoading(false);
       })
       .catch((err) => {
@@ -69,7 +73,6 @@ export function useAtualizarVenda(id) {
       });
   }, [id]);
 
-  // Busca o estoque por localização sempre que o produto selecionado no formulário mudar
   useEffect(() => {
     const produtoId = itemForm.fk_produto_id_produto;
 
@@ -101,7 +104,6 @@ export function useAtualizarVenda(id) {
     buscarEstoque();
   }, [itemForm.fk_produto_id_produto]);
 
-  // Retorna o estoque disponível da localização atualmente selecionada (ou null)
   const estoqueDisponivel = (() => {
     if (!itemForm.fk_localizacao_id) return null;
     const loc = estoquesPorLocalizacao.find(
@@ -119,7 +121,6 @@ export function useAtualizarVenda(id) {
       0,
     );
 
-  // Lida com as mudanças no formulário de NOVO item
   const handleChangeItem = (e) => {
     const { name, value } = e.target;
 
@@ -146,16 +147,13 @@ export function useAtualizarVenda(id) {
     setItemForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Adiciona novo produto à lista
   const handleAdicionarItem = () => {
     if (
       !itemForm.fk_produto_id_produto ||
       !itemForm.quantidade_vendida ||
       !itemForm.fk_localizacao_id
     ) {
-      setErroMsg(
-        "Selecione um produto, uma localização e informe a quantidade.",
-      );
+      setErroMsg("Selecione um produto, uma localização e informe a quantidade.");
       setModalErro(true);
       return;
     }
@@ -179,7 +177,6 @@ export function useAtualizarVenda(id) {
       (p) => p.id_produto === parseInt(itemForm.fk_produto_id_produto),
     );
 
-    // Evita duplicar o MESMO produto na MESMA localização
     const jaExiste = itens.find(
       (i) =>
         i.fk_produto_id_produto === parseInt(itemForm.fk_produto_id_produto) &&
@@ -219,7 +216,6 @@ export function useAtualizarVenda(id) {
     setEstoquesPorLocalizacao([]);
   };
 
-  // Altera quantidade de um item existente na tabela
   const handleChangeQuantidade = (produtoId, localizacaoId, valor) => {
     setItens((prev) =>
       prev.map((item) =>
@@ -231,7 +227,6 @@ export function useAtualizarVenda(id) {
     );
   };
 
-  // Remove item da lista
   const handleRemoverItem = (produtoId, localizacaoId) => {
     setItens((prev) =>
       prev.filter(
@@ -245,6 +240,16 @@ export function useAtualizarVenda(id) {
   };
 
   const handleSalvar = () => {
+    if (!clienteId) {
+      setErroMsg("Selecione um cliente.");
+      setModalErro(true);
+      return;
+    }
+    if (!funcionarioId) {
+      setErroMsg("Selecione um funcionário.");
+      setModalErro(true);
+      return;
+    }
     if (!statusPagamentoNovo) {
       setErroMsg("Selecione um status de pagamento.");
       setModalErro(true);
@@ -269,9 +274,7 @@ export function useAtualizarVenda(id) {
       venda.status_pagamento === "PAGO" &&
       statusPagamentoNovo === "EM_ABERTO"
     ) {
-      setErroMsg(
-        "Não é permitido alterar o status de 'PAGO' para 'EM_ABERTO'.",
-      );
+      setErroMsg("Não é permitido alterar o status de 'PAGO' para 'EM_ABERTO'.");
       setModalErro(true);
       return;
     }
@@ -287,6 +290,8 @@ export function useAtualizarVenda(id) {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          fk_cliente_id_cliente: parseInt(clienteId),
+          fk_funcionario_id_funcionario: parseInt(funcionarioId),
           status_pagamento: statusPagamentoNovo,
           data_vencimento: dataVencimento || null,
           itens: itens.map((i) => ({
@@ -368,6 +373,12 @@ export function useAtualizarVenda(id) {
     setStatusPagamentoNovo,
     dataVencimento,
     setDataVencimento,
+    clienteId,
+    setClienteId,
+    funcionarioId,
+    setFuncionarioId,
+    clientes,
+    funcionarios,
     itens,
     produtos,
     itemForm,

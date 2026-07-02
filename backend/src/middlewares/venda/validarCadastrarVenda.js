@@ -1,7 +1,12 @@
 // Validar Cadastro Venda
 const validarCadastrarVenda = (req, res, next) => {
-  const { status_pagamento, fk_funcionario_id_funcionario, itens } = req.body;
-
+  const {
+    status_pagamento,
+    fk_funcionario_id_funcionario,
+    fk_cliente_id_cliente,
+    itens,
+  } = req.body;
+  
   // Campos obrigatórios
   if (!status_pagamento) {
     return res.status(400).json({ erro: "Status de pagamento é obrigatório." });
@@ -9,6 +14,16 @@ const validarCadastrarVenda = (req, res, next) => {
 
   if (!fk_funcionario_id_funcionario) {
     return res.status(400).json({ erro: "Funcionário é obrigatório." });
+  }
+  if (!fk_cliente_id_cliente) {
+    return res.status(400).json({ erro: "Cliente é obrigatório." });
+  }
+
+  if (
+    !Number.isInteger(Number(fk_cliente_id_cliente)) ||
+    Number(fk_cliente_id_cliente) <= 0
+  ) {
+    return res.status(400).json({ erro: "ID do cliente inválido." });
   }
 
   // Validação do enum status_pagamento

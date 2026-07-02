@@ -11,7 +11,6 @@ const cadastrarVenda = async (req, res) => {
       itens,
     } = req.body;
 
-    // fk_localizacao_id é não nulo e parte da PK composta de itensvenda
     for (const item of itens) {
       if (!item.fk_localizacao_id) {
         return res
@@ -24,12 +23,6 @@ const cadastrarVenda = async (req, res) => {
 
     const produtos = await prisma.produto.findMany({
       where: { id_produto: { in: ids } },
-      include: {
-        estoque: {
-          orderBy: { data_hora: "desc" },
-          take: 1,
-        },
-      },
     });
 
     if (produtos.length !== ids.length) {
@@ -43,7 +36,7 @@ const cadastrarVenda = async (req, res) => {
       mapaProdutos[p.id_produto] = p;
     }
 
-    // Valida estoque por localização (sempre obrigatório)
+    // Valida estoque por localização
     for (const item of itens) {
       const ultimoEstoqueLocalizacao = await prisma.estoque.findFirst({
         where: {
@@ -80,7 +73,7 @@ const cadastrarVenda = async (req, res) => {
           status_pagamento,
           status_venda: "EFETUADA",
           data_vencimento: data_vencimento ? new Date(data_vencimento) : null,
-          fk_cliente_id_cliente: fk_cliente_id_cliente || null,
+          fk_cliente_id_cliente,
           fk_funcionario_id_funcionario,
         },
       });
@@ -99,7 +92,6 @@ const cadastrarVenda = async (req, res) => {
         const novoEstoqueAtual =
           (ultimoEstoque?.estoque_atual ?? 0) - item.quantidade_vendida;
 
-        // fk_localizacao_id agora é incluído (Int não nulo na PK composta)
         await tx.itensvenda.create({
           data: {
             fk_venda_id_venda: venda.id_venda,
@@ -261,9 +253,14 @@ const atualizarVenda = async (req, res) => {
   try {
     const { id } = req.params;
     const idVenda = parseInt(id);
-    const { status_pagamento, data_vencimento, itens } = req.body;
+    const {
+      status_pagamento,
+      data_vencimento,
+      fk_cliente_id_cliente,
+      fk_funcionario_id_funcionario,
+      itens,
+    } = req.body;
 
-    // fk_localizacao_id é não nulo e parte da PK composta de itensvenda
     for (const item of itens) {
       if (!item.fk_localizacao_id) {
         return res
@@ -314,7 +311,7 @@ const atualizarVenda = async (req, res) => {
     const mapaProdutos = {};
     for (const p of produtos) mapaProdutos[p.id_produto] = p;
 
-    // Valida estoque considerando produto E localização na chave composta
+    // Valida estoque considerando produto E localização
     for (const item of itens) {
       const itemAntigo = vendaExistente.itensvenda.find(
         (i) =>
@@ -346,8 +343,7 @@ const atualizarVenda = async (req, res) => {
     }
 
     const vendaAtualizada = await prisma.$transaction(async (tx) => {
-      // Estorna saídas anteriores usando fk_localizacao_id direto do item
-      // (não precisa mais buscar saidaOriginal no estoque)
+      // Estorna saídas anteriores
       for (const itemAntigo of vendaExistente.itensvenda) {
         const localizacaoId = itemAntigo.fk_localizacao_id;
 
@@ -394,7 +390,6 @@ const atualizarVenda = async (req, res) => {
           orderBy: { data_hora: "desc" },
         });
 
-        // fk_localizacao_id agora é incluído (Int não nulo na PK composta)
         await tx.itensvenda.create({
           data: {
             fk_venda_id_venda: idVenda,
@@ -426,6 +421,8 @@ const atualizarVenda = async (req, res) => {
           status_pagamento,
           data_vencimento: data_vencimento ? new Date(data_vencimento) : null,
           valor_total: valorTotal,
+          fk_cliente_id_cliente,
+          fk_funcionario_id_funcionario,
         },
         include: {
           cliente: true,
@@ -528,8 +525,6 @@ const cancelarVenda = async (req, res) => {
 
     await prisma.$transaction(async (tx) => {
       for (const item of venda.itensvenda) {
-        // fk_localizacao_id vem direto do item (parte da PK composta),
-        // eliminando a necessidade de buscar o registro de SAIDA no estoque
         const localizacaoId = item.fk_localizacao_id;
 
         const ultimoEstoque = await tx.estoque.findFirst({

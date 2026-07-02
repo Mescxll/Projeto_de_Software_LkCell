@@ -216,11 +216,11 @@ model venda {
   status_venda                  status_venda_enum
   data_vencimento               DateTime?             @db.Date
   data_hora                     DateTime              @db.Timestamp(6)
-  fk_cliente_id_cliente         Int?
+  fk_cliente_id_cliente         Int
   fk_funcionario_id_funcionario Int
   itensvenda                    itensvenda[]
   estoque                       estoque[]
-  cliente                       cliente?              @relation(fields: [fk_cliente_id_cliente], references: [id_cliente], onDelete: SetNull, onUpdate: NoAction, map: "fk_venda_2")
+  cliente                       cliente               @relation(fields: [fk_cliente_id_cliente], references: [id_cliente], onDelete: Restrict, onUpdate: NoAction, map: "fk_venda_2")
   funcionario                   funcionario           @relation(fields: [fk_funcionario_id_funcionario], references: [id_funcionario], onDelete: Cascade, onUpdate: NoAction, map: "fk_venda_3")
 }
 
