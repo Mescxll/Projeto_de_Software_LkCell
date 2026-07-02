@@ -51,7 +51,7 @@ const cadastrarCompra = async (req, res) => {
         valorTotal += Number(item.preco_compra) * item.quantidade;
       }
 
-      // ✅ Cria a compra primeiro
+      // Cria a compra primeiro
       const compra = await tx.compra.create({
         data: {
           data_hora: new Date(),

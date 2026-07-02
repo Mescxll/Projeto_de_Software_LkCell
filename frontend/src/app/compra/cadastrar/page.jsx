@@ -310,7 +310,7 @@ export default function CadastroCompra() {
                   <tbody className="divide-y divide-gray-100">
                     {form.itens.map((item) => (
                       <tr
-                        key={item.fk_produto_id_produto}
+                        key={`${item.fk_produto_id_produto}-${item.fk_localizacao_id}`}
                         className="hover:bg-gray-50"
                       >
                         <td className="px-4 py-3">
@@ -379,7 +379,7 @@ export default function CadastroCompra() {
               className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white py-2.5 rounded-lg font-semibold transition-all text-sm"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                 <Save className="w-4 h-4" /> Cadastrar Compra
+              <Save className="w-4 h-4" /> Cadastrar Compra
             </button>
           </div>
         </div>

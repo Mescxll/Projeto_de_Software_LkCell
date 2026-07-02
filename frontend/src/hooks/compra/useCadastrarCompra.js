@@ -139,17 +139,17 @@ export function useCadastrarCompra() {
       return;
     }
 
-    // Duplicata por produto + localização (PK composta)
+    // Só bloqueia se for o mesmo produto NA MESMA localização
     if (
       form.itens.some(
         (i) =>
           i.fk_produto_id_produto ===
             parseInt(itemForm.fk_produto_id_produto) &&
-          String(i.fk_localizacao_id) === String(itemForm.fk_localizacao_id),
+          i.fk_localizacao_id === parseInt(itemForm.fk_localizacao_id),
       )
     ) {
       setErroMsg(
-        "Este produto já foi adicionado nesta localização. Ajuste a quantidade na tabela.",
+        "Este produto já foi adicionado nessa localização. Ajuste a quantidade em vez de repetir o item.",
       );
       setModal("erro");
       return;
@@ -253,7 +253,10 @@ export function useCadastrarCompra() {
     });
 
   const calcularTotal = () =>
-    form.itens.reduce((acc, item) => acc + item.preco_compra * item.quantidade, 0);
+    form.itens.reduce(
+      (acc, item) => acc + item.preco_compra * item.quantidade,
+      0,
+    );
 
   return {
     fornecedores,
