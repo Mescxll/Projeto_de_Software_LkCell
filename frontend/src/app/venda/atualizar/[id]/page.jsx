@@ -180,7 +180,7 @@ export default function AtualizarVenda() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 pb-6 border-b border-gray-100">
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-2 block">
-                  Cliente
+                  Cliente  <span className="text-red-400">*</span>
                 </label>
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
                   <User className="w-4 h-4 text-gray-400" />
@@ -197,7 +197,7 @@ export default function AtualizarVenda() {
 
               <div>
                 <label className="text-xs font-semibold text-gray-600 mb-2 block">
-                  Funcionário
+                  Funcionário  <span className="text-red-400">*</span>
                 </label>
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
                   <User className="w-4 h-4 text-gray-400" />
