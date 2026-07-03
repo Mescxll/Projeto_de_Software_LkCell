@@ -7,38 +7,36 @@ export function useVisualizarCategoria(id) {
   const [erro, setErro] = useState(false);
 
   useEffect(() => {
-    console.log("ID que chegou no hook:", id);
-
     if (!id) return;
 
-    setLoading(true);
-    setErro(false);
+    const buscar = async () => {
+      setLoading(true);
+      setErro(false);
 
-    fetch(`http://localhost:3000/api/categorias/${id}`)
-      .then((res) => {
-        console.log("Status da resposta:", res.status);
+      try {
+        const res = await fetch(`http://localhost:3000/api/categorias/${id}`);
         if (!res.ok) throw new Error("Categoria não encontrada");
-        return res.json();
-      })
-      .then((data) => {
-        const produtosFormatados = data.produto?.map((prod) => {
-          return {
+        const data = await res.json();
+
+        const produtosFormatados =
+          data.produto?.map((prod) => ({
             ...prod,
             preco_compra: prod.preco_compra ? Number(prod.preco_compra) : null,
             preco_custo: prod.preco_custo ? Number(prod.preco_custo) : null,
             preco_venda: prod.preco_venda ? Number(prod.preco_venda) : 0,
             margem_lucro: prod.margem_lucro ? Number(prod.margem_lucro) : null,
-          };
-        }) ?? [];
+          })) ?? [];
 
         setCategoria({ ...data, produto: produtosFormatados });
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Erro ao buscar categoria:", err);
         setErro(true);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    buscar();
   }, [id]);
 
   const formatarPreco = (valor) => {

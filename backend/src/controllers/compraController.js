@@ -191,6 +191,7 @@ const buscarCompra = async (req, res) => {
                 modelo: { include: { marca: true } },
               },
             },
+            localizacao: true,
           },
         },
         estoque: {
@@ -370,7 +371,7 @@ const cancelarCompra = async (req, res) => {
     const compra = await prisma.compra.findUnique({
       where: { id_compra: idCompra },
       include: {
-        itenscompra: true, 
+        itenscompra: true,
       },
     });
 
@@ -385,9 +386,8 @@ const cancelarCompra = async (req, res) => {
     }
 
     await prisma.$transaction(async (tx) => {
-
       for (const item of compra.itenscompra) {
-         const ultimoEstoque = await tx.estoque.findFirst({
+        const ultimoEstoque = await tx.estoque.findFirst({
           where: {
             fk_produto_id: item.fk_produto_id_produto,
             fk_localizacao_id: item.fk_localizacao_id ?? null,
