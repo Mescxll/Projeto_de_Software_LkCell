@@ -1,17 +1,25 @@
 // Validação de Atualizar Compra
 const validarAtualizarCompra = (req, res, next) => {
   const { id } = req.params;
-  const { prazo_entrega, fk_fornecedor_id_fornecedor } = req.body;
+  const { prazo_entrega, fk_fornecedor_id_fornecedor, itens } = req.body;
 
   // Valida o ID da compra
-  if (!id || isNaN(Number(id)) || !Number.isInteger(Number(id)) || Number(id) <= 0) {
+  if (
+    !id ||
+    isNaN(Number(id)) ||
+    !Number.isInteger(Number(id)) ||
+    Number(id) <= 0
+  ) {
     return res.status(400).json({
       erro: "ID da compra inválido. Informe um número inteiro positivo.",
     });
   }
 
   // Pelo menos um campo deve ser informado para atualização
-  if (prazo_entrega === undefined && fk_fornecedor_id_fornecedor === undefined) {
+  if (
+    prazo_entrega === undefined &&
+    fk_fornecedor_id_fornecedor === undefined
+  ) {
     return res.status(400).json({
       erro: "Informe ao menos um campo para atualizar: prazo_entrega ou fk_fornecedor_id_fornecedor.",
     });
@@ -37,6 +45,36 @@ const validarAtualizarCompra = (req, res, next) => {
     return res.status(400).json({
       erro: "fk_fornecedor_id_fornecedor inválido. Informe um número inteiro positivo.",
     });
+  }
+
+  if (itens !== undefined) {
+    if (!Array.isArray(itens) || itens.length === 0) {
+      return res.status(400).json({
+        erro: "Se informado, itens deve ser uma lista com pelo menos um produto.",
+      });
+    }
+
+    for (let i = 0; i < itens.length; i++) {
+      const item = itens[i];
+
+      if (
+        item.fk_localizacao_id === undefined ||
+        item.fk_localizacao_id === null
+      ) {
+        return res.status(400).json({
+          erro: `Item ${i + 1}: a localização é obrigatória.`,
+        });
+      }
+
+      if (
+        !Number.isInteger(Number(item.fk_localizacao_id)) ||
+        Number(item.fk_localizacao_id) <= 0
+      ) {
+        return res.status(400).json({
+          erro: `Item ${i + 1}: ID da localização inválido.`,
+        });
+      }
+    }
   }
 
   next();

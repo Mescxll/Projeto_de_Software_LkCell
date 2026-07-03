@@ -17,11 +17,7 @@ const normalizarData = (valor) => {
 
 const cadastrarCompra = async (req, res) => {
   try {
-    const {
-      fk_fornecedor_id_fornecedor,
-      prazo_entrega,
-      itens,
-    } = req.body;
+    const { fk_fornecedor_id_fornecedor, prazo_entrega, itens } = req.body;
 
     const idsUnicos = [...new Set(itens.map((i) => i.fk_produto_id_produto))];
 
@@ -40,74 +36,77 @@ const cadastrarCompra = async (req, res) => {
       mapaProdutos[p.id_produto] = p;
     }
 
-    const novaCompra = await prisma.$transaction(async (tx) => {
-      let valorTotal = 0;
-      for (const item of itens) {
-        valorTotal += Number(item.preco_compra) * item.quantidade;
-      }
+    const novaCompra = await prisma.$transaction(
+      async (tx) => {
+        let valorTotal = 0;
+        for (const item of itens) {
+          valorTotal += Number(item.preco_compra) * item.quantidade;
+        }
 
-      const compra = await tx.compra.create({
-        data: {
-          data_hora: new Date(),
-          valor_total: valorTotal,
-          prazo_entrega: normalizarData(prazo_entrega),
-          fk_fornecedor_id_fornecedor,
-        },
-      });
-
-      for (const item of itens) {
-        // Leitura isolada: precisamos dela para garantir a consistência do cálculo de estoque
-        const ultimoEstoque = await tx.estoque.findFirst({
-          where: {
-            fk_produto_id: item.fk_produto_id_produto,
-            fk_localizacao_id: item.fk_localizacao_id ?? null,
+        const compra = await tx.compra.create({
+          data: {
+            data_hora: new Date(),
+            valor_total: valorTotal,
+            prazo_entrega: normalizarData(prazo_entrega),
+            fk_fornecedor_id_fornecedor,
           },
-          orderBy: { data_hora: "desc" },
         });
 
-        const novoEstoqueAtual =
-          (ultimoEstoque?.estoque_atual ?? 0) + item.quantidade;
-
-        // Execução paralela das gravações para este item
-        await Promise.all([
-          tx.itenscompra.create({
-            data: {
-              fk_compra_id_compra: compra.id_compra,
-              fk_produto_id_produto: item.fk_produto_id_produto,
-              fk_localizacao_id: item.fk_localizacao_id,
-              quantidade: item.quantidade,
-              preco_compra: item.preco_compra,
-            },
-          }),
-          tx.estoque.create({
-            data: {
+        for (const item of itens) {
+          // Leitura isolada: precisamos dela para garantir a consistência do cálculo de estoque
+          const ultimoEstoque = await tx.estoque.findFirst({
+            where: {
               fk_produto_id: item.fk_produto_id_produto,
-              fk_compra_id: compra.id_compra,
-              fk_localizacao_id: item.fk_localizacao_id ?? null,
-              tipo_movimento: "ENTRADA",
-              quantidade: item.quantidade,
-              estoque_atual: novoEstoqueAtual,
-              estoque_minimo: ultimoEstoque?.estoque_minimo ?? null,
-              estoque_ideal: ultimoEstoque?.estoque_ideal ?? null,
+              fk_localizacao_id: item.fk_localizacao_id,
             },
-          }),
-          tx.produto.update({
-            where: { id_produto: item.fk_produto_id_produto },
-            data: { preco_custo: item.preco_compra },
-          })
-        ]);
-      }
+            orderBy: { data_hora: "desc" },
+          });
 
-      return tx.compra.findUnique({
-        where: { id_compra: compra.id_compra },
-        include: {
-          fornecedor: true,
-          itenscompra: { include: { produto: true, localizacao: true } },
-        },
-      });
-    }, {
-      timeout: 15000 // Margem de segurança recomendada
-    });
+          const novoEstoqueAtual =
+            (ultimoEstoque?.estoque_atual ?? 0) + item.quantidade;
+
+          // Execução paralela das gravações para este item
+          await Promise.all([
+            tx.itenscompra.create({
+              data: {
+                fk_compra_id_compra: compra.id_compra,
+                fk_produto_id_produto: item.fk_produto_id_produto,
+                fk_localizacao_id: item.fk_localizacao_id,
+                quantidade: item.quantidade,
+                preco_compra: item.preco_compra,
+              },
+            }),
+            tx.estoque.create({
+              data: {
+                fk_produto_id: item.fk_produto_id_produto,
+                fk_compra_id: compra.id_compra,
+                fk_localizacao_id: item.fk_localizacao_id,
+                tipo_movimento: "ENTRADA",
+                quantidade: item.quantidade,
+                estoque_atual: novoEstoqueAtual,
+                estoque_minimo: ultimoEstoque?.estoque_minimo ?? null,
+                estoque_ideal: ultimoEstoque?.estoque_ideal ?? null,
+              },
+            }),
+            tx.produto.update({
+              where: { id_produto: item.fk_produto_id_produto },
+              data: { preco_custo: item.preco_compra },
+            }),
+          ]);
+        }
+
+        return tx.compra.findUnique({
+          where: { id_compra: compra.id_compra },
+          include: {
+            fornecedor: true,
+            itenscompra: { include: { produto: true, localizacao: true } },
+          },
+        });
+      },
+      {
+        timeout: 15000, // Margem de segurança recomendada
+      },
+    );
 
     return res.status(201).json({
       mensagem: "Compra cadastrada com sucesso!",
@@ -230,105 +229,110 @@ const atualizarCompra = async (req, res) => {
       });
     }
 
-    const compraAtualizada = await prisma.$transaction(async (tx) => {
-      await tx.compra.update({
-        where: { id_compra: parseInt(id) },
-        data: {
-          ...(prazo_entrega !== undefined && {
-            prazo_entrega: normalizarData(prazo_entrega),
-          }),
-          ...(fk_fornecedor_id_fornecedor !== undefined && {
-            fk_fornecedor_id_fornecedor,
-          }),
-        },
-      });
-
-      if (itens && Array.isArray(itens) && itens.length > 0) {
-        const ids = [...new Set(itens.map((i) => i.fk_produto_id_produto))];
-
-        const produtos = await tx.produto.findMany({
-          where: { id_produto: { in: ids } },
-        });
-
-        if (produtos.length !== ids.length) {
-          throw new Error("Um ou mais produtos não foram encontrados.");
-        }
-
-        const mapaProdutos = {};
-        for (const p of produtos) {
-          mapaProdutos[p.id_produto] = p;
-        }
-
-        // Deleções em paralelo
-        await Promise.all([
-          tx.estoque.deleteMany({ where: { fk_compra_id: parseInt(id) } }),
-          tx.itenscompra.deleteMany({ where: { fk_compra_id_compra: parseInt(id) } })
-        ]);
-
-        let valorTotal = 0;
-        for (const item of itens) {
-          valorTotal += Number(item.preco_compra) * item.quantidade;
-        }
-
-        for (const item of itens) {
-          const ultimoEstoque = await tx.estoque.findFirst({
-            where: {
-              fk_produto_id: item.fk_produto_id_produto,
-              fk_localizacao_id: item.fk_localizacao_id ?? null,
-            },
-            orderBy: { data_hora: "desc" },
-          });
-
-          const novoEstoqueAtual =
-            (ultimoEstoque?.estoque_atual ?? 0) + item.quantidade;
-
-          // Gravações em paralelo
-          await Promise.all([
-            tx.itenscompra.create({
-              data: {
-                fk_compra_id_compra: parseInt(id),
-                fk_produto_id_produto: item.fk_produto_id_produto,
-                fk_localizacao_id: item.fk_localizacao_id,
-                quantidade: item.quantidade,
-                preco_compra: item.preco_compra,
-              },
-            }),
-            tx.estoque.create({
-              data: {
-                fk_produto_id: item.fk_produto_id_produto,
-                fk_compra_id: parseInt(id),
-                fk_localizacao_id: item.fk_localizacao_id ?? null,
-                tipo_movimento: "ENTRADA",
-                quantidade: item.quantidade,
-                estoque_atual: novoEstoqueAtual,
-                estoque_minimo: ultimoEstoque?.estoque_minimo ?? null,
-                estoque_ideal: ultimoEstoque?.estoque_ideal ?? null,
-              },
-            }),
-            tx.produto.update({
-              where: { id_produto: item.fk_produto_id_produto },
-              data: { preco_custo: item.preco_compra },
-            })
-          ]);
-        }
-
+    const compraAtualizada = await prisma.$transaction(
+      async (tx) => {
         await tx.compra.update({
           where: { id_compra: parseInt(id) },
-          data: { valor_total: valorTotal },
+          data: {
+            ...(prazo_entrega !== undefined && {
+              prazo_entrega: normalizarData(prazo_entrega),
+            }),
+            ...(fk_fornecedor_id_fornecedor !== undefined && {
+              fk_fornecedor_id_fornecedor,
+            }),
+          },
         });
-      }
 
-      return tx.compra.findUnique({
-        where: { id_compra: parseInt(id) },
-        include: {
-          fornecedor: true,
-          itenscompra: { include: { produto: true } },
-          estoque: { include: { localizacao: true } },
-        },
-      });
-    }, {
-      timeout: 15000 // Margem de segurança recomendada
-    });
+        if (itens && Array.isArray(itens) && itens.length > 0) {
+          const ids = [...new Set(itens.map((i) => i.fk_produto_id_produto))];
+
+          const produtos = await tx.produto.findMany({
+            where: { id_produto: { in: ids } },
+          });
+
+          if (produtos.length !== ids.length) {
+            throw new Error("Um ou mais produtos não foram encontrados.");
+          }
+
+          const mapaProdutos = {};
+          for (const p of produtos) {
+            mapaProdutos[p.id_produto] = p;
+          }
+
+          // Deleções em paralelo
+          await Promise.all([
+            tx.estoque.deleteMany({ where: { fk_compra_id: parseInt(id) } }),
+            tx.itenscompra.deleteMany({
+              where: { fk_compra_id_compra: parseInt(id) },
+            }),
+          ]);
+
+          let valorTotal = 0;
+          for (const item of itens) {
+            valorTotal += Number(item.preco_compra) * item.quantidade;
+          }
+
+          for (const item of itens) {
+            const ultimoEstoque = await tx.estoque.findFirst({
+              where: {
+                fk_produto_id: item.fk_produto_id_produto,
+                fk_localizacao_id: item.fk_localizacao_id,
+              },
+              orderBy: { data_hora: "desc" },
+            });
+
+            const novoEstoqueAtual =
+              (ultimoEstoque?.estoque_atual ?? 0) + item.quantidade;
+
+            // Gravações em paralelo
+            await Promise.all([
+              tx.itenscompra.create({
+                data: {
+                  fk_compra_id_compra: parseInt(id),
+                  fk_produto_id_produto: item.fk_produto_id_produto,
+                  fk_localizacao_id: item.fk_localizacao_id,
+                  quantidade: item.quantidade,
+                  preco_compra: item.preco_compra,
+                },
+              }),
+              tx.estoque.create({
+                data: {
+                  fk_produto_id: item.fk_produto_id_produto,
+                  fk_compra_id: parseInt(id),
+                  fk_localizacao_id: item.fk_localizacao_id,
+                  tipo_movimento: "ENTRADA",
+                  quantidade: item.quantidade,
+                  estoque_atual: novoEstoqueAtual,
+                  estoque_minimo: ultimoEstoque?.estoque_minimo ?? null,
+                  estoque_ideal: ultimoEstoque?.estoque_ideal ?? null,
+                },
+              }),
+              tx.produto.update({
+                where: { id_produto: item.fk_produto_id_produto },
+                data: { preco_custo: item.preco_compra },
+              }),
+            ]);
+          }
+
+          await tx.compra.update({
+            where: { id_compra: parseInt(id) },
+            data: { valor_total: valorTotal },
+          });
+        }
+
+        return tx.compra.findUnique({
+          where: { id_compra: parseInt(id) },
+          include: {
+            fornecedor: true,
+            itenscompra: { include: { produto: true } },
+            estoque: { include: { localizacao: true } },
+          },
+        });
+      },
+      {
+        timeout: 15000, // Margem de segurança recomendada
+      },
+    );
 
     return res.status(200).json({
       mensagem: "Compra atualizada com sucesso!",
@@ -369,40 +373,43 @@ const cancelarCompra = async (req, res) => {
       });
     }
 
-    await prisma.$transaction(async (tx) => {
-      for (const item of compra.itenscompra) {
-        const ultimoEstoque = await tx.estoque.findFirst({
-          where: {
-            fk_produto_id: item.fk_produto_id_produto,
-            fk_localizacao_id: item.fk_localizacao_id ?? null,
-          },
-          orderBy: { data_hora: "desc" },
+    await prisma.$transaction(
+      async (tx) => {
+        for (const item of compra.itenscompra) {
+          const ultimoEstoque = await tx.estoque.findFirst({
+            where: {
+              fk_produto_id: item.fk_produto_id_produto,
+              fk_localizacao_id: item.fk_localizacao_id,
+            },
+            orderBy: { data_hora: "desc" },
+          });
+
+          const estoqueRestaurado =
+            (ultimoEstoque?.estoque_atual ?? 0) - item.quantidade;
+
+          await tx.estoque.create({
+            data: {
+              fk_produto_id: item.fk_produto_id_produto,
+              fk_localizacao_id: item.fk_localizacao_id,
+              tipo_movimento: "AJUSTE",
+              quantidade: item.quantidade,
+              estoque_atual: estoqueRestaurado,
+              estoque_minimo: ultimoEstoque?.estoque_minimo ?? null,
+              estoque_ideal: ultimoEstoque?.estoque_ideal ?? null,
+              observacao: `Estorno por cancelamento da compra #${idCompra}`,
+            },
+          });
+        }
+
+        await tx.compra.update({
+          where: { id_compra: idCompra },
+          data: { status_compra: "CANCELADA" },
         });
-
-        const estoqueRestaurado =
-          (ultimoEstoque?.estoque_atual ?? 0) - item.quantidade;
-
-        await tx.estoque.create({
-          data: {
-            fk_produto_id: item.fk_produto_id_produto,
-            fk_localizacao_id: item.fk_localizacao_id ?? null,
-            tipo_movimento: "AJUSTE",
-            quantidade: item.quantidade,
-            estoque_atual: estoqueRestaurado,
-            estoque_minimo: ultimoEstoque?.estoque_minimo ?? null,
-            estoque_ideal: ultimoEstoque?.estoque_ideal ?? null,
-            observacao: `Estorno por cancelamento da compra #${idCompra}`,
-          },
-        });
-      }
-
-      await tx.compra.update({
-        where: { id_compra: idCompra },
-        data: { status_compra: "CANCELADA" },
-      });
-    }, {
-      timeout: 15000 // Margem de segurança recomendada
-    });
+      },
+      {
+        timeout: 15000, // Margem de segurança recomendada
+      },
+    );
 
     return res.status(200).json({
       mensagem: `Compra #${idCompra} cancelada com sucesso. Estoque estornado. Para registrar uma nova entrada, cadastre uma nova compra.`,

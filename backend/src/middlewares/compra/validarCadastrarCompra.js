@@ -24,6 +24,24 @@ const validarCadastrarCompra = (req, res, next) => {
   for (let i = 0; i < itens.length; i++) {
     const item = itens[i];
 
+    if (
+      item.fk_localizacao_id === undefined ||
+      item.fk_localizacao_id === null
+    ) {
+      return res.status(400).json({
+        erro: `Item ${i + 1}: a localização é obrigatória.`,
+      });
+    }
+
+    if (
+      !Number.isInteger(Number(item.fk_localizacao_id)) ||
+      Number(item.fk_localizacao_id) <= 0
+    ) {
+      return res.status(400).json({
+        erro: `Item ${i + 1}: ID da localização inválido.`,
+      });
+    }
+
     if (!item.fk_produto_id_produto) {
       return res.status(400).json({
         erro: `Item ${i + 1}: o produto é obrigatório.`,
@@ -67,13 +85,12 @@ const validarCadastrarCompra = (req, res, next) => {
   // Verificação de produtos duplicados na mesma compra
   // Duplicata real = mesmo produto NA MESMA localização (PK composta de itenscompra)
   const chaves = itens.map(
-    (i) => `${i.fk_produto_id_produto}-${i.fk_localizacao_id ?? "null"}`,
+    (i) => `${i.fk_produto_id_produto}-${i.fk_localizacao_id}`,
   );
   const chavesUnicas = new Set(chaves);
   if (chavesUnicas.size !== chaves.length) {
     return res.status(400).json({
-      erro:
-        "A compra contém o mesmo produto repetido na mesma localização. Ajuste a quantidade em vez de repetir o item.",
+      erro: "A compra contém o mesmo produto repetido na mesma localização. Ajuste a quantidade em vez de repetir o item.",
     });
   }
 
