@@ -249,7 +249,7 @@ export default function VisualizarVenda() {
                   <tbody className="divide-y divide-gray-100">
                     {venda.itensvenda.map((item) => (
                       <tr
-                        key={item.fk_produto_id_produto}
+                        key={`${item.fk_produto_id_produto}-${item.fk_localizacao_id}`}
                         className="hover:bg-gray-50"
                       >
                         <td className="px-6 py-4">

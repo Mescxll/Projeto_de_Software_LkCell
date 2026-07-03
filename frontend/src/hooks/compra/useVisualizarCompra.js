@@ -1,5 +1,4 @@
-// Lógica de Tela para visualização de Compra
-
+// hooks/compra/useVisualizarCompra.js
 import { useState, useEffect } from "react";
 
 export function useVisualizarCompra(id) {
@@ -10,37 +9,33 @@ export function useVisualizarCompra(id) {
   useEffect(() => {
     if (!id) return;
 
-    fetch(`http://localhost:3000/api/compras/${id}`)
-      .then((res) => {
+    const buscar = async () => {
+      setLoading(true);
+      setErro(false);
+
+      try {
+        const res = await fetch(`http://localhost:3000/api/compras/${id}`);
         if (!res.ok) throw new Error("Compra não encontrada");
-        return res.json();
-      })
-      .then((data) => {
-        const itensComLocalizacao = data.itenscompra.map((item) => {
-          const entrada = data.estoque?.find(
-            (e) =>
-              e.fk_produto_id === item.fk_produto_id_produto &&
-              e.tipo_movimento === "ENTRADA",
-          );
+        const data = await res.json();
 
-          return {
-            ...item,
-            localizacao: entrada?.localizacao?.localizacao ?? null,
-          };
-        });
+        // fk_localizacao_id é parte da PK composta de itenscompra
+        // e localizacao já vem incluída pelo controller — não precisa
+        // buscar no estoque (que colidiria com mesmo produto em 2 localizações)
+        const itensComLocalizacao = data.itenscompra.map((item) => ({
+          ...item,
+          localizacao: item.localizacao?.localizacao ?? null,
+        }));
 
-        setCompra({
-          ...data,
-          itenscompra: itensComLocalizacao,
-        });
-
-        setLoading(false);
-      })
-      .catch((err) => {
+        setCompra({ ...data, itenscompra: itensComLocalizacao });
+      } catch (err) {
         console.error("Erro ao buscar compra:", err);
         setErro(true);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    buscar();
   }, [id]);
 
   const formatarPreco = (valor) =>
@@ -70,11 +65,9 @@ export function useVisualizarCompra(id) {
     try {
       const dataUTC = new Date(data);
       if (Number.isNaN(dataUTC.getTime())) return "-";
-
       const dia = String(dataUTC.getUTCDate()).padStart(2, "0");
       const mes = String(dataUTC.getUTCMonth() + 1).padStart(2, "0");
       const ano = dataUTC.getUTCFullYear();
-
       return `${dia}/${mes}/${ano}`;
     } catch {
       return "-";

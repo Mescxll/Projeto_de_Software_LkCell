@@ -15,22 +15,15 @@ export function useVisualizarVenda(id) {
         return res.json();
       })
       .then((data) => {
-        // Para cada item, encontra o registro de SAIDA correspondente no estoque
-        const itensComLocalizacao = data.itensvenda.map((item) => {
-          const saida = data.estoque?.find(
-            (e) =>
-              e.fk_produto_id === item.fk_produto_id_produto &&
-              e.tipo_movimento === "SAIDA",
-          );
-          return {
-            ...item,
-            localizacao: saida?.localizacao?.localizacao ?? null,
-          };
-        });
+        const itensComLocalizacao = data.itensvenda.map((item) => ({
+          ...item,
+          localizacao: item.localizacao?.localizacao ?? null,
+        }));
 
         setVenda({ ...data, itensvenda: itensComLocalizacao });
         setLoading(false);
       })
+
       .catch((err) => {
         console.error("Erro ao buscar venda:", err);
         setErro(true);

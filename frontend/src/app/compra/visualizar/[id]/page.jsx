@@ -227,8 +227,7 @@ export default function VisualizarCompra() {
                   <tbody className="divide-y divide-gray-100">
                     {compra.itenscompra.map((item) => (
                       <tr
-                        key={item.fk_produto_id_produto}
-                        className="hover:bg-gray-50"
+                        key={`${item.fk_produto_id_produto}-${item.fk_localizacao_id}`}
                       >
                         <td className="px-6 py-4">
                           <p className="font-semibold text-gray-800">
